@@ -157,7 +157,7 @@ export function SiteHeader() {
               Solicitar serviço
             </Link>
             <Link
-              href="/#parceiro-fundador"
+              href="/parceiros"
               onClick={() => setOpen(false)}
               className={buttonClass("outline", "lg", "w-full")}
             >

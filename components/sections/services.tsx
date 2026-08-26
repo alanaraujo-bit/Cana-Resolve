@@ -57,7 +57,7 @@ export function Services() {
             <span className="text-muted text-[0.9375rem] leading-relaxed">
               Novas categorias entram conforme profissionais locais se juntam à
               plataforma. Se a sua não está aqui,{" "}
-              <Link href="/#parceiro-fundador" className="text-brand-ink underline underline-offset-4">
+              <Link href="/parceiros" className="text-brand-ink underline underline-offset-4">
                 fale com a gente
               </Link>
               .

@@ -93,7 +93,7 @@ export function Launch() {
             </ul>
 
             <Link
-              href="/#parceiro-fundador"
+              href="/parceiros"
               className="text-brand-ink hover:text-brand-hover mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-medium transition-colors"
             >
               Ver o programa Parceiro Fundador

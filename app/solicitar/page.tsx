@@ -80,7 +80,7 @@ export default async function SolicitarPage({
             <p className="text-faint mt-9 text-[0.8125rem] leading-relaxed">
               É profissional e quer receber pedidos?{" "}
               <Link
-                href="/#parceiro-fundador"
+                href="/parceiros"
                 className="text-brand-ink underline underline-offset-4"
               >
                 Conheça o Parceiro Fundador

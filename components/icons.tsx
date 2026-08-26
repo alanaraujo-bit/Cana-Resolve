@@ -212,6 +212,44 @@ export function IconTag(props: IconProps) {
   );
 }
 
+export function IconClock(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 1.8" />
+    </Base>
+  );
+}
+
+export function IconArrowDown(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 4.5v14" />
+      <path d="m6.5 13 5.5 5.5L17.5 13" />
+    </Base>
+  );
+}
+
+export function IconMegaphone(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 9.5v4a1.5 1.5 0 0 0 1.5 1.5H8l7.5 4.5V5L8 9.5H5.5A1.5 1.5 0 0 0 4 11z" />
+      <path d="M18.5 9.5a4 4 0 0 1 0 5" />
+      <path d="M8 15v4.5h2.5" />
+    </Base>
+  );
+}
+
+export function IconTarget(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </Base>
+  );
+}
+
 export function IconWhatsApp(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...props}>

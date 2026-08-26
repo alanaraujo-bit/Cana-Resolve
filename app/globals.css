@@ -244,6 +244,39 @@
   }
 }
 
+/* Troca suave entre os exemplos da demonstração de oportunidade. */
+.cr-swap {
+  animation: cr-swap-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cr-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Barra de ação fixa no mobile: entra sem sobressaltar. */
+.cr-dock {
+  animation: cr-dock-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+@keyframes cr-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(115%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Revelação em scroll — desligada por completo em movimento reduzido. */
 .cr-reveal {
   opacity: 0;

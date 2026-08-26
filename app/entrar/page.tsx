@@ -33,7 +33,7 @@ export default function EntrarPage() {
             Solicitar um serviço
             <IconArrowRight className="h-[18px] w-[18px]" />
           </Link>
-          <Link href="/#parceiro-fundador" className={buttonClass("outline", "lg")}>
+          <Link href="/parceiros" className={buttonClass("outline", "lg")}>
             Sou profissional
           </Link>
         </div>

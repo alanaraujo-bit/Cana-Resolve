@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { IconCheck, IconWhatsApp } from "@/components/icons";
+import { IconArrowRight, IconCheck } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { buttonClass, Container, Eyebrow, Section } from "@/components/ui";
-import { partnerMessage, waLink } from "@/lib/whatsapp";
 
 const argumentos = [
   {
@@ -106,27 +105,25 @@ export function ForPros() {
                 </ul>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <a
-                    href={waLink(partnerMessage)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/parceiros#cadastro"
                     className={buttonClass("brand", "lg", "flex-1")}
                   >
-                    <IconWhatsApp className="h-[18px] w-[18px]" />
                     Quero ser Parceiro Fundador
-                  </a>
+                    <IconArrowRight className="h-[18px] w-[18px]" />
+                  </Link>
                   <Link
-                    href="/#duvidas"
+                    href="/parceiros"
                     className={buttonClass("outline", "lg", "sm:w-auto")}
                   >
-                    Tirar dúvidas
+                    Ver o programa
                   </Link>
                 </div>
 
                 <p className="text-faint mt-5 text-[0.8125rem] leading-relaxed">
                   As vagas são limitadas por categoria para preservar o valor de
-                  quem entra primeiro. Ao tocar no botão você fala com a equipe
-                  do Canaã Resolve pelo WhatsApp.
+                  quem entra primeiro. Na página de parceiros está tudo
+                  explicado — inclusive o que não prometemos.
                 </p>
               </div>
             </div>

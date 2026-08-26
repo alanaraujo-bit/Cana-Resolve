@@ -18,8 +18,8 @@ const columns = [
   {
     title: "Profissionais",
     links: [
-      { label: "Para profissionais", href: "/#profissionais" },
-      { label: "Parceiro Fundador", href: "/#parceiro-fundador" },
+      { label: "Seja parceiro", href: "/parceiros" },
+      { label: "Parceiro Fundador", href: "/parceiros#parceiro-fundador" },
       { label: "Entrar", href: "/entrar" },
     ],
   },
