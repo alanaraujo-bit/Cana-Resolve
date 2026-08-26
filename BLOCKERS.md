@@ -90,13 +90,14 @@ apresentação antes de uma campanha de volume.
 
 ---
 
-## 7. O domínio oficial ainda não resolve publicamente
+## 7. ~~O domínio oficial ainda não resolve publicamente~~ — resolvido
 
-**Estado atual:** em 26/08/2026, a consulta a
-`canaaresolve.aionixdev.com` não retornou DNS e a URL pública não pôde ser
-aberta. O código já usa esse endereço como base canônica, em sitemap e nos
-previews, sem depender do endereço temporário da Vercel.
+**Fechado em 26/08/2026.** `https://canaaresolve.aionixdev.com` responde 200
+com HTTPS e está como alias do deploy de produção. As sete rotas foram
+auditadas no ar, em cinco larguras e nos dois temas, sem overflow horizontal e
+sem erros de console.
 
-**O que falta:** criar/apontar o registro DNS do subdomínio para o projeto de
-produção e adicioná-lo no provedor de hospedagem. Em seguida, conferir HTTPS e
-redirecionar o domínio temporário para o oficial, se a hospedagem permitir.
+A URL crua do deploy (`canaa-resolve-*.vercel.app`) devolve 302 para o SSO da
+Vercel — é a Proteção de Deploy, e não afeta o domínio público. Se um dia for
+preciso compartilhar um preview com alguém de fora, é essa opção que precisa
+ser afrouxada no painel do projeto.

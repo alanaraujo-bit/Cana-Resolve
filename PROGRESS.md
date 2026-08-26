@@ -89,6 +89,15 @@ rotas × 5 larguras × 2 temas para que isso não volte.
 - Em `prefers-reduced-motion: reduce`, os 29 blocos de revelação da home
   aparecem todos visíveis e nenhuma animação roda.
 
+### No ar
+
+Publicado em produção em 26/08/2026 (`vercel --prod`, deploy
+`canaa-resolve-dpyj1orr2`), com o commit também no GitHub. O domínio oficial
+`https://canaaresolve.aionixdev.com` passou a responder — ver `BLOCKERS.md`
+item 7, agora fechado. A mesma auditoria de largura e a mesma bateria de
+interações foram repetidas **contra o site no ar**, com o mesmo resultado:
+nenhum overflow, nenhum erro de console, tudo funcionando.
+
 
 ## 26/08/2026 — Auditoria de pré-lançamento comercial
 
