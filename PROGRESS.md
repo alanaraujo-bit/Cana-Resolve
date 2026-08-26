@@ -5,12 +5,11 @@ inversa: o mais recente primeiro.
 
 ---
 
-## 26/08/2026 — Tentativa de publicação em produção
+## 26/08/2026 — Publicação em produção
 
-- A publicação via Vercel foi tentada para o projeto vinculado `canaa-resolve`,
-  mas a CLI retornou `Not authorized`.
-- O bloqueio e o comando de retomada foram registrados em `BLOCKERS.md` (item 0).
-  A versão local permanece pronta, com build aprovado.
+- O novo modelo comercial foi publicado: commit `3d55b8e` enviado para o `main` no GitHub e deploy de produção concluído na Vercel.
+- `canaaresolve.aionixdev.com/parceiros` responde 200 e serve a condição Beta Fundador (R$ 79 pelos primeiros 90 dias); a oferta antiga saiu do ar.
+- O bloqueio de autenticação da Vercel registrado antes deixou de existir: a CLI está autenticada e `vercel --prod --yes` executa normalmente.
 
 ---
 

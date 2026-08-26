@@ -6,20 +6,6 @@ como está. Registrados em 26/08/2026.
 
 ---
 
-## 0. Publicação em produção bloqueada por autenticação da Vercel
-
-**Tentativa em 26/08/2026:** `vercel --prod --yes` no projeto vinculado
-`canaa-resolve` retornou `Not authorized`.
-
-**O que falta:** autenticar novamente a CLI da Vercel na conta/equipe que possui
-o projeto, ou disponibilizar um token de deploy com acesso a essa equipe. Depois
-disso, executar `vercel --prod --yes` na raiz do projeto.
-
-As alterações da nova condição comercial estão prontas e validadas localmente;
-nenhum arquivo foi descartado.
-
----
-
 ## 1. Não existe backend para receber o lead de parceiro
 
 **Estado atual:** o formulário monta a mensagem e abre o WhatsApp da equipe
