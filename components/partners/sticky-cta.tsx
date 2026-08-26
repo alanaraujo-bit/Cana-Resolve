@@ -59,7 +59,7 @@ export function StickyCta({
                 Parceiro Fundador
               </p>
               <p className="text-faint text-[0.75rem] leading-tight">
-                {founder.price} por {founder.period}
+                {founder.price} pelos {founder.period}
               </p>
             </div>
             <a

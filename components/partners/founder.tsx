@@ -28,8 +28,8 @@ export function PartnersFounder() {
       <Container>
         <SectionHead
           eyebrow="Programa de lançamento"
-          title="Parceiro Fundador Canaã Resolve"
-          lead="O grupo inicial de profissionais e empresas que entram junto com a plataforma na cidade — e ajudam a definir como ela funciona."
+          title="Parceiro Fundador · Beta"
+          lead="Uma condição especial para profissionais e empresas que entram desde o início e ajudam a validar a primeira rede do Canaã Resolve."
         />
 
         <Reveal className="border-line bg-surface shadow-lift mt-12 overflow-hidden rounded-2xl border lg:mt-14">
@@ -48,10 +48,10 @@ export function PartnersFounder() {
               />
               <div>
                 <h3 className="text-ink text-2xl leading-tight tracking-[-0.02em]">
-                  Condição de lançamento
+                  Condição especial de lançamento
                 </h3>
                 <p className="text-muted mt-1.5 max-w-sm text-[0.9375rem] leading-relaxed">
-                  Vaga na sua categoria durante todo o período do programa.
+                  Risco baixo para testar uma rede que está começando, com entrada cuidada por categoria.
                 </p>
               </div>
             </div>
@@ -62,11 +62,11 @@ export function PartnersFounder() {
                   R$ <CountUp to={founder.priceValue} />
                 </span>
                 <span className="text-muted pb-1 text-[0.9375rem]">
-                  por {founder.period}
+                  pelos {founder.period}
                 </span>
               </div>
               <p className="text-faint mt-2 text-[0.8125rem]">
-                Valor único do período. Sem comissão sobre os serviços.
+                Beta Fundador. Sem comissão sobre os serviços.
               </p>
             </div>
           </div>
@@ -124,8 +124,9 @@ export function PartnersFounder() {
                 </PartnerCta>
               </div>
               <p className="text-faint mt-4 text-[0.8125rem] leading-relaxed">
-                Demonstrar interesse não gera cobrança. O pagamento só entra na
-                conversa depois da análise cadastral e da confirmação da vaga.
+                Demonstrar interesse não gera cobrança. Os 90 dias começam com
+                o início oficial da operação para moradores, depois da análise
+                cadastral e da confirmação da vaga.
               </p>
             </div>
 
@@ -164,11 +165,12 @@ export function PartnersFounder() {
               O selo não é enfeite
             </h3>
             <p className="text-muted mt-2.5 max-w-2xl text-[0.9375rem] leading-relaxed">
-              Ele identifica as empresas e os profissionais que estavam aqui
-              quando o Canaã Resolve começou em Canaã dos Carajás. A ideia é que
-              essa marca continue aparecendo no perfil do parceiro mesmo depois
-              do período de lançamento — porque começar junto é um fato, e ele
-              não expira.
+              Ele identifica as empresas e os profissionais que participaram da
+              primeira fase do Canaã Resolve em Canaã dos Carajás. A ideia é que
+              essa marca continue aparecendo no perfil mesmo depois do beta —
+              porque começar junto é um fato, e ele não expira. Parceiros
+              Fundadores também poderão receber uma condição especial de
+              renovação posteriormente, quando ela estiver definida.
             </p>
           </div>
         </Reveal>

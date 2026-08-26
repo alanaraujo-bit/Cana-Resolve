@@ -6,6 +6,7 @@ import { PartnersFaq } from "@/components/partners/faq";
 import { PartnersFounder } from "@/components/partners/founder";
 import { PartnersHero } from "@/components/partners/hero";
 import { PartnersHow } from "@/components/partners/how";
+import { PartnersPlans } from "@/components/partners/plans";
 import { PartnersSignup } from "@/components/partners/signup";
 import { PartnersWho } from "@/components/partners/who";
 import { StickyCta } from "@/components/partners/sticky-cta";
@@ -78,7 +79,7 @@ const jsonLd = {
         price: founder.priceValue,
         priceCurrency: "BRL",
         category: "Programa de lançamento",
-        description: `Participação no programa Parceiro Fundador por ${founder.period}.`,
+        description: `Participação no Beta Parceiro Fundador pelos ${founder.period}, a partir do início oficial da operação para moradores.`,
         availability: "https://schema.org/LimitedAvailability",
         url,
       },
@@ -100,6 +101,7 @@ const secoesObservadas = [
   "como-funciona-parceiro",
   "beneficios",
   "parceiro-fundador",
+  "planos",
   "quem-participa",
   "duvidas-parceiro",
   "cadastro",
@@ -118,6 +120,7 @@ export default function ParceirosPage() {
       <PartnersHow />
       <PartnersBenefits />
       <PartnersFounder />
+      <PartnersPlans />
       <PartnersWho />
       <PartnersFaq />
       <PartnersSignup />

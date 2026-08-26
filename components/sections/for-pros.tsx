@@ -3,6 +3,7 @@ import { IconArrowRight, IconCheck } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { CountUp } from "@/components/motion";
 import { buttonClass, Container, Eyebrow, Section } from "@/components/ui";
+import { founder } from "@/lib/partners";
 
 const argumentos = [
   {
@@ -26,8 +27,8 @@ const beneficios = [
   "Apresentação dos serviços que você oferece",
   "Presença diferenciada no lançamento",
   "Identificação como Parceiro Fundador",
-  "Prioridade inicial dentro da sua categoria",
-  "Acompanhamento das oportunidades recebidas",
+  "Entrada organizada por categoria durante o beta",
+  "Acompanhamento básico previsto para a operação regular",
 ];
 
 export function ForPros() {
@@ -87,10 +88,10 @@ export function ForPros() {
 
                 <div className="border-line mt-7 flex items-end gap-3 border-y py-5">
                   <span className="font-display text-4xl leading-none font-semibold tracking-[-0.03em]">
-                    R$ <CountUp to={197} />
+                    R$ <CountUp to={founder.priceValue} />
                   </span>
                   <span className="text-muted pb-1 text-[0.9375rem]">
-                    por 90 dias
+                    pelos primeiros 90 dias
                   </span>
                 </div>
 
@@ -125,7 +126,8 @@ export function ForPros() {
                 </div>
 
                 <p className="text-faint mt-5 text-[0.8125rem] leading-relaxed">
-                  A entrada é organizada por categoria durante o lançamento.
+                  Beta Fundador: condição especial para quem ajuda a validar a
+                  primeira rede. A entrada é organizada por categoria.
                   Na página de parceiros está tudo
                   explicado — inclusive o que não prometemos.
                 </p>

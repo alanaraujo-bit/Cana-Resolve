@@ -61,11 +61,14 @@ export default function TermosPage() {
         <h2>Parceiros</h2>
         <p>
           Profissionais e empresas que aderem ao programa Parceiro Fundador
-          contratam a participação na plataforma pelo período informado na
-          oferta. A adesão permite participar da rede para receber solicitações
+          entram no beta pela condição de lançamento informada na oferta. Os 90
+          dias começam com o início oficial da operação para moradores. A adesão
+          permite participar da rede para receber solicitações
           compatíveis com a categoria contratada quando houver; não constitui exclusividade, nem garantia de volume,
           fechamento ou faturamento. As condições comerciais de cada adesão são
-          confirmadas com a equipe antes do pagamento.
+          confirmadas com a equipe antes do pagamento. Ao final do beta não há
+          fidelidade obrigatória: cada parceiro decide se deseja continuar sob
+          as condições então vigentes.
         </p>
       </section>
 

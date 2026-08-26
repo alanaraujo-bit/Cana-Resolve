@@ -5,6 +5,31 @@ inversa: o mais recente primeiro.
 
 ---
 
+## 26/08/2026 — Tentativa de publicação em produção
+
+- A publicação via Vercel foi tentada para o projeto vinculado `canaa-resolve`,
+  mas a CLI retornou `Not authorized`.
+- O bloqueio e o comando de retomada foram registrados em `BLOCKERS.md` (item 0).
+  A versão local permanece pronta, com build aprovado.
+
+---
+
+## 26/08/2026 — Novo modelo comercial de lançamento
+
+- A oferta passou a ser **Parceiro Fundador · Beta: R$79 pelos primeiros 90 dias**. O período só começa com o início oficial da operação para moradores; a análise e a confirmação da categoria acontecem antes.
+- A página `/parceiros` ganhou uma comparação clara, porém discreta, entre o Beta Fundador e a operação regular, além da seção de continuidade prevista: Profissional (a partir de R$79/mês), Empresarial (previsão de R$129/mês) e Destaque (previsão de R$199/mês).
+- Cada plano é apresentado como estrutura prevista, sujeita à validação. Recursos futuros não são oferecidos como disponíveis agora; oportunidades continuam dependentes de compatibilidade para o cliente, nunca do plano contratado.
+- O funil agora afirma explicitamente a entrada controlada por categoria, a inexistência de garantia de leads/clientes/faturamento, a ausência de fidelidade obrigatória após o beta e a decisão livre de continuar ou não.
+- O selo de Parceiro Fundador passou a comunicar participação na primeira fase e possível permanência no perfil, com uma futura condição especial de renovação sem inventar valores ou prazos.
+- Home, FAQ, formulário, WhatsApp, Termos, SEO, JSON-LD e preview de compartilhamento foram alinhados à nova condição.
+
+### Verificação
+
+- `npm run lint`, `npx tsc --noEmit` e `npm run build` concluídos sem erros.
+- Servidor local consultado em `/`, `/parceiros`, `/parceiros/opengraph-image` e `/termos`: todas as rotas responderam 200; a página de parceiros renderizou a comparação e não contém a oferta antiga.
+
+---
+
 ## 26/08/2026 — Camada de movimento
 
 O site ganhou uma gramática de movimento própria. A regra que organiza tudo:

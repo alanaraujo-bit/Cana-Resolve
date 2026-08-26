@@ -89,8 +89,8 @@ export default function OgImage() {
               maxWidth: 900,
             }}
           >
-            Participe da rede de profissionais e empresas que atendem Canaã dos
-            Carajás e fique pronto para oportunidades compatíveis com o que você faz.
+            Beta para quem entra desde o início e ajuda a validar a primeira rede
+            de profissionais e empresas da cidade.
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export default function OgImage() {
               fontWeight: 600,
             }}
           >
-            Parceiro Fundador · {founder.price} por {founder.period}
+            Beta Fundador · {founder.price} pelos {founder.period}
           </div>
           <div style={{ display: "flex", color: "#8fb3a2" }}>
             {new URL(site.url).host}/parceiros

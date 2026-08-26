@@ -85,9 +85,8 @@ export function PartnersHero() {
               className="cr-enter text-faint mt-5 text-[0.8125rem] leading-relaxed"
               style={{ "--cr-delay": "360ms" } as React.CSSProperties}
             >
-              Programa de lançamento: {founder.price} por {founder.period}, com
-              entrada limitada por categoria. Demonstrar interesse não gera
-              cobrança.
+              Beta Fundador: {founder.price} pelos {founder.period}, com entrada
+              limitada por categoria. Depois, você decide se quer continuar.
             </p>
           </div>
 

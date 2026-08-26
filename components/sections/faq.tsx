@@ -21,7 +21,7 @@ export const faq = [
   },
   {
     q: "Como a minha empresa pode participar?",
-    a: "Pelo programa Parceiro Fundador. Fale com a equipe pelo WhatsApp: confirmamos a sua categoria, explicamos como os pedidos chegam e montamos o seu perfil na plataforma.",
+    a: "Pelo Beta Parceiro Fundador. A condição de lançamento é R$79 pelos primeiros 90 dias, que começam com a operação oficial para moradores. Fale com a equipe: confirmamos a sua categoria e explicamos todo o processo.",
   },
   {
     q: "O Canaã Resolve realiza o serviço?",

@@ -67,7 +67,7 @@ const proximosPassos = [
   },
   {
     title: "A participação é confirmada",
-    text: "Só depois da análise a sua vaga na categoria é confirmada e o período de 90 dias começa a contar. Não existe aprovação automática.",
+    text: "Só depois da análise a sua vaga na categoria é confirmada. Os 90 dias do beta começam com o início oficial da operação para moradores. Não existe aprovação automática.",
   },
 ];
 

@@ -6,7 +6,7 @@ export function waLink(message: string) {
 }
 
 export const partnerMessage =
-  "Olá! Vi a página do Canaã Resolve e quero ser Parceiro Fundador. " +
+  "Olá! Vi a página do Canaã Resolve e quero entrar no Beta como Parceiro Fundador. " +
   "Meu nome é: \nMinha área de atuação é: ";
 
 export const contactMessage =
@@ -36,7 +36,7 @@ export function partnerLeadMessage(lead: PartnerLead) {
     `*Atende Canaã dos Carajás:* ${lead.atendeCanaa ? "Sim" : "Ainda não"}`,
     lead.comoConheceu ? `*Como conheci:* ${lead.comoConheceu}` : null,
     "",
-    "Quero entender os próximos passos do Parceiro Fundador.",
+    "Quero entender os próximos passos do Beta Parceiro Fundador (R$79 pelos primeiros 90 dias).",
   ]
     .filter((line) => line !== null)
     .join("\n");

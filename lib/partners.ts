@@ -9,11 +9,18 @@ import { site } from "./site";
  */
 
 export const founder = {
-  price: "R$ 197",
-  period: "90 dias",
-  priceValue: 197,
+  price: "R$ 79",
+  period: "primeiros 90 dias",
+  priceValue: 79,
   periodDays: 90,
 } as const;
+
+/** Estrutura comercial prevista para depois da validação do beta. */
+export const regularPlans = [
+  { name: "Profissional", price: "a partir de R$79/mês", audience: "Para autônomos, MEIs e pequenos prestadores.", items: ["Perfil profissional, serviços e região atendida", "Contato por WhatsApp e presença na plataforma", "Participação em oportunidades compatíveis", "Acompanhamento básico"] },
+  { name: "Empresarial", price: "previsão de R$129/mês", audience: "Para empresas mais estruturadas.", items: ["Perfil empresarial mais completo e portfólio ampliado", "Mais informações comerciais e múltiplos serviços", "Recursos de apresentação e conversão", "Métricas e acompanhamento mais completos"] },
+  { name: "Destaque", price: "previsão de R$199/mês", audience: "Para quem deseja maior presença comercial na plataforma.", items: ["Maior destaque em categorias e buscas", "Posicionamentos patrocinados claramente identificados", "Recursos comerciais adicionais e métricas avançadas", "Benefícios premium futuros"] },
+] as const;
 
 /** O caminho de um pedido até virar conversa. Serve de fluxo e de passo a passo. */
 export const partnerSteps = [
@@ -140,15 +147,15 @@ export const founderIncludes = [
   },
   {
     title: "Identificação de Parceiro Fundador",
-    text: "A marca de quem entrou na implantação da plataforma na cidade.",
+    text: "A marca de quem participou da primeira fase do Canaã Resolve na cidade — pensada para continuar no perfil depois do beta.",
   },
   {
-    title: "Prioridade inicial dentro da categoria",
-    text: "Durante o lançamento, os fundadores da categoria vêm primeiro.",
+    title: "Rede inicial organizada por categoria",
+    text: "A entrada é controlada por categoria para preservar a qualidade das oportunidades desde o início.",
   },
   {
-    title: "Acesso antecipado às evoluções",
-    text: "Cada recurso novo do programa chega antes para quem começou junto.",
+    title: "Possível condição especial de renovação",
+    text: "Quem ajudou a validar a primeira rede poderá receber uma condição especial depois; os detalhes serão comunicados quando estiverem definidos.",
   },
 ];
 
@@ -159,7 +166,7 @@ export const partnerFaq = [
   },
   {
     q: "Existe garantia de que vou receber clientes?",
-    a: "Não, e não vamos prometer isso. O volume de pedidos depende do que a cidade procurar e do ritmo de crescimento da plataforma. O que existe é o seu lugar na rede durante os 90 dias e o encaminhamento dos pedidos compatíveis com a sua categoria.",
+    a: "Não, e não vamos prometer isso. O volume de pedidos depende do que a cidade procurar e do ritmo de crescimento da plataforma. Durante o beta, o que existe é a sua participação na rede e o encaminhamento de oportunidades compatíveis com a sua categoria e região.",
   },
   {
     q: "O Canaã Resolve cobra comissão sobre o serviço?",
@@ -179,15 +186,15 @@ export const partnerFaq = [
   },
   {
     q: "O que significa ser Parceiro Fundador?",
-    a: "É a identificação de quem entrou na implantação do Canaã Resolve em Canaã dos Carajás. Vem com a condição especial de lançamento, prioridade inicial dentro da categoria e acesso antecipado às evoluções do programa. A intenção é que essa identificação continue no perfil mesmo depois do período de lançamento.",
+    a: "É a identificação de quem participou da primeira fase do Canaã Resolve em Canaã dos Carajás. Ela representa a condição especial de lançamento e a contribuição para validar a primeira rede. A intenção é que continue no perfil mesmo depois do beta; fundadores também poderão receber uma condição especial de renovação, a ser comunicada quando definida.",
   },
   {
     q: "Quando começam os 90 dias?",
-    a: "A partir da confirmação da sua participação, com o cadastro concluído e a sua presença ativa na plataforma. A data exata é combinada com você antes de qualquer pagamento — nada começa a contar durante a análise.",
+    a: "Com o início oficial da operação para moradores. A análise cadastral e a confirmação da vaga acontecem antes; nenhum dia do beta começa a contar durante essa etapa.",
   },
   {
     q: "O que acontece depois dos 90 dias?",
-    a: "Os valores e o formato da continuidade ainda não estão definidos: o programa de fundadores é justamente o período em que isso vai ser construído. O compromisso é comunicar as condições com antecedência, antes do fim do período, sem renovação automática silenciosa.",
+    a: "Você decide se quer continuar. A estrutura prevista tem os planos Profissional, Empresarial e Destaque, sujeitos a ajustes durante a validação. Não há fidelidade obrigatória depois do beta nem renovação automática silenciosa.",
   },
   {
     q: "Como a minha empresa será apresentada?",
@@ -199,7 +206,7 @@ export const partnerFaq = [
   },
   {
     q: "Posso cancelar?",
-    a: "A condição de lançamento é contratada por um período de 90 dias. Se você quiser sair antes, a sua presença é retirada da plataforma a pedido. As regras completas ficam registradas por escrito no momento da confirmação, antes do pagamento — nada é combinado só de boca.",
+    a: "Não há fidelidade obrigatória após o beta. Se quiser sair antes, a sua presença é retirada da plataforma a pedido. As regras completas ficam registradas por escrito no momento da confirmação, antes do pagamento — nada é combinado só de boca.",
   },
 ];
 
@@ -223,5 +230,5 @@ export const cadastroDepois = [
 
 export const partnerSeo = {
   title: "Seja parceiro do Canaã Resolve",
-  description: `Participe da rede de profissionais e empresas que atendem ${site.city} e fique pronto para oportunidades compatíveis com o que você faz. Programa Parceiro Fundador: ${founder.price} por ${founder.period}, sem comissão sobre o valor do serviço.`,
+  description: `Entre no beta do Canaã Resolve como Parceiro Fundador: ${founder.price} pelos ${founder.period}. Participe da primeira rede de profissionais e empresas de ${site.city}, sem comissão sobre o valor do serviço.`,
 };

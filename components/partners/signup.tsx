@@ -9,7 +9,7 @@ import { founder } from "@/lib/partners";
 import { partnerDoubtMessage, waLink } from "@/lib/whatsapp";
 
 const resumo = [
-  "Vaga na sua categoria durante os 90 dias",
+  "Beta Fundador por R$79 pelos primeiros 90 dias",
   "Participação nas oportunidades compatíveis",
   "Contato direto, sem comissão sobre o serviço",
 ];
@@ -46,7 +46,7 @@ export function PartnersSignup() {
                       R$ <CountUp to={founder.priceValue} />
                     </span>
                     <span className="text-muted text-[0.875rem]">
-                      por {founder.period}
+                      pelos {founder.period}
                     </span>
                   </p>
                 </div>
@@ -63,6 +63,9 @@ export function PartnersSignup() {
             </div>
 
             <p className="text-faint mt-7 text-[0.8125rem] leading-relaxed">
+              Os 90 dias começam com o início oficial da operação para moradores. Depois do beta, você escolhe se quer continuar — sem fidelidade obrigatória.
+            </p>
+            <p className="text-faint mt-5 text-[0.8125rem] leading-relaxed">
               Prefere conversar antes de preencher?{" "}
               <PartnerCta
                 href={waLink(partnerDoubtMessage)}
