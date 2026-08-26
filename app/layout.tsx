@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { RouteTransition } from "@/components/route-transition";
 import { themeScript } from "@/lib/theme-script";
 import { site } from "@/lib/site";
 
@@ -72,7 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {/* Sem JS, nada pode ficar invisível esperando uma revelação. */}
         <noscript>
-          <style>{`.cr-reveal{opacity:1;transform:none}`}</style>
+          <style>{`.cr-reveal{opacity:1;transform:none;filter:none}.cr-enter{animation:none}`}</style>
         </noscript>
       </head>
       <body className="flex min-h-full flex-col">
@@ -84,7 +85,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <SiteHeader />
         <main id="conteudo" className="flex-1">
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </main>
         <SiteFooter />
       </body>

@@ -15,9 +15,13 @@ export function PartnersBenefits() {
 
         <div className="mt-12 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3">
           {benefits.map((b, i) => (
-            <Reveal key={b.title} delay={(i % 3) * 80} className="border-line border-t pt-5">
+            <Reveal
+              key={b.title}
+              delay={(i % 3) * 80}
+              className="border-line hover:border-brand group border-t pt-5 transition-colors duration-500"
+            >
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                <h3 className="text-ink font-display text-[1.0625rem] font-semibold tracking-[-0.01em]">
+                <h3 className="text-ink group-hover:text-brand-ink font-display text-[1.0625rem] font-semibold tracking-[-0.01em] transition-colors duration-300">
                   {b.title}
                 </h3>
                 {b.soon ? (

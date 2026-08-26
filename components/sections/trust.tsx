@@ -26,8 +26,10 @@ export function Trust() {
       <Container>
         <ul className="grid gap-10 sm:grid-cols-3 sm:gap-8">
           {pillars.map(({ Icon, title, text }, i) => (
-            <Reveal as="li" key={title} delay={i * 90}>
-              <Icon className="text-brand-ink h-6 w-6" />
+            <Reveal as="li" key={title} delay={i * 90} anim="blur" className="group">
+              <span className="border-brand-line bg-brand-soft text-brand-ink grid h-11 w-11 place-items-center rounded-xl border transition-transform duration-500 ease-[cubic-bezier(0.22,1.35,0.36,1)] group-hover:-translate-y-1 group-hover:rotate-3">
+                <Icon className="h-6 w-6" />
+              </span>
               <h3 className="text-ink mt-4 text-[1.0625rem] font-display font-semibold tracking-[-0.01em]">
                 {title}
               </h3>

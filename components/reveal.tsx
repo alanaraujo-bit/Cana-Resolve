@@ -4,23 +4,32 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ElementType,
   type ReactNode,
   type Ref,
 } from "react";
 
+export type RevealAnim = "up" | "blur" | "scale" | "left" | "right";
+
 /**
  * Revela o conteúdo quando ele entra na tela. Em `prefers-reduced-motion`
  * o CSS já neutraliza a transição, então nada aqui precisa ser desligado.
+ *
+ * O atributo `data-shown` também serve de gatilho para o que estiver
+ * dentro: traços de SVG (`.cr-draw`) e trilhos (`.cr-rail`) escutam o
+ * mesmo sinal, de modo que um bloco inteiro entra em cena junto.
  */
 export function Reveal({
   children,
   delay = 0,
+  anim = "up",
   className = "",
   as: Tag = "div",
 }: {
   children: ReactNode;
   delay?: number;
+  anim?: RevealAnim;
   className?: string;
   as?: ElementType;
 }) {
@@ -53,10 +62,9 @@ export function Reveal({
     <Tag
       ref={ref as Ref<HTMLElement>}
       className={`cr-reveal ${className}`}
+      data-anim={anim}
       data-shown={shown ? "true" : "false"}
-      style={
-        delay ? ({ "--cr-delay": `${delay}ms` } as React.CSSProperties) : undefined
-      }
+      style={delay ? ({ "--cr-delay": `${delay}ms` } as CSSProperties) : undefined}
     >
       {children}
     </Tag>

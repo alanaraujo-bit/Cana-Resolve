@@ -72,16 +72,21 @@ autorizarem, o lugar natural é uma seção nova entre `PartnersWho` e
 
 ---
 
-## 6. Inspeção visual automatizada indisponível neste ambiente
+## 6. Falta a conferência final em aparelho de verdade
 
-**Estado atual:** nesta auditoria, o navegador integrado não estava disponível
-para abrir a aplicação renderizada em simuladores de viewport. Os testes de
-produção, build, HTML, metadados e fluxos de formulário continuaram possíveis.
+**Estado atual (atualizado em 26/08/2026):** a inspeção automatizada passou a
+existir. Em cada rodada, um Edge headless dirigido por CDP percorre `/`,
+`/parceiros`, `/solicitar`, `/entrar`, `/termos`, `/privacidade` e a rota 404
+em 320, 390, 768, 1024 e 1440 px, nos dois temas, verificando overflow
+horizontal e erros de console — e exercita as interações (formulários, menu,
+sanfona, troca de tema, navegação). Foi assim que apareceu e foi corrigido o
+estouro de largura do título de `/parceiros` no celular.
 
-**O que falta:** antes de uma campanha de volume, abrir o domínio oficial em
-um smartphone pequeno e um moderno, nos temas claro e escuro, para a checagem
-visual final de menu, CTA fixo e teclado. Isso não impede o uso funcional da
-operação inicial, mas é a última validação manual de apresentação.
+**O que falta:** o que um navegador headless não reproduz — abrir o domínio
+oficial em um aparelho físico para conferir teclado virtual, área segura do
+notch, a barra fixa acima da barra do navegador e a fluidez real das animações
+em um celular modesto. Não impede a operação inicial; é a última validação de
+apresentação antes de uma campanha de volume.
 
 ---
 

@@ -58,7 +58,7 @@ function Field({
 }
 
 const inputBase =
-  "w-full rounded-xl border bg-field px-4 text-[1rem] text-ink outline-none transition-colors placeholder:text-faint focus:border-brand";
+  "w-full rounded-xl border bg-field px-4 text-[1rem] text-ink outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-faint focus:border-brand focus:shadow-[0_0_0_3px_var(--cr-brand-soft)]";
 
 export function RequestForm({
   initialDescricao = "",
@@ -79,6 +79,20 @@ export function RequestForm({
   const started = useRef(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
+  /**
+   * O quanto do pedido já está de pé. Vira um filete no topo do cartão:
+   * mostra que falta pouco sem transformar o formulário em jogo.
+   */
+  const progresso = useMemo(() => {
+    const feitos = [
+      descricao.trim().length >= 10,
+      nome.trim().length >= 2,
+      telefone.replace(/\D/g, "").length >= 10,
+      consent,
+    ].filter(Boolean).length;
+    return feitos / 4;
+  }, [descricao, nome, telefone, consent]);
+
   const mensagem = useMemo(() => {
     const urg = urgencias.find((u) => u.id === urgencia);
     const linhas = [
@@ -94,6 +108,16 @@ export function RequestForm({
     return linhas.join("\n");
   }, [descricao, categoria, local, urgencia, nome, telefone]);
 
+  /**
+   * O aviso some assim que o campo passa a estar certo. Manter um erro em
+   * vermelho ao lado de um campo já corrigido é a forma mais rápida de
+   * fazer um formulário parecer quebrado.
+   */
+  function limparErro(campo: keyof Errors, valido: boolean) {
+    if (!valido) return;
+    setErrors((prev) => (prev[campo] ? { ...prev, [campo]: undefined } : prev));
+  }
+
   function validate(): Errors {
     const e: Errors = {};
     if (descricao.trim().length < 10)
@@ -105,10 +129,30 @@ export function RequestForm({
     return e;
   }
 
+  /**
+   * Leva o foco ao primeiro campo com problema e dá nele um tranco curto —
+   * o suficiente para o olho encontrar, longe de um alarme.
+   */
   function focusFirstError(e: Errors) {
     const order: Array<keyof Errors> = ["descricao", "nome", "telefone", "consent"];
     const first = order.find((k) => e[k]);
-    if (first) document.getElementById(first)?.focus();
+    if (!first) return;
+    const el = document.getElementById(first);
+    el?.focus();
+
+    const alvo = first === "consent" ? el?.closest("label") : el;
+    if (!alvo || typeof alvo.animate !== "function") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    alvo.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-4px)" },
+        { transform: "translateX(4px)" },
+        { transform: "translateX(-2px)" },
+        { transform: "translateX(0)" },
+      ],
+      { duration: 330, easing: "cubic-bezier(0.36, 0.07, 0.19, 0.97)" },
+    );
   }
 
   function onAnchorClick(ev: React.MouseEvent<HTMLAnchorElement>) {
@@ -151,8 +195,8 @@ export function RequestForm({
 
   if (sent) {
     return (
-      <div className="border-line bg-surface shadow-card rounded-2xl border p-7 text-center sm:p-10">
-        <span className="bg-brand-soft text-brand-ink mx-auto grid h-14 w-14 place-items-center rounded-full">
+      <div className="cr-bloom border-line bg-surface shadow-card rounded-2xl border p-7 text-center sm:p-10">
+        <span className="cr-halo bg-brand-soft text-brand-ink relative mx-auto grid h-14 w-14 place-items-center rounded-full">
           <IconWhatsApp className="h-7 w-7" />
         </span>
         <h2 className="mt-6 text-2xl tracking-[-0.02em]">
@@ -196,9 +240,20 @@ export function RequestForm({
       }}
       onKeyDown={onKeyDown}
       noValidate
-      className="border-line bg-surface shadow-card rounded-2xl border p-6 sm:p-9"
+      className="border-line bg-surface shadow-card relative overflow-hidden rounded-2xl border p-6 sm:p-9"
       onFocusCapture={markStart}
     >
+      {/* Filete de conclusão: o pedido ganhando corpo, sem contar pontos. */}
+      <span
+        aria-hidden="true"
+        className="bg-line absolute inset-x-0 top-0 h-[3px] overflow-hidden"
+      >
+        <span
+          className="bg-brand block h-full origin-left transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{ transform: `scaleX(${progresso})` }}
+        />
+      </span>
+
       <div className="space-y-8">
         <Field
           label="O que você precisa resolver?"
@@ -211,7 +266,10 @@ export function RequestForm({
             name="descricao"
             rows={4}
             value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
+            onChange={(e) => {
+              setDescricao(e.target.value);
+              limparErro("descricao", e.target.value.trim().length >= 10);
+            }}
             aria-invalid={!!errors.descricao}
             aria-describedby={errors.descricao ? "descricao-erro" : undefined}
             placeholder="Ex.: Meu ar-condicionado do quarto não está gelando e faz um barulho alto."
@@ -243,13 +301,21 @@ export function RequestForm({
                       track("consumidor_category_click", { categoria: c.id });
                     }}
                     className={cx(
-                      "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8125rem] transition-colors",
+                      "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8125rem]",
+                      "transition-[color,background-color,border-color,transform] duration-300 ease-[cubic-bezier(0.22,1.35,0.36,1)]",
                       active
-                        ? "border-brand bg-brand-soft text-brand-ink font-medium"
-                        : "border-line text-muted hover:border-line-strong hover:text-ink",
+                        ? "border-brand bg-brand-soft text-brand-ink scale-[1.04] font-medium"
+                        : "border-line text-muted hover:border-line-strong hover:text-ink hover:-translate-y-0.5",
                     )}
                   >
-                    {Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
+                    {Icon ? (
+                      <Icon
+                        className={cx(
+                          "h-4 w-4 shrink-0 transition-transform duration-300",
+                          active ? "scale-110" : "",
+                        )}
+                      />
+                    ) : null}
                     <span className="sm:hidden">{c.short}</span>
                     <span className="hidden sm:inline">{c.name}</span>
                   </button>
@@ -311,7 +377,10 @@ export function RequestForm({
               id="nome"
               name="nome"
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              onChange={(e) => {
+                setNome(e.target.value);
+                limparErro("nome", e.target.value.trim().length >= 2);
+              }}
               autoComplete="name"
               aria-invalid={!!errors.nome}
               aria-describedby={errors.nome ? "nome-erro" : undefined}
@@ -325,7 +394,11 @@ export function RequestForm({
               id="telefone"
               name="telefone"
               value={telefone}
-              onChange={(e) => setTelefone(maskPhone(e.target.value))}
+              onChange={(e) => {
+                const v = maskPhone(e.target.value);
+                setTelefone(v);
+                limparErro("telefone", v.replace(/D/g, "").length >= 10);
+              }}
               inputMode="tel"
               autoComplete="tel-national"
               aria-invalid={!!errors.telefone}
@@ -350,15 +423,18 @@ export function RequestForm({
                 name="consent"
                 type="checkbox"
                 checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
+                onChange={(e) => {
+                  setConsent(e.target.checked);
+                  limparErro("consent", e.target.checked);
+                }}
                 aria-invalid={!!errors.consent}
                 aria-describedby={errors.consent ? "consent-erro" : undefined}
-                className="peer h-5 w-5 appearance-none rounded-[6px] border border-[var(--cr-field-border)] bg-[var(--cr-field)] transition-colors checked:border-transparent checked:bg-[var(--cr-brand)]"
+                className="peer h-5 w-5 appearance-none rounded-[6px] border border-[var(--cr-field-border)] bg-[var(--cr-field)] transition-[background-color,border-color,transform] duration-200 checked:border-transparent checked:bg-[var(--cr-brand)] checked:scale-105"
               />
               <IconCheck
                 aria-hidden="true"
                 strokeWidth={2.6}
-                className="text-on-brand pointer-events-none absolute inset-0 m-auto h-3.5 w-3.5 opacity-0 peer-checked:opacity-100"
+                className="text-on-brand pointer-events-none absolute inset-0 m-auto h-3.5 w-3.5 scale-50 opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1.35,0.36,1)] peer-checked:scale-100 peer-checked:opacity-100"
               />
             </span>
             <span className="text-muted text-[0.875rem] leading-relaxed">
@@ -383,7 +459,7 @@ export function RequestForm({
               onAnchorClick(event);
               if (!event.defaultPrevented) track("consumidor_whatsapp_click", { local: "formulario" });
             }}
-            className={buttonClass("brand", "lg", "w-full")}
+            className={buttonClass("brand", "lg", "cr-sheen w-full")}
           >
             <IconWhatsApp className="h-[18px] w-[18px]" />
             Enviar pedido pelo WhatsApp
@@ -391,7 +467,7 @@ export function RequestForm({
           <p className="text-faint mt-4 text-[0.8125rem] leading-relaxed">
             Nesta primeira versão, você envia o pedido à equipe do Canaã Resolve
             pelo WhatsApp — nada é armazenado neste site. Veja a{" "}
-            <Link href="/privacidade" className="text-brand-ink underline underline-offset-4">
+            <Link href="/privacidade" className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300">
               Política de Privacidade
             </Link>
             .

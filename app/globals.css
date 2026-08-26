@@ -244,15 +244,476 @@
   }
 }
 
-/* Troca suave entre os exemplos da demonstração de oportunidade. */
-.cr-swap {
-  animation: cr-swap-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+/* ===============================================================
+   Camada de movimento — Canaã Resolve
+   Uma gramática só, aplicada a tudo: o mesmo easing, as mesmas
+   distâncias, o mesmo tempo. Tudo aqui é enfeite funcional —
+   mostra hierarquia, confirma um toque, indica o que chegou.
+   Nada depende de JavaScript para o conteúdo aparecer, e o bloco
+   `prefers-reduced-motion` no fim desliga o que for supérfluo.
+   =============================================================== */
+
+:root {
+  --cr-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --cr-ease-spring: cubic-bezier(0.22, 1.35, 0.36, 1);
+  --cr-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-@keyframes cr-swap-in {
+/* --- 1. Entrada no carregamento -------------------------------- */
+
+.cr-enter {
+  animation: cr-enter-up 0.8s var(--cr-ease) both;
+  animation-delay: var(--cr-delay, 0ms);
+}
+
+@keyframes cr-enter-up {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* --- 2. Revelação em scroll ------------------------------------ */
+
+.cr-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s var(--cr-ease),
+    transform 0.7s var(--cr-ease),
+    filter 0.7s var(--cr-ease);
+  transition-delay: var(--cr-delay, 0ms);
+}
+
+.cr-reveal[data-anim="blur"] {
+  transform: translateY(10px);
+  filter: blur(8px);
+}
+
+.cr-reveal[data-anim="scale"] {
+  transform: translateY(10px) scale(0.975);
+}
+
+.cr-reveal[data-anim="left"] {
+  transform: translateX(-18px);
+}
+
+.cr-reveal[data-anim="right"] {
+  transform: translateX(18px);
+}
+
+.cr-reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* Traço de SVG que se desenha quando o bloco é revelado. */
+.cr-draw {
+  stroke-dasharray: var(--cr-len, 320);
+  stroke-dashoffset: var(--cr-len, 320);
+  transition: stroke-dashoffset 1.1s var(--cr-ease) var(--cr-delay, 0ms);
+}
+
+[data-shown="true"] .cr-draw,
+.cr-draw[data-shown="true"] {
+  stroke-dashoffset: 0;
+}
+
+/* Traço que se desenha logo no carregamento, para o que já está à vista. */
+.cr-draw-load {
+  stroke-dasharray: var(--cr-len, 320);
+  stroke-dashoffset: var(--cr-len, 320);
+  animation: cr-draw-load 1.1s var(--cr-ease) var(--cr-delay, 520ms) both;
+}
+
+@keyframes cr-draw-load {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Marca-texto que acompanha o texto quando ele quebra em várias linhas.
+   O traço de SVG só funciona em uma linha só; este funciona em todas, e
+   por isso é o que fica em títulos longos e em telas estreitas. */
+.cr-mark {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--cr-brand) 32%, transparent),
+    color-mix(in oklab, var(--cr-brand) 32%, transparent)
+  );
+  background-repeat: no-repeat;
+  background-position: 0 92%;
+  background-size: 0% 0.13em;
+  animation: cr-mark-in 1.1s var(--cr-ease) var(--cr-delay, 520ms) both;
+}
+
+@keyframes cr-mark-in {
+  to {
+    background-size: 100% 0.13em;
+  }
+}
+
+/* Trilho que se preenche conforme os passos entram na tela. */
+.cr-rail {
+  transform-origin: top center;
+  transform: scaleY(0);
+  transition: transform 1.2s var(--cr-ease);
+}
+
+.cr-rail-x {
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 1.4s var(--cr-ease);
+}
+
+[data-shown="true"] .cr-rail {
+  transform: scaleY(1);
+}
+
+[data-shown="true"] .cr-rail-x {
+  transform: scaleX(1);
+}
+
+/* --- 3. Superfícies que respondem ao ponteiro ------------------ */
+
+/* Foco de luz que segue o cursor dentro do cartão. */
+.cr-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    16rem 16rem at var(--sx, 50%) var(--sy, 50%),
+    color-mix(in oklab, var(--cr-brand) 14%, transparent),
+    transparent 68%
+  );
+}
+
+.cr-spot:hover::before,
+.cr-spot:focus-within::before {
+  opacity: 1;
+}
+
+/* Elevação discreta no hover — sempre com a sombra do tema. */
+.cr-lift {
+  transition:
+    transform 0.35s var(--cr-ease),
+    box-shadow 0.35s var(--cr-ease),
+    border-color 0.35s ease;
+}
+
+.cr-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--cr-shadow-lg);
+}
+
+/* Brilho que atravessa o botão principal uma vez, no hover. */
+.cr-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cr-sheen::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -60%;
+  z-index: 1;
+  width: 38%;
+  pointer-events: none;
+  opacity: 0;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgb(255 255 255 / 0.26),
+    transparent
+  );
+}
+
+.cr-sheen:hover::after,
+.cr-sheen:focus-visible::after {
+  animation: cr-sheen 0.75s var(--cr-ease-io);
+}
+
+@keyframes cr-sheen {
+  from {
+    left: -60%;
+    opacity: 1;
+  }
+  to {
+    left: 120%;
+    opacity: 1;
+  }
+}
+
+/* Sublinhado que cresce a partir do início do texto. */
+.cr-link {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 0.35s var(--cr-ease);
+}
+
+.cr-link:hover,
+.cr-link:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Item de menu: filete que abre do centro. */
+.cr-navlink::after {
+  content: "";
+  position: absolute;
+  bottom: 0.3rem;
+  left: 50%;
+  height: 1.5px;
+  width: 0;
+  border-radius: 2px;
+  background-color: var(--cr-brand);
+  transform: translateX(-50%);
+  transition: width 0.32s var(--cr-ease);
+}
+
+.cr-navlink:hover::after,
+.cr-navlink[data-active="true"]::after {
+  width: calc(100% - 1.5rem);
+}
+
+/* A seta de avançar desliza no hover do bloco que a contém. */
+.cr-nudge {
+  transition: transform 0.3s var(--cr-ease);
+}
+
+.group:hover .cr-nudge,
+a:hover > .cr-nudge,
+button:hover > .cr-nudge {
+  transform: translateX(3px);
+}
+
+/* --- 4. Sinais de vida ----------------------------------------- */
+
+/* Anel que pulsa: algo acabou de chegar. */
+.cr-ping {
+  animation: cr-ping 2.4s var(--cr-ease) infinite;
+}
+
+@keyframes cr-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* Cursor piscando no exemplo que se escreve sozinho. */
+.cr-caret::after {
+  content: "";
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.16em;
+  border-radius: 1px;
+  background-color: currentColor;
+  animation: cr-blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes cr-blink {
+  0%,
+  50% {
+    opacity: 0.85;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* O exemplo que se escreve sozinho some no fim da linha em vez de ser
+   cortado a faca — inclusive quando a frase é maior que o campo. */
+.cr-ghost {
+  -webkit-mask-image: linear-gradient(to right, #000 80%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 80%, transparent 100%);
+}
+
+/* Auroras do fundo: deriva lenta, quase imperceptível. */
+.cr-drift-a {
+  animation: cr-drift-a 26s ease-in-out infinite alternate;
+}
+
+.cr-drift-b {
+  animation: cr-drift-b 34s ease-in-out infinite alternate;
+}
+
+@keyframes cr-drift-a {
+  from {
+    transform: translate3d(-2%, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 4%, 0) scale(1.12);
+  }
+}
+
+@keyframes cr-drift-b {
+  from {
+    transform: translate3d(2%, 2%, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-3%, -3%, 0) scale(0.98);
+  }
+}
+
+/* O anel de texto do selo gira devagar — quase um relógio parado. */
+.cr-seal-ring {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: cr-seal-ring 56s linear infinite;
+}
+
+@keyframes cr-seal-ring {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mancha de luz que acompanha o ponteiro de longe. `translate` é uma
+   propriedade separada de `transform`: a deriva lenta segue rodando. */
+.cr-aura {
+  translate: calc(var(--px, 0) * 20px) calc(var(--py, 0) * 16px);
+  transition: translate 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cr-aura-far {
+  translate: calc(var(--px, 0) * -14px) calc(var(--py, 0) * -11px);
+  transition: translate 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Barra de tempo do carrossel de exemplos. */
+.cr-timer {
+  transform-origin: left center;
+  animation: cr-timer var(--cr-timer, 6s) linear both;
+}
+
+@keyframes cr-timer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* --- 5. Respostas do formulário -------------------------------- */
+
+.cr-shake {
+  animation: cr-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes cr-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-3px);
+  }
+  40%,
+  60% {
+    transform: translateX(3px);
+  }
+}
+
+.cr-bloom {
+  animation: cr-bloom 0.8s var(--cr-ease-spring) both;
+}
+
+@keyframes cr-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Halo que se abre uma vez atrás do ícone de confirmação. */
+.cr-halo::before,
+.cr-halo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px solid var(--cr-brand);
+  opacity: 0;
+  animation: cr-halo 1.8s var(--cr-ease) both;
+}
+
+.cr-halo::after {
+  animation-delay: 0.45s;
+}
+
+@keyframes cr-halo {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* Traço do certo que se desenha ao confirmar. */
+.cr-check path {
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: cr-draw-check 0.55s var(--cr-ease) 0.25s both;
+}
+
+@keyframes cr-draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Etiqueta que sobe quando o campo ganha conteúdo. */
+.cr-chip-in {
+  animation: cr-chip-in 0.4s var(--cr-ease-spring) both;
+}
+
+@keyframes cr-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
   }
   to {
     opacity: 1;
@@ -260,9 +721,29 @@
   }
 }
 
-/* Barra de ação fixa no mobile: entra sem sobressaltar. */
+/* --- 6. Troca suave entre exemplos ----------------------------- */
+
+.cr-swap {
+  animation: cr-swap-in 0.5s var(--cr-ease) both;
+}
+
+@keyframes cr-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* --- 7. Barra de ação fixa ------------------------------------- */
+
 .cr-dock {
-  animation: cr-dock-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: cr-dock-in 0.42s var(--cr-ease) both;
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
@@ -277,28 +758,169 @@
   }
 }
 
-/* Revelação em scroll — desligada por completo em movimento reduzido. */
-.cr-reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--cr-delay, 0ms);
+/* --- 8. Progresso de leitura ----------------------------------- */
+
+.cr-progress {
+  transform-origin: 0 50%;
+  transform: scaleX(var(--cr-read, 0));
 }
 
-.cr-reveal[data-shown="true"] {
-  opacity: 1;
-  transform: none;
+@supports (animation-timeline: scroll()) {
+  .cr-progress[data-native="true"] {
+    animation: cr-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+
+  @keyframes cr-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
 }
+
+/* --- 9. Sanfona de dúvidas ------------------------------------- */
+
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details.cr-acc::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      block-size 0.42s var(--cr-ease),
+      opacity 0.3s ease,
+      content-visibility 0.42s allow-discrete;
+  }
+
+  details.cr-acc[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+/* --- 10. Transições entre páginas e de tema -------------------- */
+
+/* Troca de rota: o conteúdo novo sobe um passo e ganha nitidez. */
+.cr-page-enter {
+  animation: cr-page-enter 0.42s var(--cr-ease) both;
+}
+
+@keyframes cr-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+::view-transition-old(.cr-page),
+::view-transition-new(.cr-page) {
+  animation-duration: 0.36s;
+  animation-timing-function: var(--cr-ease);
+}
+
+::view-transition-old(.cr-page) {
+  animation-name: cr-page-out;
+}
+
+::view-transition-new(.cr-page) {
+  animation-name: cr-page-in;
+}
+
+@keyframes cr-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+    filter: blur(3px);
+  }
+}
+
+@keyframes cr-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+}
+
+/* A troca de tema abre em círculo a partir do botão que foi tocado. */
+html[data-vt="tema"]::view-transition-old(root) {
+  animation: none;
+}
+
+html[data-vt="tema"]::view-transition-new(root) {
+  animation: cr-theme-wipe 0.62s var(--cr-ease-io) both;
+  mix-blend-mode: normal;
+}
+
+@keyframes cr-theme-wipe {
+  from {
+    clip-path: circle(0 at var(--cr-vt-x, 50%) var(--cr-vt-y, 50%));
+  }
+  to {
+    clip-path: circle(
+      var(--cr-vt-r, 150vmax) at var(--cr-vt-x, 50%) var(--cr-vt-y, 50%)
+    );
+  }
+}
+
+/* --- 11. Movimento reduzido ------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
-  .cr-reveal {
+  .cr-reveal,
+  .cr-enter {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
+    animation: none;
+  }
+
+  .cr-draw,
+  .cr-draw-load,
+  .cr-rail,
+  .cr-rail-x,
+  .cr-check path {
+    stroke-dashoffset: 0;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+
+  .cr-aura,
+  .cr-aura-far {
+    translate: none;
+    transition: none;
+  }
+
+  .cr-spot::before,
+  .cr-sheen::after,
+  .cr-halo::before,
+  .cr-halo::after {
+    display: none;
+  }
+
+  .cr-lift:hover {
+    transform: none;
+  }
+
+  html[data-vt="tema"]::view-transition-new(root) {
+    animation: none;
   }
 
   *,
@@ -309,4 +931,3 @@
     transition-duration: 0.01ms !important;
   }
 }
-

@@ -29,7 +29,14 @@ export function PartnerCta({
   className = "",
   external = false,
 }: Props) {
-  const cls = buttonClass(variant, size, className);
+  // O brilho passa só no botão principal; nos secundários seria ruído.
+  const cls = buttonClass(
+    variant,
+    size,
+    variant === "brand" || variant === "accent"
+      ? `cr-sheen ${className}`
+      : className,
+  );
 
   function onClick() {
     track(external ? "parceiros_whatsapp_click" : "parceiros_cta_click", {

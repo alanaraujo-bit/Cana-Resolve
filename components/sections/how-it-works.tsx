@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/reveal";
+import { InView } from "@/components/motion";
 import { IconArrowRight } from "@/components/icons";
 import { buttonClass, Container, Section, SectionHead } from "@/components/ui";
 
@@ -33,15 +34,21 @@ export function HowItWorks() {
         />
 
         <ol className="relative mt-14 grid gap-10 sm:mt-16 lg:grid-cols-3 lg:gap-8">
-          {/* Trilho que liga os passos */}
-          <div
-            aria-hidden="true"
-            className="bg-line absolute top-6 left-[1.4rem] hidden h-[calc(100%-3rem)] w-px sm:block lg:top-[1.375rem] lg:left-0 lg:h-px lg:w-full"
-          />
+          {/* Trilho que liga os passos — desenha-se conforme a seção entra. */}
+          <InView className="pointer-events-none absolute inset-0">
+            <div
+              aria-hidden="true"
+              className="cr-rail bg-line absolute top-6 left-[1.4rem] hidden h-[calc(100%-3rem)] w-px sm:block lg:hidden"
+            />
+            <div
+              aria-hidden="true"
+              className="cr-rail-x bg-line absolute top-[1.375rem] left-0 hidden h-px w-full lg:block"
+            />
+          </InView>
           {steps.map((step, i) => (
             <Reveal as="li" key={step.n} delay={i * 110} className="relative">
               <div className="flex gap-5 lg:flex-col lg:gap-0">
-                <span className="bg-bg border-line-strong text-brand-ink relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border font-display text-[0.9375rem] font-semibold">
+                <span className="bg-bg border-line-strong text-brand-ink hover:border-brand hover:text-brand relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border font-display text-[0.9375rem] font-semibold transition-colors duration-300">
                   {step.n}
                 </span>
                 <div className="lg:mt-6 lg:pr-6">
@@ -58,9 +65,9 @@ export function HowItWorks() {
         </ol>
 
         <div className="mt-14 flex flex-col items-center gap-3 sm:mt-16">
-          <Link href="/solicitar" className={buttonClass("brand", "lg")}>
+          <Link href="/solicitar" className={buttonClass("brand", "lg", "cr-sheen")}>
             Descrever meu problema
-            <IconArrowRight className="h-[18px] w-[18px]" />
+            <IconArrowRight className="cr-nudge h-[18px] w-[18px]" />
           </Link>
           <p className="text-faint text-[0.8125rem]">
             Leva menos de um minuto.

@@ -20,7 +20,7 @@ export function PartnersFaq() {
             {partnerFaq.map((item, i) => (
               <Reveal key={item.q} delay={Math.min(i, 6) * 45}>
                 <details
-                  className="group border-line border-b"
+                  className="cr-acc group border-line border-b"
                   onToggle={(e) => {
                     if ((e.currentTarget as HTMLDetailsElement).open) {
                       track("parceiros_faq_open", { pergunta: item.q });
@@ -28,7 +28,7 @@ export function PartnersFaq() {
                   }}
                 >
                   <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
-                    <h3 className="text-ink font-sans text-[1.0625rem] font-medium tracking-normal">
+                    <h3 className="text-ink group-hover:text-brand-ink font-sans text-[1.0625rem] font-medium tracking-normal transition-colors duration-200">
                       {item.q}
                     </h3>
                     <span

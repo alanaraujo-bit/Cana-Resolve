@@ -39,7 +39,9 @@ export function SiteFooter() {
       <Container className="relative py-16 sm:py-20">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_2fr]">
           <div>
-            <Logo markClassName="h-9 w-9" />
+            <Link href="/" className="group -m-1 inline-block rounded-lg p-1" aria-label="Canaã Resolve — início">
+              <Logo markClassName="h-9 w-9 transition-transform duration-500 ease-[cubic-bezier(0.22,1.35,0.36,1)] group-hover:-rotate-6 group-hover:scale-105" />
+            </Link>
             <p className="text-muted mt-5 max-w-xs text-[0.9375rem] leading-relaxed">
               Uma forma simples de encontrar quem resolve o que você precisa em{" "}
               {site.city}.
@@ -70,9 +72,9 @@ export function SiteFooter() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-muted hover:text-ink text-[0.9375rem] transition-colors"
+                        className="text-muted hover:text-ink inline-block text-[0.9375rem] transition-[color,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-0.5"
                       >
-                        {link.label}
+                        <span className="cr-link">{link.label}</span>
                       </Link>
                     </li>
                   ))}

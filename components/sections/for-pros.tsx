@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconArrowRight, IconCheck } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
+import { CountUp } from "@/components/motion";
 import { buttonClass, Container, Eyebrow, Section } from "@/components/ui";
 
 const argumentos = [
@@ -46,7 +47,10 @@ export function ForPros() {
 
             <ul className="mt-9 space-y-7">
               {argumentos.map((a) => (
-                <li key={a.title} className="border-line border-l-2 pl-5">
+                <li
+                  key={a.title}
+                  className="border-line hover:border-brand relative border-l-2 pl-5 transition-colors duration-300"
+                >
                   <h3 className="text-ink text-[1.0625rem] font-display font-semibold tracking-[-0.01em]">
                     {a.title}
                   </h3>
@@ -62,7 +66,7 @@ export function ForPros() {
           <Reveal delay={100}>
             <div
               id="parceiro-fundador"
-              className="border-line bg-surface shadow-lift relative scroll-mt-24 overflow-hidden rounded-2xl border"
+              className="cr-lift border-line bg-surface shadow-lift relative scroll-mt-24 overflow-hidden rounded-2xl border"
             >
               <div
                 aria-hidden="true"
@@ -83,7 +87,7 @@ export function ForPros() {
 
                 <div className="border-line mt-7 flex items-end gap-3 border-y py-5">
                   <span className="font-display text-4xl leading-none font-semibold tracking-[-0.03em]">
-                    R$ 197
+                    R$ <CountUp to={197} />
                   </span>
                   <span className="text-muted pb-1 text-[0.9375rem]">
                     por 90 dias
@@ -107,10 +111,10 @@ export function ForPros() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link
                     href="/parceiros#cadastro"
-                    className={buttonClass("brand", "lg", "flex-1")}
+                    className={buttonClass("brand", "lg", "cr-sheen flex-1")}
                   >
                     Quero ser Parceiro Fundador
-                    <IconArrowRight className="h-[18px] w-[18px]" />
+                    <IconArrowRight className="cr-nudge h-[18px] w-[18px]" />
                   </Link>
                   <Link
                     href="/parceiros"

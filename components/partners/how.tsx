@@ -1,5 +1,6 @@
 import { IconArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
+import { InView } from "@/components/motion";
 import { Container, Eyebrow, Section } from "@/components/ui";
 import { PartnerCta } from "./cta";
 import { partnerSteps } from "@/lib/partners";
@@ -28,11 +29,14 @@ export function PartnersHow() {
           </div>
 
           <ol className="relative">
-            {/* Trilho que costura os passos, como um caminho. */}
-            <div
-              aria-hidden="true"
-              className="bg-line absolute top-6 bottom-8 left-[1.375rem] w-px"
-            />
+            {/* Trilho que costura os passos, como um caminho — e que se
+                desenha de cima para baixo quando a lista entra na tela. */}
+            <InView className="pointer-events-none absolute inset-0">
+              <div
+                aria-hidden="true"
+                className="cr-rail bg-line absolute top-6 bottom-8 left-[1.375rem] w-px"
+              />
+            </InView>
             {partnerSteps.map((step, i) => (
               <Reveal
                 as="li"
@@ -41,7 +45,7 @@ export function PartnersHow() {
                 className="relative pb-9 last:pb-0"
               >
                 <div className="flex gap-5">
-                  <span className="bg-bg border-line-strong text-brand-ink font-display relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border text-[0.9375rem] font-semibold">
+                  <span className="bg-bg border-line-strong text-brand-ink hover:border-brand hover:text-brand font-display relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border text-[0.9375rem] font-semibold transition-colors duration-300">
                     {step.n}
                   </span>
                   <div className="pt-1">

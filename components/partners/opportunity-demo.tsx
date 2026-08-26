@@ -5,12 +5,18 @@ import { categoryIcons, IconArrowRight, IconClock, IconPin } from "@/components/
 import { cx } from "@/components/ui";
 import { demoOpportunities } from "@/lib/partners";
 
+const CICLO = 6000;
+
 /**
  * O momento "eu entendi": a cara de uma oportunidade chegando.
  *
  * É explicitamente uma demonstração do conceito — o módulo de oportunidades
  * ainda não existe no produto, então o cartão não se disfarça de captura de
  * tela e o rodapé diz isso com todas as letras.
+ *
+ * O movimento aqui tem função: o ponto que pulsa diz "acabou de chegar", a
+ * barra de tempo mostra que a troca é automática e para de correr quando o
+ * ponteiro entra — quem está lendo manda no ritmo.
  */
 export function OpportunityDemo({ className = "" }: { className?: string }) {
   const [index, setIndex] = useState(0);
@@ -25,7 +31,7 @@ export function OpportunityDemo({ className = "" }: { className?: string }) {
     if (paused || reduced.current) return;
     const id = setTimeout(
       () => setIndex((i) => (i + 1) % demoOpportunities.length),
-      6000,
+      CICLO,
     );
     return () => clearTimeout(id);
   }, [index, paused]);
@@ -41,22 +47,38 @@ export function OpportunityDemo({ className = "" }: { className?: string }) {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      <div className="border-line bg-surface shadow-lift relative overflow-hidden rounded-2xl border">
+      <div className="cr-lift border-line bg-surface shadow-lift relative overflow-hidden rounded-2xl border">
         <div
           aria-hidden="true"
           className="bg-brand absolute inset-x-0 top-0 h-[3px] opacity-70"
         />
 
-        <div className="border-line flex items-center justify-between gap-4 border-b px-5 py-3.5 sm:px-6">
+        <div className="border-line relative flex items-center justify-between gap-4 border-b px-5 py-3.5 sm:px-6">
           <p className="text-brand-ink flex items-center gap-2 text-[0.6875rem] font-semibold tracking-[0.14em] uppercase">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="bg-brand absolute inline-flex h-full w-full rounded-full opacity-70" />
+              <span className="bg-brand cr-ping absolute inline-flex h-full w-full rounded-full" />
+              <span className="bg-brand relative inline-flex h-1.5 w-1.5 rounded-full" />
             </span>
             Nova oportunidade
           </p>
           <p className="text-faint text-[0.6875rem] tracking-[0.1em] uppercase">
             Exemplo
           </p>
+
+          {/* Quanto falta para o próximo exemplo entrar. */}
+          <span
+            aria-hidden="true"
+            className="bg-line absolute inset-x-0 bottom-0 h-px overflow-hidden"
+          >
+            <span
+              key={index}
+              className="cr-timer bg-brand block h-px w-full opacity-60"
+              style={{
+                "--cr-timer": `${CICLO}ms`,
+                animationPlayState: paused ? "paused" : "running",
+              } as React.CSSProperties}
+            />
+          </span>
         </div>
 
         <div aria-live="polite" className="px-5 py-6 sm:px-6 sm:py-7">
@@ -99,17 +121,17 @@ export function OpportunityDemo({ className = "" }: { className?: string }) {
                   aria-label={`Ver o exemplo de ${o.categoria}`}
                   onClick={() => setIndex(i)}
                   className={cx(
-                    "h-1.5 rounded-full transition-all duration-300",
+                    "h-1.5 rounded-full transition-all duration-500 ease-[cubic-bezier(0.22,1.35,0.36,1)]",
                     i === index
                       ? "bg-brand w-6"
-                      : "bg-line-strong hover:bg-faint w-1.5",
+                      : "bg-line-strong hover:bg-faint w-1.5 hover:w-3",
                   )}
                 />
               ))}
             </div>
-            <span className="text-brand-ink inline-flex items-center gap-1.5 text-[0.875rem] font-medium">
+            <span className="text-brand-ink group inline-flex items-center gap-1.5 text-[0.875rem] font-medium">
               Ver oportunidade
-              <IconArrowRight className="h-4 w-4" />
+              <IconArrowRight className="cr-nudge h-4 w-4" />
             </span>
           </div>
         </div>

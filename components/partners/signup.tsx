@@ -3,6 +3,7 @@ import { Reveal } from "@/components/reveal";
 import { Container, Eyebrow, Section } from "@/components/ui";
 import { PartnerCta } from "./cta";
 import { FounderSeal } from "./founder-seal";
+import { CountUp } from "@/components/motion";
 import { PartnerForm } from "./partner-form";
 import { founder } from "@/lib/partners";
 import { partnerDoubtMessage, waLink } from "@/lib/whatsapp";
@@ -34,6 +35,7 @@ export function PartnersSignup() {
                 <FounderSeal
                   className="text-brand-ink h-12 w-12 shrink-0"
                   id="selo-fundador-cadastro"
+                  spin
                 />
                 <div>
                   <p className="text-faint text-[0.6875rem] font-semibold tracking-[0.14em] uppercase">
@@ -41,7 +43,7 @@ export function PartnersSignup() {
                   </p>
                   <p className="mt-1 flex items-end gap-2">
                     <span className="font-display text-2xl leading-none font-semibold tracking-[-0.02em]">
-                      {founder.price}
+                      R$ <CountUp to={founder.priceValue} />
                     </span>
                     <span className="text-muted text-[0.875rem]">
                       por {founder.period}

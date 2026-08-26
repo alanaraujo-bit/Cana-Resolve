@@ -79,3 +79,79 @@ export const urgencias = [
   { id: "esta-semana", label: "Esta semana", hint: "Dá para agendar" },
   { id: "sem-pressa", label: "Sem pressa", hint: "Só quero orçamento" },
 ];
+
+/* ---------------------------------------------------------------
+   Palpite de categoria a partir do texto do morador.
+
+   Serve para dar uma resposta imediata a quem está escrevendo — "parece
+   Eletricista" — e para pré-selecionar a categoria no formulário. É um
+   palpite assumido como palpite: a pessoa sempre pode trocar, e o texto
+   dela continua sendo o que vale.
+   --------------------------------------------------------------- */
+
+const categoryHints: Record<string, string[]> = {
+  "ar-condicionado": [
+    "ar condicionado", "ar-condicionado", "arcondicionado", "split", "gelando",
+    "gela", "geladeira", "freezer", "refrigera", "climatiz", "compressor",
+    "recarga de gas", "ar de casa", "condensadora",
+  ],
+  eletricista: [
+    "eletricista", "eletrica", "tomada", "disjuntor", "curto", "chuveiro",
+    "fiacao", "fio queimado", "quadro de energia", "padrao de energia",
+    "lampada", "luminaria", "choque", "sem energia", "sem luz", "ventilador de teto",
+  ],
+  guincho: [
+    "guincho", "reboque", "rebocar", "pane seca", "sem gasolina", "bateria arriada",
+    "bateria descarregada", "chaveiro", "carro quebrou", "quebrei na br",
+    "na estrada", "atolado", "pneu furado", "chave trancada", "auto socorro",
+  ],
+  mecanica: [
+    "mecanic", "motor", "freio", "suspensao", "embreagem", "injecao",
+    "troca de oleo", "revisao", "radiador", "correia", "escapamento",
+    "cambio", "superaquec", "barulho no carro",
+  ],
+  construcao: [
+    "pedreiro", "reforma", "reformar", "pintura", "pintar", "hidraulic",
+    "encanador", "vazamento", "telhado", "goteira", "gesso", "piso",
+    "azulejo", "obra", "alvenaria", "muro", "laje", "banheiro", "cozinha",
+    "acabamento", "drywall", "calha",
+  ],
+  seguranca: [
+    "camera", "cftv", "alarme", "cerca eletrica", "portao", "interfone",
+    "monitoramento", "controle de acesso", "fechadura eletronica",
+    "concertina", "vigilancia",
+  ],
+  informatica: [
+    "notebook", "computador", "pc ", "formatar", "internet", "wifi", "wi-fi",
+    "roteador", "rede de computadores", "impressora", "windows",
+    "nao liga mais", "sistema da empresa", "backup", "cabeamento de rede",
+  ],
+};
+
+function normalize(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Devolve o id da categoria mais provável, ou `null` quando o texto ainda
+ * é curto demais ou não se parece com nada em especial.
+ */
+export function guessCategory(text: string): string | null {
+  const t = normalize(text);
+  if (t.trim().length < 8) return null;
+
+  let best: { id: string; score: number } | null = null;
+
+  for (const [id, hints] of Object.entries(categoryHints)) {
+    let score = 0;
+    for (const hint of hints) {
+      if (t.includes(hint)) score += hint.length;
+    }
+    if (score > 0 && (!best || score > best.score)) best = { id, score };
+  }
+
+  return best ? best.id : null;
+}

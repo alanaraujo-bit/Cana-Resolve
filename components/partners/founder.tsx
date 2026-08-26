@@ -1,5 +1,6 @@
 import { IconArrowRight, IconCheck, IconWhatsApp } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
+import { CountUp } from "@/components/motion";
 import { Container, Section, SectionHead } from "@/components/ui";
 import { PartnerCta } from "./cta";
 import { FounderSeal } from "./founder-seal";
@@ -43,6 +44,7 @@ export function PartnersFounder() {
               <FounderSeal
                 className="text-brand-ink h-14 w-14 shrink-0 sm:h-[4.5rem] sm:w-[4.5rem]"
                 id="selo-fundador-oferta"
+                spin
               />
               <div>
                 <h3 className="text-ink text-2xl leading-tight tracking-[-0.02em]">
@@ -57,7 +59,7 @@ export function PartnersFounder() {
             <div className="border-line shrink-0 sm:border-l sm:pl-9">
               <div className="flex items-end gap-2.5">
                 <span className="font-display text-[2.75rem] leading-none font-semibold tracking-[-0.03em]">
-                  {founder.price}
+                  R$ <CountUp to={founder.priceValue} />
                 </span>
                 <span className="text-muted pb-1 text-[0.9375rem]">
                   por {founder.period}
@@ -155,6 +157,7 @@ export function PartnersFounder() {
           <FounderSeal
             className="text-accent-ink h-14 w-14 shrink-0"
             id="selo-fundador-significado"
+            spin
           />
           <div>
             <h3 className="text-ink text-xl tracking-[-0.015em]">

@@ -11,9 +11,12 @@ import { cx } from "@/components/ui";
 export function FounderSeal({
   className = "",
   id = "selo-fundador",
+  spin = false,
 }: {
   className?: string;
   id?: string;
+  /** Gira o anel de texto devagar. Só faz sentido nos tamanhos grandes. */
+  spin?: boolean;
 }) {
   const ring = `${id}-anel`;
   return (
@@ -35,6 +38,7 @@ export function FounderSeal({
       <circle cx="50" cy="50" r="30.5" stroke="currentColor" strokeWidth="0.9" opacity="0.35" />
 
       <text
+        className={spin ? "cr-seal-ring" : undefined}
         fill="currentColor"
         fontSize="7.6"
         fontWeight="600"

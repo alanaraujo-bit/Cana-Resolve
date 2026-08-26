@@ -45,26 +45,40 @@ export default async function SolicitarPage({
     <div className="relative isolate">
       <ConsumerAnalytics page="solicitar" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="from-brand-soft absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent opacity-60" />
+        <div className="from-brand-soft absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent opacity-60 dark:opacity-40" />
+        <div className="cr-contour absolute inset-0 opacity-50" />
+        <div className="cr-drift-a bg-brand absolute -top-20 -left-24 h-[24rem] w-[24rem] rounded-full opacity-[0.06] blur-[100px] dark:opacity-[0.09]" />
         <div className="cr-grain absolute inset-0" />
       </div>
 
       <Container className="py-12 sm:py-16 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.35fr] lg:gap-16">
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <Eyebrow>Solicitar serviço</Eyebrow>
-            <h1 className="mt-4 text-[2rem] leading-[1.1] tracking-[-0.03em] text-balance sm:text-[2.5rem]">
+            <Eyebrow className="cr-enter">Solicitar serviço</Eyebrow>
+            <h1
+              className="cr-enter mt-4 text-[2rem] leading-[1.1] tracking-[-0.03em] text-balance sm:text-[2.5rem]"
+              style={{ "--cr-delay": "80ms" } as React.CSSProperties}
+            >
               Conte o que precisa resolver
             </h1>
-            <p className="text-muted mt-4 max-w-md text-[1.0625rem] leading-relaxed text-pretty">
+            <p
+              className="cr-enter text-muted mt-4 max-w-md text-[1.0625rem] leading-relaxed text-pretty"
+              style={{ "--cr-delay": "150ms" } as React.CSSProperties}
+            >
               São poucas informações. Com elas, a equipe entende o seu pedido
               e pode encaminhá-lo a quem atende essa área em {site.city}.
             </p>
 
             <ul className="mt-9 space-y-6">
-              {lembretes.map(({ Icon, title, text }) => (
-                <li key={title} className="flex gap-4">
-                  <span className="border-line bg-surface text-brand-ink grid h-10 w-10 shrink-0 place-items-center rounded-xl border">
+              {lembretes.map(({ Icon, title, text }, i) => (
+                <li
+                  key={title}
+                  className="cr-enter group flex gap-4"
+                  style={
+                    { "--cr-delay": `${220 + i * 70}ms` } as React.CSSProperties
+                  }
+                >
+                  <span className="border-line bg-surface text-brand-ink grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-transform duration-500 ease-[cubic-bezier(0.22,1.35,0.36,1)] group-hover:-translate-y-1 group-hover:rotate-3">
                     <Icon className="h-5 w-5" />
                   </span>
                   <div>
@@ -83,7 +97,7 @@ export default async function SolicitarPage({
               É profissional e quer receber pedidos?{" "}
               <Link
                 href="/parceiros"
-                className="text-brand-ink underline underline-offset-4"
+                className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300"
               >
                 Conheça o Parceiro Fundador
               </Link>

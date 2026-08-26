@@ -38,8 +38,8 @@ export function PartnersWho() {
               {categories.map((c) => {
                 const Icon = categoryIcons[c.id];
                 return (
-                  <li key={c.id} className="flex items-center gap-3.5 py-3.5">
-                    <Icon className="text-faint h-[18px] w-[18px] shrink-0" />
+                  <li key={c.id} className="group flex items-center gap-3.5 py-3.5">
+                    <Icon className="text-faint group-hover:text-brand-ink h-[18px] w-[18px] shrink-0 transition-colors duration-300" />
                     <div className="min-w-0 flex-1">
                       <p className="text-ink text-[0.9375rem]">{c.name}</p>
                       <p className="text-faint mt-0.5 text-[0.8125rem] leading-snug">

@@ -34,9 +34,10 @@ export function PartnersContrast() {
             <Reveal
               key={lado.title}
               delay={i * 90}
+              anim="scale"
               className={
                 lado.tone === "marca"
-                  ? "border-brand-line bg-surface shadow-card rounded-2xl border p-7 sm:p-8"
+                  ? "cr-lift border-brand-line bg-surface shadow-card rounded-2xl border p-7 sm:p-8"
                   : "border-line bg-bg/40 rounded-2xl border border-dashed p-7 sm:p-8"
               }
             >

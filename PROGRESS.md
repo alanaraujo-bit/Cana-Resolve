@@ -5,6 +5,91 @@ inversa: o mais recente primeiro.
 
 ---
 
+## 26/08/2026 — Camada de movimento
+
+O site ganhou uma gramática de movimento própria. A regra que organiza tudo:
+**nenhum efeito existe só para ser bonito** — cada um mostra hierarquia,
+confirma um toque, indica o que chegou ou revela uma informação que já era
+útil. Nada depende de JavaScript para o conteúdo aparecer e tudo desliga em
+`prefers-reduced-motion`.
+
+### Onde o vocabulário vive
+
+Quase tudo é CSS, em `app/globals.css` (bloco "Camada de movimento", numerado
+de 1 a 11). O JavaScript entra só onde o CSS não alcança, em
+`components/motion.tsx` — e sempre com um listener só, `requestAnimationFrame`
+e nenhum estado em React por pixel.
+
+| Classe | O que faz |
+| --- | --- |
+| `.cr-enter` | Entrada escalonada no carregamento (`--cr-delay` controla o ritmo) |
+| `.cr-reveal` | Revelação em scroll; aceita `anim="up\|blur\|scale\|left\|right"` |
+| `.cr-draw` / `.cr-draw-load` | Traço de SVG que se desenha (em scroll / no carregamento) |
+| `.cr-mark` | Marca-texto que acompanha o texto quando ele quebra em várias linhas |
+| `.cr-rail` / `.cr-rail-x` | Trilho que se preenche conforme os passos entram na tela |
+| `.cr-spot` | Foco de luz que segue o ponteiro dentro do cartão |
+| `.cr-aura` / `.cr-aura-far` | Manchas do fundo que respondem de longe ao ponteiro |
+| `.cr-lift` | Elevação discreta no hover |
+| `.cr-sheen` | Brilho que atravessa o botão principal uma vez |
+| `.cr-link` / `.cr-navlink` | Sublinhado que cresce (do início / do centro) |
+| `.cr-nudge` | Seta que desliza quando o bloco que a contém recebe hover |
+| `.cr-ping` | Anel que pulsa: algo acabou de chegar |
+| `.cr-caret` / `.cr-ghost` | Cursor piscando e esmaecimento do exemplo que se escreve sozinho |
+| `.cr-drift-a/b` | Deriva lenta das auroras de fundo |
+| `.cr-timer` | Barra de tempo do carrossel de exemplos |
+| `.cr-seal-ring` | O anel de texto do selo de Fundador girando devagar |
+| `.cr-shake` (via WAAPI) | Tranco curto no primeiro campo com erro |
+| `.cr-bloom` / `.cr-halo` | Confirmação de envio |
+| `.cr-acc` | Sanfona de dúvidas com altura animada (`::details-content`) |
+| `.cr-progress` | Filete de progresso de leitura no cabeçalho |
+| `.cr-page-enter` | Troca de rota |
+
+Componentes novos em `components/motion.tsx`: `InView`, `SpotlightArea`,
+`PointerAura`, `ReadingProgress`, `CountUp`, `useReducedMotion`. E
+`components/route-transition.tsx` para a troca de rota.
+
+### As sacadas que mudam o produto, não só a aparência
+
+- **Palpite de categoria no hero.** `guessCategory()` (em `lib/categories.ts`)
+  lê o que a pessoa está escrevendo e sugere a categoria em tempo real —
+  "Parece Eletricista". O palpite vai junto na URL para `/solicitar`, onde a
+  categoria já chega marcada. Menos um campo para preencher.
+- **Filete de conclusão nos dois formulários.** Uma linha no topo do cartão
+  cresce conforme os campos obrigatórios ficam prontos. Sem contagem, sem
+  gamificação: só a sensação de que falta pouco.
+- **O erro some sozinho.** `limparErro()` apaga o aviso assim que o campo passa
+  a estar certo, em vez de esperar um novo envio.
+- **Barra de tempo na demonstração de oportunidade.** Mostra que a troca é
+  automática e para de correr quando o ponteiro entra no cartão.
+- **Troca de tema em círculo.** A View Transitions API abre o tema novo a
+  partir do botão tocado. Onde a API não existe, a troca é instantânea.
+- **Progresso de leitura.** `animation-timeline: scroll()` onde houver;
+  onde não houver, um listener passivo faz o mesmo.
+
+### Bug real corrigido no caminho
+
+No celular, o `<h1>` de `/parceiros` estourava a largura da tela: a frase
+destacada estava com `whitespace-nowrap` para caber o traço de SVG, e o item
+de grid crescia junto. Trocada pelo marca-texto `.cr-mark`, que quebra em
+várias linhas. Existe agora uma auditoria automatizada de overflow em todas as
+rotas × 5 larguras × 2 temas para que isso não volte.
+
+### Verificação feita
+
+- `tsc --noEmit`, `eslint` e `next build` limpos.
+- Navegador headless (Edge via CDP) percorrendo `/`, `/parceiros`,
+  `/solicitar`, `/entrar`, `/termos`, `/privacidade` e 404 em 320, 390, 768,
+  1024 e 1440 px, nos dois temas: **nenhum overflow horizontal e nenhum erro
+  de console**.
+- Interações exercitadas de verdade: palpite de categoria e a URL que ele
+  gera, validação e erros dos formulários, filete de progresso chegando a
+  100%, sanfona de dúvidas, menu mobile, troca de tema (incluindo a limpeza do
+  `data-vt`), navegação entre rotas, barra fixa do mobile, foco de luz nos
+  cartões e paralaxe do hero.
+- Em `prefers-reduced-motion: reduce`, os 29 blocos de revelação da home
+  aparecem todos visíveis e nenhuma animação roda.
+
+
 ## 26/08/2026 — Auditoria de pré-lançamento comercial
 
 - Revisadas as rotas públicas, textos de lançamento, funis WhatsApp, metadata,

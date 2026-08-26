@@ -4,6 +4,7 @@ import { categoryIcons, IconArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { Container, Section, SectionHead } from "@/components/ui";
 import { CategoryLink } from "@/components/category-link";
+import { SpotlightArea } from "@/components/motion";
 
 export function Services() {
   return (
@@ -17,14 +18,17 @@ export function Services() {
           />
           <Link
             href="/solicitar"
-            className="text-brand-ink hover:text-brand-hover inline-flex shrink-0 items-center gap-2 text-[0.9375rem] font-medium transition-colors"
+            className="text-brand-ink hover:text-brand-hover group inline-flex shrink-0 items-center gap-2 text-[0.9375rem] font-medium transition-colors"
           >
-            Não achei o que preciso
-            <IconArrowRight className="h-4 w-4" />
+            <span className="cr-link">Não achei o que preciso</span>
+            <IconArrowRight className="cr-nudge h-4 w-4" />
           </Link>
         </div>
 
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <SpotlightArea
+          as="ul"
+          className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3"
+        >
           {categories.map((c, i) => {
             const Icon = categoryIcons[c.id];
             return (
@@ -32,20 +36,20 @@ export function Services() {
                 <CategoryLink
                   category={c.id}
                   href={`/solicitar?categoria=${c.id}`}
-                  className="group bg-surface hover:bg-surface-3 focus-visible:bg-surface-3 relative flex w-full flex-col gap-3 p-6 transition-colors sm:p-7"
+                  className="group cr-spot bg-surface hover:bg-surface-3 focus-visible:bg-surface-3 relative flex w-full flex-col gap-3 p-6 transition-colors sm:p-7"
                 >
-                  <span className="bg-brand-soft text-brand-ink border-brand-line grid h-11 w-11 place-items-center rounded-xl border transition-transform duration-300 group-hover:-translate-y-0.5">
+                  <span className="bg-brand-soft text-brand-ink border-brand-line relative grid h-11 w-11 place-items-center rounded-xl border transition-transform duration-500 ease-[cubic-bezier(0.22,1.35,0.36,1)] group-hover:-translate-y-1 group-hover:scale-105 group-hover:rotate-3">
                     <Icon className="h-[22px] w-[22px]" />
                   </span>
-                  <span className="text-ink mt-1 font-display text-[1.0625rem] font-semibold tracking-[-0.01em]">
+                  <span className="text-ink relative mt-1 font-display text-[1.0625rem] font-semibold tracking-[-0.01em]">
                     {c.name}
                   </span>
-                  <span className="text-muted text-[0.9375rem] leading-relaxed">
+                  <span className="text-muted relative text-[0.9375rem] leading-relaxed">
                     {c.blurb}
                   </span>
-                  <span className="text-brand-ink mt-auto inline-flex items-center gap-1.5 pt-3 text-[0.8125rem] font-medium opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                  <span className="text-brand-ink relative mt-auto inline-flex translate-y-1 items-center gap-1.5 pt-3 text-[0.8125rem] font-medium opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
                     Pedir orçamento
-                    <IconArrowRight className="h-3.5 w-3.5" />
+                    <IconArrowRight className="cr-nudge h-3.5 w-3.5" />
                   </span>
                 </CategoryLink>
               </Reveal>
@@ -59,13 +63,13 @@ export function Services() {
             <span className="text-muted text-[0.9375rem] leading-relaxed">
               Novas categorias entram conforme profissionais locais se juntam à
               plataforma. Se a sua não está aqui,{" "}
-              <Link href="/parceiros" className="text-brand-ink underline underline-offset-4">
+              <Link href="/parceiros" className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300">
                 fale com a gente
               </Link>
               .
             </span>
           </li>
-        </ul>
+        </SpotlightArea>
       </Container>
     </Section>
   );

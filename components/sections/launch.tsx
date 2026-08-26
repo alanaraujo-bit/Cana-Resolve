@@ -32,15 +32,15 @@ export function Launch() {
               O que já funciona hoje
             </h3>
             <ul className="mt-5 space-y-3.5">
-              {agora.map((item) => (
-                <li key={item} className="flex gap-3">
+              {agora.map((item, i) => (
+                <Reveal as="li" key={item} delay={120 + i * 90} className="flex gap-3">
                   <span className="bg-brand-soft text-brand-ink mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full">
                     <IconCheck className="h-3 w-3" strokeWidth={2.4} />
                   </span>
                   <span className="text-muted text-[0.9375rem] leading-relaxed">
                     {item}
                   </span>
-                </li>
+                </Reveal>
               ))}
             </ul>
 
@@ -50,15 +50,15 @@ export function Launch() {
               O que vem em seguida
             </h3>
             <ul className="mt-5 space-y-3.5">
-              {depois.map((item) => (
-                <li key={item} className="flex gap-3">
+              {depois.map((item, i) => (
+                <Reveal as="li" key={item} delay={i * 80} className="flex gap-3">
                   <span className="border-line-strong text-faint mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-dashed">
                     <span className="bg-faint h-1 w-1 rounded-full" />
                   </span>
                   <span className="text-muted text-[0.9375rem] leading-relaxed">
                     {item}
                   </span>
-                </li>
+                </Reveal>
               ))}
             </ul>
           </Reveal>
@@ -76,15 +76,25 @@ export function Launch() {
             </p>
 
             <ul className="border-line mt-6 divide-y divide-[var(--cr-border)] border-t">
-              {categories.map((c) => {
+              {categories.map((c, i) => {
                 const Icon = categoryIcons[c.id];
                 return (
-                  <li key={c.id} className="flex items-center gap-3 py-3.5">
-                    <Icon className="text-faint h-[18px] w-[18px] shrink-0" />
+                  <li
+                    key={c.id}
+                    className="group flex items-center gap-3 py-3.5"
+                  >
+                    <Icon className="text-faint group-hover:text-brand-ink h-[18px] w-[18px] shrink-0 transition-colors duration-300" />
                     <span className="text-ink flex-1 text-[0.9375rem]">
                       {c.name}
                     </span>
-                    <span className="border-brand-line bg-brand-soft text-brand-ink shrink-0 rounded-full border px-2.5 py-1 text-[0.6875rem] font-semibold tracking-wide uppercase">
+                    <span className="border-brand-line bg-brand-soft text-brand-ink flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.6875rem] font-semibold tracking-wide uppercase">
+                      <span aria-hidden="true" className="relative flex h-1.5 w-1.5">
+                        <span
+                          className="bg-brand cr-ping absolute inline-flex h-full w-full rounded-full"
+                          style={{ animationDelay: `${i * 0.4}s` }}
+                        />
+                        <span className="bg-brand relative inline-flex h-1.5 w-1.5 rounded-full" />
+                      </span>
                       Vagas abertas
                     </span>
                   </li>
@@ -94,10 +104,10 @@ export function Launch() {
 
             <Link
               href="/parceiros"
-              className="text-brand-ink hover:text-brand-hover mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-medium transition-colors"
+              className="text-brand-ink hover:text-brand-hover group mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-medium transition-colors"
             >
-              Ver o programa Parceiro Fundador
-              <IconArrowRight className="h-4 w-4" />
+              <span className="cr-link">Ver o programa Parceiro Fundador</span>
+              <IconArrowRight className="cr-nudge h-4 w-4" />
             </Link>
           </Reveal>
         </div>

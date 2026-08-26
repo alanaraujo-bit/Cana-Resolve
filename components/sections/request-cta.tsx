@@ -14,6 +14,9 @@ export function RequestCta() {
               "repeating-radial-gradient(circle at 15% 120%, #ffffff 0 1px, transparent 1px 44px)",
           }}
         />
+        {/* Luz que atravessa a faixa devagar, como um fim de tarde. */}
+        <div className="cr-drift-a absolute -top-32 left-1/4 h-[26rem] w-[26rem] rounded-full bg-white opacity-[0.06] blur-[100px]" />
+        <div className="cr-drift-b absolute -bottom-40 right-1/5 h-[22rem] w-[22rem] rounded-full bg-white opacity-[0.04] blur-[110px]" />
         <div className="cr-grain absolute inset-0 opacity-70" />
       </div>
 
@@ -37,7 +40,7 @@ export function RequestCta() {
               )}
             >
               Solicitar serviço
-              <IconArrowRight className="h-[18px] w-[18px]" />
+              <IconArrowRight className="cr-nudge h-[18px] w-[18px]" />
             </Link>
             <Link
               href="/#como-funciona"

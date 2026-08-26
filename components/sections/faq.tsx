@@ -43,9 +43,9 @@ export function Faq() {
           <div className="border-line border-t">
             {faq.map((item, i) => (
               <Reveal key={item.q} delay={i * 55}>
-                <details className="group border-line border-b">
+                <details className="cr-acc group border-line border-b">
                   <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden">
-                    <h3 className="text-ink font-sans text-[1.0625rem] font-medium tracking-normal">
+                    <h3 className="text-ink group-hover:text-brand-ink font-sans text-[1.0625rem] font-medium tracking-normal transition-colors duration-200">
                       {item.q}
                     </h3>
                     <span
@@ -67,7 +67,7 @@ export function Faq() {
               Ficou alguma dúvida sobre os seus dados? Está tudo explicado na{" "}
               <Link
                 href="/privacidade"
-                className="text-brand-ink underline underline-offset-4"
+                className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300"
               >
                 Política de Privacidade
               </Link>
