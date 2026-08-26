@@ -7,6 +7,7 @@ import { RequestCta } from "@/components/sections/request-cta";
 import { ForPros } from "@/components/sections/for-pros";
 import { Faq, faq } from "@/components/sections/faq";
 import { site } from "@/lib/site";
+import { ConsumerAnalytics } from "@/components/consumer-analytics";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -62,6 +63,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ConsumerAnalytics page="home" />
       <Hero />
       <Services />
       <HowItWorks />

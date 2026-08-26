@@ -4,6 +4,7 @@ import { RequestForm } from "@/components/request-form";
 import { IconChat, IconPin, IconTag } from "@/components/icons";
 import { Container, Eyebrow } from "@/components/ui";
 import { site } from "@/lib/site";
+import { ConsumerAnalytics } from "@/components/consumer-analytics";
 
 export const metadata: Metadata = {
   title: "Solicitar serviço",
@@ -42,6 +43,7 @@ export default async function SolicitarPage({
 
   return (
     <div className="relative isolate">
+      <ConsumerAnalytics page="solicitar" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
         <div className="from-brand-soft absolute inset-x-0 top-0 h-80 bg-gradient-to-b to-transparent opacity-60" />
         <div className="cr-grain absolute inset-0" />
@@ -55,8 +57,8 @@ export default async function SolicitarPage({
               Conte o que precisa resolver
             </h1>
             <p className="text-muted mt-4 max-w-md text-[1.0625rem] leading-relaxed text-pretty">
-              São poucas informações. Com elas, o seu pedido chega a quem
-              trabalha exatamente com isso em {site.city}.
+              São poucas informações. Com elas, a equipe entende o seu pedido
+              e pode encaminhá-lo a quem atende essa área em {site.city}.
             </p>
 
             <ul className="mt-9 space-y-6">

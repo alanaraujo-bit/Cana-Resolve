@@ -5,6 +5,23 @@ inversa: o mais recente primeiro.
 
 ---
 
+## 26/08/2026 — Auditoria de pré-lançamento comercial
+
+- Revisadas as rotas públicas, textos de lançamento, funis WhatsApp, metadata,
+  SEO técnico e instrumentação de conversão.
+- Removidas alegações de demanda já ativa, categorias “mais procuradas” e
+  atendimento obrigatoriamente residente. A linguagem agora descreve uma rede
+  inicial preparada para receber e encaminhar solicitações.
+- Criada imagem de compartilhamento própria para `/solicitar`; o preview de
+  `/parceiros` passou a comunicar aquisição B2B sem prometer demanda existente.
+- O domínio canônico padrão é `canaaresolve.aionixdev.com`, sem fallback visual
+  para domínio temporário da Vercel.
+- Adicionados eventos agregados do funil de moradores. Nenhum texto livre,
+  nome ou telefone entra na camada de analytics.
+- `/entrar` permanece acessível diretamente e sem indexação, mas foi retirado
+  da navegação principal para não prometer uma conta que ainda não existe.
+- Validação técnica após as mudanças: `npm run lint` e `npm run build` concluídos.
+
 ## 26/08/2026 — Área de parceiros (`/parceiros`)
 
 Rota comercial completa, pensada para ser o link enviado por WhatsApp a

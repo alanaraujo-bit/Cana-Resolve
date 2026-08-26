@@ -11,13 +11,13 @@ const steps = [
   },
   {
     n: "02",
-    title: "Encontramos quem pode resolver",
-    text: "Seu pedido vai para profissionais e empresas de Canaã que atuam naquilo que você precisa.",
+    title: "A equipe faz o encaminhamento inicial",
+    text: "Depois do envio pelo WhatsApp, a equipe identifica a categoria e pode encaminhar o pedido a profissionais e empresas que atendem essa área.",
   },
   {
     n: "03",
-    title: "Receba contato e escolha",
-    text: "Você conversa direto com cada um, compara o que foi proposto e decide com quem quer fechar.",
+    title: "Converse e escolha",
+    text: "Se houver encaminhamento, você conversa direto com os profissionais ou empresas, compara o que for proposto e decide com quem quer fechar.",
   },
 ];
 

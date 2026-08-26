@@ -10,7 +10,7 @@ export function PartnersBenefits() {
         <SectionHead
           eyebrow="O que você ganha"
           title="O que muda no dia a dia da sua empresa"
-          lead="Nada aqui é promessa de resultado. É o que o Canaã Resolve coloca do seu lado para que o trabalho de encontrar cliente pese menos."
+          lead="Nada aqui é promessa de resultado. É a base do programa para que sua empresa participe da rede inicial com clareza."
         />
 
         <div className="mt-12 grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3">
@@ -42,8 +42,8 @@ export function PartnersBenefits() {
               </h3>
               <p className="text-muted mt-3 text-[0.9375rem] leading-relaxed">
                 Preferimos deixar isso claro antes: o papel da plataforma é
-                fazer o pedido chegar até você. O trabalho, o preço e a relação
-                com o cliente continuam sendo seus.
+                avaliar solicitações e, quando compatíveis, encaminhá-las pela
+                equipe. O trabalho, o preço e a relação com o cliente continuam sendo seus.
               </p>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2 lg:gap-x-6">

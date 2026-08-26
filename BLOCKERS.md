@@ -33,7 +33,9 @@ nenhuma seção.
 Eventos disponíveis: `parceiros_page_view` (com origem/UTM),
 `parceiros_section_view`, `parceiros_cta_click`, `parceiros_whatsapp_click`,
 `parceiros_faq_open`, `parceiros_form_start`, `parceiros_form_error`,
-`parceiros_form_submit`, `parceiros_saida_sem_envio`.
+`parceiros_form_submit`, `parceiros_saida_sem_envio`, `consumidor_page_view`,
+`consumidor_category_click`, `consumidor_request_start`,
+`consumidor_request_submit` e `consumidor_whatsapp_click`.
 
 ---
 
@@ -67,3 +69,29 @@ Por decisão de projeto, nenhuma logo, depoimento, número de parceiros ou
 estatística aparece na página. Quando os primeiros parceiros reais existirem e
 autorizarem, o lugar natural é uma seção nova entre `PartnersWho` e
 `PartnersFaq` — o ritmo da página já comporta.
+
+---
+
+## 6. Inspeção visual automatizada indisponível neste ambiente
+
+**Estado atual:** nesta auditoria, o navegador integrado não estava disponível
+para abrir a aplicação renderizada em simuladores de viewport. Os testes de
+produção, build, HTML, metadados e fluxos de formulário continuaram possíveis.
+
+**O que falta:** antes de uma campanha de volume, abrir o domínio oficial em
+um smartphone pequeno e um moderno, nos temas claro e escuro, para a checagem
+visual final de menu, CTA fixo e teclado. Isso não impede o uso funcional da
+operação inicial, mas é a última validação manual de apresentação.
+
+---
+
+## 7. O domínio oficial ainda não resolve publicamente
+
+**Estado atual:** em 26/08/2026, a consulta a
+`canaaresolve.aionixdev.com` não retornou DNS e a URL pública não pôde ser
+aberta. O código já usa esse endereço como base canônica, em sitemap e nos
+previews, sem depender do endereço temporário da Vercel.
+
+**O que falta:** criar/apontar o registro DNS do subdomínio para o projeto de
+produção e adicioná-lo no provedor de hospedagem. Em seguida, conferir HTTPS e
+redirecionar o domínio temporário para o oficial, se a hospedagem permitir.

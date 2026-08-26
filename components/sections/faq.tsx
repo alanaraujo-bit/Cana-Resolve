@@ -36,7 +36,7 @@ export function Faq() {
         <div className="grid gap-10 lg:grid-cols-[1fr_1.5fr] lg:gap-16">
           <SectionHead
             eyebrow="Dúvidas"
-            title="Perguntas que já nos fizeram"
+            title="Dúvidas importantes antes de começar"
             className="lg:sticky lg:top-28"
           />
 

@@ -5,8 +5,8 @@ import { Container, Section } from "@/components/ui";
 const pillars = [
   {
     Icon: IconPin,
-    title: "Profissionais locais",
-    text: "O foco é Canaã dos Carajás. Quem atende você mora e trabalha aqui.",
+    title: "Atendimento na região",
+    text: "O foco é Canaã dos Carajás. A rede reúne profissionais e empresas que atendem a cidade e a região.",
   },
   {
     Icon: IconChat,

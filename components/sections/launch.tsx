@@ -5,7 +5,7 @@ import { Reveal } from "@/components/reveal";
 import { Container, Section, SectionHead } from "@/components/ui";
 
 const agora = [
-  "Você já pode enviar um pedido e ele chega direto à nossa equipe.",
+  "O sistema já está preparado para receber o seu pedido e encaminhá-lo pela equipe.",
   "Estamos formando o primeiro grupo de profissionais parceiros, categoria por categoria.",
 ];
 
@@ -71,8 +71,8 @@ export function Launch() {
               Categorias abrindo vagas de parceiro
             </h3>
             <p className="text-muted mt-2.5 text-[0.9375rem] leading-relaxed">
-              A entrada é limitada por categoria para que cada parceiro receba
-              pedidos de verdade, e não disputa por atenção.
+              A entrada é organizada por categoria para construir uma rede
+              inicial cuidadosa, sem concentrar profissionais demais na mesma área.
             </p>
 
             <ul className="border-line mt-6 divide-y divide-[var(--cr-border)] border-t">

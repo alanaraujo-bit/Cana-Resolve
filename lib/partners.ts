@@ -32,8 +32,8 @@ export const partnerSteps = [
   {
     n: "03",
     beat: "Encaminhamento",
-    title: "O pedido chega a quem trabalha com aquilo",
-    text: "O Canaã Resolve identifica a necessidade e encaminha a oportunidade aos parceiros da categoria correspondente.",
+    title: "O pedido pode ser encaminhado a quem atende aquela área",
+    text: "Na primeira fase, o Canaã Resolve identifica a necessidade e a equipe encaminha a oportunidade aos parceiros compatíveis da categoria correspondente.",
   },
   {
     n: "04",
@@ -89,11 +89,11 @@ export const demoOpportunities: DemoOpportunity[] = [
 export const benefits = [
   {
     title: "Pessoas com intenção real",
-    text: "A oportunidade só existe porque alguém procurou aquele serviço. Não é audiência: é gente que já decidiu resolver.",
+    text: "Quando alguém descreve uma necessidade, a equipe avalia se ela é compatível com a categoria e a região de atendimento do parceiro.",
   },
   {
     title: "Feito para Canaã",
-    text: "A plataforma nasceu para Canaã dos Carajás. Quem pede é daqui e quem atende é daqui.",
+    text: "A plataforma nasceu para Canaã dos Carajás e é voltada a quem precisa de serviços na cidade e a quem atende a cidade e a região.",
   },
   {
     title: "Contato direto",
@@ -223,5 +223,5 @@ export const cadastroDepois = [
 
 export const partnerSeo = {
   title: "Seja parceiro do Canaã Resolve",
-  description: `Receba oportunidades de pessoas procurando serviços em ${site.city}. Conheça o programa Parceiro Fundador: ${founder.price} por ${founder.period}, sem comissão sobre o valor do serviço.`,
+  description: `Participe da rede de profissionais e empresas que atendem ${site.city} e fique pronto para oportunidades compatíveis com o que você faz. Programa Parceiro Fundador: ${founder.price} por ${founder.period}, sem comissão sobre o valor do serviço.`,
 };

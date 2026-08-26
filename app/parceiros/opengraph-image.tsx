@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { founder } from "@/lib/partners";
 import { site } from "@/lib/site";
 
-export const alt = `Seja parceiro do ${site.name} — receba oportunidades em ${site.city}`;
+export const alt = `Seja parceiro do ${site.name} — rede para quem atende ${site.city}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -77,7 +77,7 @@ export default function OgImage() {
               maxWidth: 960,
             }}
           >
-            Tem gente em Canaã procurando o que você faz.
+            Seja parceiro do Canaã Resolve.
           </div>
           <div
             style={{
@@ -89,8 +89,8 @@ export default function OgImage() {
               maxWidth: 900,
             }}
           >
-            Entre para a rede de parceiros e receba as oportunidades compatíveis
-            com os seus serviços em {site.city}.
+            Participe da rede de profissionais e empresas que atendem Canaã dos
+            Carajás e fique pronto para oportunidades compatíveis com o que você faz.
           </div>
         </div>
 

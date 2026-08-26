@@ -11,6 +11,7 @@ import {
 import { buttonClass, cx } from "@/components/ui";
 import { site } from "@/lib/site";
 import { waLink } from "@/lib/whatsapp";
+import { track } from "@/lib/analytics";
 
 type Errors = Partial<Record<"descricao" | "nome" | "telefone" | "consent", string>>;
 
@@ -75,6 +76,7 @@ export function RequestForm({
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState(false);
+  const started = useRef(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
   const mensagem = useMemo(() => {
@@ -117,7 +119,15 @@ export function RequestForm({
       focusFirstError(e);
       return;
     }
+    track("consumidor_request_submit", { categoria: categoria || "nao_informada" });
+    document.dispatchEvent(new CustomEvent("cr:solicitacao-enviada"));
     setSent(true);
+  }
+
+  function markStart() {
+    if (started.current) return;
+    started.current = true;
+    track("consumidor_request_start");
   }
 
   /** Enter em um campo de texto envia o formulário, como se espera. */
@@ -171,8 +181,8 @@ export function RequestForm({
           </button>
         </div>
         <p className="text-faint mt-7 text-[0.8125rem] leading-relaxed">
-          Assim que o pedido chegar, encaminhamos para profissionais da
-          categoria em {site.city}.
+          Quando você enviar a mensagem, a equipe faz o encaminhamento inicial
+          para profissionais e empresas que atendem essa categoria em {site.city}.
         </p>
       </div>
     );
@@ -187,6 +197,7 @@ export function RequestForm({
       onKeyDown={onKeyDown}
       noValidate
       className="border-line bg-surface shadow-card rounded-2xl border p-6 sm:p-9"
+      onFocusCapture={markStart}
     >
       <div className="space-y-8">
         <Field
@@ -226,7 +237,11 @@ export function RequestForm({
                   <button
                     type="button"
                     aria-pressed={active}
-                    onClick={() => setCategoria(active ? "" : c.id)}
+                    onClick={() => {
+                      markStart();
+                      setCategoria(active ? "" : c.id);
+                      track("consumidor_category_click", { categoria: c.id });
+                    }}
                     className={cx(
                       "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8125rem] transition-colors",
                       active
@@ -364,15 +379,18 @@ export function RequestForm({
             href={waLink(mensagem)}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={onAnchorClick}
+            onClick={(event) => {
+              onAnchorClick(event);
+              if (!event.defaultPrevented) track("consumidor_whatsapp_click", { local: "formulario" });
+            }}
             className={buttonClass("brand", "lg", "w-full")}
           >
             <IconWhatsApp className="h-[18px] w-[18px]" />
             Enviar pedido pelo WhatsApp
           </a>
           <p className="text-faint mt-4 text-[0.8125rem] leading-relaxed">
-            Nesta primeira versão o pedido chega à equipe do Canaã Resolve pelo
-            WhatsApp — nada é armazenado neste site. Veja a{" "}
+            Nesta primeira versão, você envia o pedido à equipe do Canaã Resolve
+            pelo WhatsApp — nada é armazenado neste site. Veja a{" "}
             <Link href="/privacidade" className="text-brand-ink underline underline-offset-4">
               Política de Privacidade
             </Link>

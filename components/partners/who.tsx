@@ -30,9 +30,8 @@ export function PartnersWho() {
               As categorias que abrem primeiro
             </h2>
             <p className="text-muted mt-4 text-[1.0625rem] leading-relaxed text-pretty">
-              O programa começa pelas áreas mais procuradas na cidade. A
-              plataforma foi feita para receber novas categorias conforme a
-              rede cresce.
+              Estas são as categorias iniciais do lançamento. A plataforma foi
+              feita para receber novas categorias conforme a rede cresce.
             </p>
 
             <ul className="border-line mt-8 divide-y divide-[var(--cr-border)] border-t border-b">

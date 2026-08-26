@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   keywords: [
     "ser parceiro Canaã Resolve",
-    "receber clientes em Canaã dos Carajás",
+    "rede de parceiros em Canaã dos Carajás",
     "divulgar serviços em Canaã dos Carajás",
     "parceiro fundador Canaã Resolve",
     "oportunidades para prestadores de serviço em Canaã dos Carajás",

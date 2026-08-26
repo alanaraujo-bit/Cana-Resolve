@@ -77,12 +77,6 @@ export function SiteHeader() {
             <div className="hidden items-center gap-2 lg:flex">
               <ThemeToggle />
               <Link
-                href="/entrar"
-                className={buttonClass("ghost", "sm", "px-3")}
-              >
-                Entrar
-              </Link>
-              <Link
                 href="/solicitar"
                 className={buttonClass("brand", "sm", "px-4")}
               >
@@ -137,15 +131,6 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link
-                href="/entrar"
-                onClick={() => setOpen(false)}
-                className="border-line text-ink flex items-center justify-between border-b py-4 font-display text-xl"
-              >
-                Entrar
-              </Link>
-            </li>
           </ul>
 
           <div className="mt-8 flex flex-col gap-3">

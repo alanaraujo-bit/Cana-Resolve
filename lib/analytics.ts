@@ -9,6 +9,11 @@
  */
 
 export type FunnelEvent =
+  | "consumidor_page_view"
+  | "consumidor_category_click"
+  | "consumidor_request_start"
+  | "consumidor_request_submit"
+  | "consumidor_whatsapp_click"
   | "parceiros_page_view"
   | "parceiros_cta_click"
   | "parceiros_form_start"
@@ -40,7 +45,6 @@ export function visitSource(): Params {
     utm_campaign: get("utm_campaign"),
     utm_content: get("utm_content"),
     origem: get("origem") ?? get("utm_source") ?? (ref ? new URL(ref).host : "direto"),
-    referrer: ref || undefined,
   };
 }
 
@@ -48,6 +52,7 @@ export function track(event: FunnelEvent, params: Params = {}) {
   if (typeof window === "undefined") return;
   const payload = {
     event,
+    ...visitSource(),
     ...params,
     página: window.location.pathname,
     ts: Date.now(),

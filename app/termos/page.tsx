@@ -25,9 +25,9 @@ export default function TermosPage() {
       <section>
         <h2>O que nós fazemos</h2>
         <ul>
-          <li>Recebemos o seu pedido e encaminhamos a profissionais da categoria correspondente.</li>
-          <li>Apresentamos quem pode atender e viabilizamos o contato direto.</li>
-          <li>Mantemos a plataforma no ar e cuidamos dos dados que você nos envia.</li>
+          <li>Preparamos a sua mensagem para envio pelo WhatsApp à nossa equipe.</li>
+          <li>Com a sua autorização, podemos encaminhar o pedido a profissionais e empresas da categoria correspondente.</li>
+          <li>Mantemos a plataforma no ar e tratamos os dados enviados pelo WhatsApp conforme a Política de Privacidade.</li>
         </ul>
       </section>
 
@@ -53,8 +53,7 @@ export default function TermosPage() {
           <li>Não envie conteúdo ofensivo, ilegal ou de terceiros sem autorização.</li>
         </ul>
         <p>
-          Podemos recusar ou interromper o encaminhamento de pedidos que
-          descumpram estas regras.
+          Podemos não encaminhar pedidos que descumpram estas regras.
         </p>
       </section>
 
@@ -63,8 +62,8 @@ export default function TermosPage() {
         <p>
           Profissionais e empresas que aderem ao programa Parceiro Fundador
           contratam a participação na plataforma pelo período informado na
-          oferta. A adesão dá acesso às solicitações compatíveis com a categoria
-          contratada; não constitui exclusividade, nem garantia de volume,
+          oferta. A adesão permite participar da rede para receber solicitações
+          compatíveis com a categoria contratada quando houver; não constitui exclusividade, nem garantia de volume,
           fechamento ou faturamento. As condições comerciais de cada adesão são
           confirmadas com a equipe antes do pagamento.
         </p>

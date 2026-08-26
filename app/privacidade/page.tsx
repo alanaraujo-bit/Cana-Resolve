@@ -32,6 +32,12 @@ export default function PrivacidadePage() {
           bairro ou referência, a urgência, o seu nome e o seu WhatsApp.
         </p>
         <p>
+          O formulário de interesse de parceiros monta uma mensagem semelhante,
+          com nome, empresa ou nome profissional, WhatsApp, categoria, informação
+          de atendimento em Canaã dos Carajás e, se você escolher informar, como
+          conheceu o Canaã Resolve.
+        </p>
+        <p>
           Nesta primeira versão do site, esse conteúdo não é gravado aqui. Ele é
           enviado por você, pelo WhatsApp, para o número oficial do{" "}
           {site.name}, e passa a existir nessa conversa.
@@ -73,9 +79,12 @@ export default function PrivacidadePage() {
       <section>
         <h2>Cookies e medição</h2>
         <p>
-          Este site não usa cookies de rastreamento nem ferramentas de
-          publicidade. A sua preferência de tema (claro ou escuro) fica guardada
-          apenas no seu navegador e não sai dele.
+          Este site não usa cookies de publicidade. Para entender o desempenho
+          comercial, pode registrar de forma agregada páginas vistas, cliques,
+          etapas de formulário, categoria informada e origem de campanha (como
+          links com UTM). Não enviamos a descrição do pedido, nome, telefone ou
+          outros dados pessoais para essa medição. A sua preferência de tema
+          (claro ou escuro) fica guardada apenas no seu navegador.
         </p>
       </section>
 

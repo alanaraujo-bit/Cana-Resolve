@@ -13,8 +13,8 @@ const lados = [
   {
     Icon: IconTarget,
     eyebrow: "Canaã Resolve",
-    title: "O pedido é que vem até a empresa",
-    text: "A oportunidade só nasce quando alguém descreve uma necessidade. Ela chega a quem trabalha com aquilo — porque a pessoa já está procurando.",
+    title: "A solicitação é analisada antes do encaminhamento",
+    text: "Quando alguém descreve uma necessidade, a equipe identifica a categoria e pode encaminhá-la a quem atende aquela área.",
     tone: "marca" as const,
   },
 ];
@@ -26,7 +26,7 @@ export function PartnersContrast() {
         <SectionHead
           eyebrow="A diferença"
           title="Isto não é um espaço de anúncio"
-          lead="Divulgar tem o seu valor e continua fazendo sentido para a sua empresa. O Canaã Resolve trabalha do outro lado: em vez de disputar atenção, ele carrega até você a intenção de quem já decidiu contratar."
+          lead="Divulgar tem o seu valor e continua fazendo sentido para a sua empresa. O Canaã Resolve complementa esse trabalho com um encaminhamento assistido de solicitações compatíveis, quando elas chegarem."
         />
 
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:mt-14 lg:gap-6">

@@ -29,9 +29,9 @@ export function PartnersHero() {
             </p>
 
             <h1 className="mt-6 text-[2.25rem] leading-[1.06] tracking-[-0.03em] text-balance sm:text-[3rem] lg:text-[3.375rem]">
-              Tem gente em Canaã procurando{" "}
+              Sua empresa pode estar pronta para{" "}
               <span className="text-brand-ink relative whitespace-nowrap">
-                o que você faz
+                receber pedidos compatíveis
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 260 12"
@@ -51,9 +51,9 @@ export function PartnersHero() {
             </h1>
 
             <p className="text-muted mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-pretty sm:text-lg">
-              O Canaã Resolve leva o pedido de quem precisa resolver alguma
-              coisa na cidade até quem trabalha com aquilo. Entre para a rede de
-              parceiros e participe das oportunidades da sua área.
+              O Canaã Resolve está preparado para encaminhar pedidos de quem
+              precisa resolver algo na cidade a quem atende essa área. Entre
+              para a rede e participe das oportunidades compatíveis.
             </p>
 
             <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2">

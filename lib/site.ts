@@ -1,15 +1,11 @@
 /**
  * URL pública do site, na ordem em que vale confiar:
- * uma variável explícita, o domínio de produção que a Vercel resolve
- * (que passa a ser o domínio próprio assim que ele é apontado) e, por
- * último, o endereço definitivo — usado no build local.
+ * uma variável explícita e, por último, o endereço comercial definitivo.
+ * O domínio temporário da Vercel nunca deve aparecer em canonicals ou previews.
  */
 function resolveSiteUrl() {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
   if (explicit) return explicit.replace(/[/]$/, "");
-
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercel) return `https://${vercel}`;
 
   return "https://canaaresolve.aionixdev.com";
 }
@@ -21,7 +17,7 @@ export const site = {
   state: "PA",
   url: resolveSiteUrl(),
   description:
-    "O Canaã Resolve conecta quem precisa resolver alguma coisa em Canaã dos Carajás a profissionais e empresas locais. Descreva o que você precisa e receba contato de quem pode resolver.",
+    "O Canaã Resolve aproxima quem precisa resolver algo em Canaã dos Carajás de profissionais e empresas que atendem a região. Descreva o que você precisa para a equipe fazer o encaminhamento inicial.",
   company: "Aionix",
   companyUrl: "https://aionixdev.com",
   email: "contato@canaaresolve.aionixdev.com",

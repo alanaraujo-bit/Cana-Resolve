@@ -5,8 +5,8 @@ import { buttonClass, Container, Eyebrow, Section } from "@/components/ui";
 
 const argumentos = [
   {
-    title: "Pedido, não anúncio",
-    text: "Chega até você a descrição de alguém que já decidiu resolver o problema — não um espaço de vitrine esperando ser visto.",
+    title: "Encaminhamento assistido",
+    text: "Nesta fase, a equipe avalia solicitações recebidas e pode encaminhá-las a parceiros compatíveis — em vez de oferecer apenas uma vitrine.",
   },
   {
     title: "Só o que é da sua área",
@@ -40,8 +40,8 @@ export function ForPros() {
               Você trabalha com serviços em Canaã?
             </h2>
             <p className="text-muted mt-4 text-[1.0625rem] leading-relaxed text-pretty">
-              Todo dia alguém na cidade procura exatamente o que você faz.
-              O Canaã Resolve existe para que esse pedido chegue até você.
+              O Canaã Resolve está formando uma rede inicial para encaminhar,
+              pela equipe, solicitações compatíveis com quem atende a cidade e a região.
             </p>
 
             <ul className="mt-9 space-y-7">
@@ -121,8 +121,8 @@ export function ForPros() {
                 </div>
 
                 <p className="text-faint mt-5 text-[0.8125rem] leading-relaxed">
-                  As vagas são limitadas por categoria para preservar o valor de
-                  quem entra primeiro. Na página de parceiros está tudo
+                  A entrada é organizada por categoria durante o lançamento.
+                  Na página de parceiros está tudo
                   explicado — inclusive o que não prometemos.
                 </p>
               </div>

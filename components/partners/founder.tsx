@@ -13,7 +13,7 @@ const transparencia = [
   },
   {
     title: "Em que ponto o produto está",
-    text: "O Canaã Resolve está em lançamento em Canaã dos Carajás. Os pedidos já chegam e são encaminhados pela nossa equipe; os recursos de acompanhamento dentro da plataforma vêm em seguida. Quem entra agora entra na construção da rede.",
+    text: "O Canaã Resolve está em lançamento em Canaã dos Carajás. O sistema já está preparado para receber solicitações e encaminhá-las pela nossa equipe nesta primeira fase; os recursos de acompanhamento dentro da plataforma vêm em seguida. Quem entra agora participa da construção da rede.",
   },
   {
     title: "O que não prometemos",

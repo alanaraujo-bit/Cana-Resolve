@@ -3,6 +3,7 @@ import { categories } from "@/lib/categories";
 import { categoryIcons, IconArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
 import { Container, Section, SectionHead } from "@/components/ui";
+import { CategoryLink } from "@/components/category-link";
 
 export function Services() {
   return (
@@ -11,8 +12,8 @@ export function Services() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <SectionHead
             eyebrow="Serviços"
-            title="As primeiras categorias abertas em Canaã"
-            lead="Começamos pelo que mais aparece no dia a dia da cidade. Escolha uma categoria ou descreva o seu caso — a gente identifica para você."
+            title="Categorias iniciais em Canaã"
+            lead="Estas são as categorias do lançamento. Escolha uma delas ou descreva o seu caso — a equipe identifica o melhor encaminhamento inicial."
           />
           <Link
             href="/solicitar"
@@ -28,7 +29,8 @@ export function Services() {
             const Icon = categoryIcons[c.id];
             return (
               <Reveal as="li" key={c.id} delay={i * 45} className="flex">
-                <Link
+                <CategoryLink
+                  category={c.id}
                   href={`/solicitar?categoria=${c.id}`}
                   className="group bg-surface hover:bg-surface-3 focus-visible:bg-surface-3 relative flex w-full flex-col gap-3 p-6 transition-colors sm:p-7"
                 >
@@ -45,7 +47,7 @@ export function Services() {
                     Pedir orçamento
                     <IconArrowRight className="h-3.5 w-3.5" />
                   </span>
-                </Link>
+                </CategoryLink>
               </Reveal>
             );
           })}

@@ -11,6 +11,8 @@ import {
   IconSearch,
 } from "@/components/icons";
 import { buttonClass, Container, cx } from "@/components/ui";
+import { CategoryLink } from "@/components/category-link";
+import { track } from "@/lib/analytics";
 
 /** Placeholder que escreve exemplos reais de pedido, um de cada vez. */
 function useTypedPlaceholder(active: boolean) {
@@ -58,6 +60,7 @@ export function Hero() {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const q = value.trim();
+    track("consumidor_request_start", { local: "busca-home", tem_descricao: Boolean(q) });
     router.push(q ? `/solicitar?descricao=${encodeURIComponent(q)}` : "/solicitar");
   }
 
@@ -102,8 +105,8 @@ export function Hero() {
           </h1>
 
           <p className="text-muted mx-auto mt-6 max-w-xl text-[1.0625rem] leading-relaxed text-pretty sm:text-lg">
-            Conte o seu problema em uma frase. O Canaã Resolve leva o seu pedido
-            até profissionais e empresas daqui que podem resolver.
+            Conte o seu problema em uma frase. A equipe usa essas informações
+            para fazer o encaminhamento inicial a profissionais e empresas que atendem a região.
           </p>
 
           <form onSubmit={onSubmit} className="mx-auto mt-9 max-w-xl">
@@ -150,13 +153,14 @@ export function Hero() {
                 const Icon = categoryIcons[c.id];
                 return (
                   <li key={c.id}>
-                    <Link
+                    <CategoryLink
+                      category={c.id}
                       href={`/solicitar?categoria=${c.id}`}
                       className="border-line bg-surface/70 text-muted hover:border-brand-line hover:text-brand-ink inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[0.8125rem] backdrop-blur-sm transition-colors"
                     >
                       <Icon className="h-4 w-4" />
                       {c.short}
-                    </Link>
+                    </CategoryLink>
                   </li>
                 );
               })}
