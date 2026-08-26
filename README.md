@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Canaã Resolve
 
-## Getting Started
+Landing page oficial do **Canaã Resolve** — a plataforma que conecta quem
+precisa resolver alguma coisa em Canaã dos Carajás (PA) a profissionais e
+empresas locais.
 
-First, run the development server:
+Uma plataforma Aionix. Domínio de produção: `canaaresolve.aionixdev.com`.
+
+## Stack
+
+- Next.js 16 (App Router, Turbopack) + React 19
+- Tailwind CSS v4 (tokens em `app/globals.css`, sem `tailwind.config.js`)
+- TypeScript
+- Sem dependências de UI ou animação: tudo é CSS + um `IntersectionObserver`
+
+## Rodando
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # build de produção
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estrutura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/
+  page.tsx              landing
+  solicitar/            fluxo de solicitação de serviço
+  entrar/               área de conta (ainda não construída, e a página diz isso)
+  termos/ privacidade/  conteúdo institucional
+  opengraph-image.tsx   card de compartilhamento (next/og)
+  robots.ts sitemap.ts
+components/
+  sections/             seções da landing
+  request-form.tsx      formulário → mensagem pronta no WhatsApp
+  site-header.tsx       header + navegação mobile
+  theme.tsx             controle de tema (claro / sistema / escuro)
+lib/
+  site.ts               nome, cidade, contato, URL
+  categories.ts         categorias, exemplos de pedido, urgências
+  whatsapp.ts           montagem dos links wa.me
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Decisões que valem manter
 
-## Learn More
+- **Sem prova social inventada.** Não há números, avaliações, depoimentos ou
+  empresas fictícias. A seção de profissionais mostra o estágio real do
+  produto e as categorias com vaga aberta.
+- **Nenhum CTA morto.** Todo botão e link leva a algo que existe. A área de
+  conta tem uma página honesta em vez de um login que não funciona.
+- **A solicitação é real.** O formulário monta a mensagem e abre a conversa
+  no WhatsApp oficial (`lib/site.ts`). Nada é gravado no site nesta versão —
+  e a página diz isso ao usuário, com consentimento desmarcado por padrão.
+- **Dois temas nativos.** As duas paletas são escritas à mão em
+  `app/globals.css`; o escuro não é a inversão do claro. O tema é aplicado
+  por um script inline no `<head>`, antes da primeira pintura.
+- **Tokens antes de classes.** Cores novas entram como variáveis em
+  `:root` / `[data-theme="dark"]` e são expostas no `@theme inline`.
 
-To learn more about Next.js, take a look at the following resources:
+## Próximos passos previstos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Descoberta de serviços, perfis de profissionais, área do parceiro, gestão de
+leads e avaliações. A base de tokens, componentes e conteúdo foi montada para
+crescer nessa direção sem refazer a identidade.

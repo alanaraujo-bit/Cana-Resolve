@@ -1,0 +1,48 @@
+import { IconChat, IconPin, IconTag } from "@/components/icons";
+import { Reveal } from "@/components/reveal";
+import { Container, Section } from "@/components/ui";
+
+const pillars = [
+  {
+    Icon: IconPin,
+    title: "Profissionais locais",
+    text: "O foco é Canaã dos Carajás. Quem atende você mora e trabalha aqui.",
+  },
+  {
+    Icon: IconChat,
+    title: "Contato direto",
+    text: "A conversa, o preço e o combinado ficam entre você e o profissional.",
+  },
+  {
+    Icon: IconTag,
+    title: "Sem taxa sobre o serviço",
+    text: "O Canaã Resolve não cobra do cliente nem fica com parte do valor do serviço.",
+  },
+];
+
+export function Trust() {
+  return (
+    <Section className="border-line bg-surface-2 border-y py-16 sm:py-20">
+      <Container>
+        <ul className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+          {pillars.map(({ Icon, title, text }, i) => (
+            <Reveal as="li" key={title} delay={i * 90}>
+              <Icon className="text-brand-ink h-6 w-6" />
+              <h3 className="text-ink mt-4 text-[1.0625rem] font-display font-semibold tracking-[-0.01em]">
+                {title}
+              </h3>
+              <p className="text-muted mt-2 text-[0.9375rem] leading-relaxed">
+                {text}
+              </p>
+            </Reveal>
+          ))}
+        </ul>
+        <p className="text-faint mt-10 max-w-3xl text-[0.8125rem] leading-relaxed">
+          O Canaã Resolve conecta pessoas a profissionais e empresas locais. A
+          execução do serviço, o preço e as garantias são responsabilidade de
+          quem foi contratado.
+        </p>
+      </Container>
+    </Section>
+  );
+}

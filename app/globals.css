@@ -1,26 +1,279 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------------------------------------------------------------
+   Canaã Resolve — tokens
+   Duas paletas autorais. O modo escuro não é a inversão do claro:
+   cada valor foi escolhido para a sua própria superfície.
+   --------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --cr-bg: #fbf9f5;
+  --cr-bg-deep: #f3efe6;
+  --cr-surface: #ffffff;
+  --cr-surface-2: #f7f4ec;
+  --cr-surface-3: #efeae0;
+
+  --cr-border: #e6e0d3;
+  --cr-border-strong: #d3ccbb;
+
+  --cr-text: #17201b;
+  --cr-text-muted: #59635c;
+  --cr-text-faint: #626d66;
+
+  --cr-brand: #0e5c42;
+  --cr-brand-hover: #0a4732;
+  --cr-brand-ink: #0b4b36;
+  --cr-brand-soft: #e6f0ea;
+  --cr-brand-line: #c4dbcd;
+  --cr-on-brand: #ffffff;
+
+  --cr-accent: #a9501d;
+  --cr-accent-ink: #8f4315;
+  --cr-accent-soft: #fbeee3;
+  --cr-accent-line: #ecd6c1;
+  --cr-on-accent: #ffffff;
+
+  --cr-danger: #a32b1c;
+  --cr-danger-soft: #fdeceb;
+
+  --cr-raised: #ffffff;
+  --cr-field: #ffffff;
+  --cr-field-border: #9b9484;
+
+  --cr-ring: #0e5c42;
+
+  --cr-band-bg: #0d5039;
+  --cr-band-text: #f2f7f4;
+  --cr-band-muted: #b6d2c4;
+  --cr-band-line: rgb(255 255 255 / 0.16);
+  --cr-band-btn-bg: #ffffff;
+  --cr-band-btn-text: #0b4b36;
+
+  --cr-shadow-sm: 0 1px 2px rgb(23 32 27 / 0.05);
+  --cr-shadow: 0 1px 2px rgb(23 32 27 / 0.04), 0 8px 24px -12px rgb(23 32 27 / 0.14);
+  --cr-shadow-lg: 0 2px 4px rgb(23 32 27 / 0.04), 0 24px 56px -28px rgb(23 32 27 / 0.22);
+
+  --cr-grain: 0.032;
+  --cr-contour: #0e5c42;
+  --cr-contour-opacity: 0.07;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --cr-bg: #0c1310;
+  --cr-bg-deep: #080d0b;
+  --cr-surface: #121d18;
+  --cr-surface-2: #17241e;
+  --cr-surface-3: #1d2c25;
+
+  --cr-border: #253429;
+  --cr-border-strong: #35473c;
+
+  --cr-text: #e9efea;
+  --cr-text-muted: #a1aea6;
+  --cr-text-faint: #8b998f;
+
+  --cr-brand: #4ecb92;
+  --cr-brand-hover: #69d9a5;
+  --cr-brand-ink: #7ae0b0;
+  --cr-brand-soft: #12291f;
+  --cr-brand-line: #264635;
+  --cr-on-brand: #06130d;
+
+  --cr-accent: #e59a5c;
+  --cr-accent-ink: #f0ae74;
+  --cr-accent-soft: #2a1c12;
+  --cr-accent-line: #48301d;
+  --cr-on-accent: #21120a;
+
+  --cr-danger: #f08b7e;
+  --cr-danger-soft: #2b1512;
+
+  --cr-raised: #26382e;
+  --cr-field: #0e1713;
+  --cr-field-border: #566a5f;
+
+  --cr-ring: #4ecb92;
+
+  --cr-band-bg: #0f221a;
+  --cr-band-text: #e9efea;
+  --cr-band-muted: #9cbaab;
+  --cr-band-line: rgb(255 255 255 / 0.1);
+  --cr-band-btn-bg: #4ecb92;
+  --cr-band-btn-text: #06130d;
+
+  --cr-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --cr-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --cr-shadow-lg: 0 2px 4px rgb(0 0 0 / 0.4), 0 24px 56px -28px rgb(0 0 0 / 0.75);
+
+  --cr-grain: 0.05;
+  --cr-contour: #7ae0b0;
+  --cr-contour-opacity: 0.075;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--cr-bg);
+  --color-bg-deep: var(--cr-bg-deep);
+  --color-surface: var(--cr-surface);
+  --color-surface-2: var(--cr-surface-2);
+  --color-surface-3: var(--cr-surface-3);
+
+  --color-raised: var(--cr-raised);
+  --color-field: var(--cr-field);
+  --color-field-line: var(--cr-field-border);
+
+  --color-line: var(--cr-border);
+  --color-line-strong: var(--cr-border-strong);
+
+  --color-ink: var(--cr-text);
+  --color-muted: var(--cr-text-muted);
+  --color-faint: var(--cr-text-faint);
+
+  --color-brand: var(--cr-brand);
+  --color-brand-hover: var(--cr-brand-hover);
+  --color-brand-ink: var(--cr-brand-ink);
+  --color-brand-soft: var(--cr-brand-soft);
+  --color-brand-line: var(--cr-brand-line);
+  --color-on-brand: var(--cr-on-brand);
+
+  --color-accent: var(--cr-accent);
+  --color-accent-ink: var(--cr-accent-ink);
+  --color-accent-soft: var(--cr-accent-soft);
+  --color-accent-line: var(--cr-accent-line);
+  --color-on-accent: var(--cr-on-accent);
+
+  --color-band: var(--cr-band-bg);
+  --color-band-text: var(--cr-band-text);
+  --color-band-muted: var(--cr-band-muted);
+  --color-band-line: var(--cr-band-line);
+  --color-band-btn: var(--cr-band-btn-bg);
+  --color-band-btn-text: var(--cr-band-btn-text);
+
+  --color-danger: var(--cr-danger);
+  --color-danger-soft: var(--cr-danger-soft);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+
+  --shadow-card: var(--cr-shadow);
+  --shadow-lift: var(--cr-shadow-lg);
+  --shadow-hair: var(--cr-shadow-sm);
+
+  --radius-card: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--cr-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--cr-bg);
+    color: var(--cr-text);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--cr-brand);
+    color: var(--cr-on-brand);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cr-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  ::placeholder {
+    color: var(--cr-text-faint);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Grão fino: dá matéria ao papel/superfície sem custo de imagem. */
+  .cr-grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--cr-grain);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: var(--cr-grain-blend, multiply);
+  }
+
+  [data-theme="dark"] .cr-grain::after {
+    --cr-grain-blend: overlay;
+  }
+
+  /* Curvas de nível — referência à topografia da região, discreta. */
+  .cr-contour {
+    background-image: repeating-radial-gradient(
+      circle at 82% 12%,
+      color-mix(in oklab, var(--cr-contour) calc(var(--cr-contour-opacity) * 100%), transparent) 0 1px,
+      transparent 1px 38px
+    );
+  }
+
+  .cr-rule {
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      var(--cr-border-strong) 12%,
+      var(--cr-border-strong) 88%,
+      transparent
+    );
+  }
 }
+
+/* Revelação em scroll — desligada por completo em movimento reduzido. */
+.cr-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--cr-delay, 0ms);
+}
+
+.cr-reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .cr-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
