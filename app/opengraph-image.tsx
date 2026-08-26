@@ -92,7 +92,7 @@ export default function OgImage() {
           >
             Canaã dos Carajás — PA
           </div>
-          <div style={{ display: "flex", color: "#8fb3a2" }}>canaaresolve.aionixdev.com</div>
+          <div style={{ display: "flex", color: "#8fb3a2" }}>{new URL(site.url).host}</div>
         </div>
       </div>
     ),

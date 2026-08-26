@@ -42,3 +42,6 @@ next-env.d.ts
 
 # ferramentas locais do agente (caminhos absolutos da máquina)
 /.codex
+
+.vercel
+.env*
