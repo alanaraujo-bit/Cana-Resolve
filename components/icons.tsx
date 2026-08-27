@@ -250,6 +250,25 @@ export function IconTarget(props: IconProps) {
   );
 }
 
+export function IconHome(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6 10v8.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V10" />
+      <path d="M10 19.5V14h4v5.5" />
+    </Base>
+  );
+}
+
+export function IconBell(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M6 10.5a6 6 0 0 1 12 0c0 3.4.9 5 1.8 5.9H4.2c.9-.9 1.8-2.5 1.8-5.9Z" />
+      <path d="M10.2 19.5a1.9 1.9 0 0 0 3.6 0" />
+    </Base>
+  );
+}
+
 export function IconWhatsApp(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...props}>

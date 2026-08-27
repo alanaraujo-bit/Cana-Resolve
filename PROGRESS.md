@@ -5,6 +5,98 @@ inversa: o mais recente primeiro.
 
 ---
 
+## 27/08/2026 — Portal do Morador e Portal do Parceiro
+
+O HANDOFF.md desta sessão trazia um item de segurança como prioridade máxima
+(§3.1): o login dos dois portais era um código curto + telefone, sem limite de
+tentativas, e o telefone de um morador compartilha DDD/prefixo com o resto da
+cidade — uma senha adivinhável por força bruta em minutos.
+
+### O que mudou na autenticação
+
+- **Morador deixou de ter login.** Não existe mais código nem formulário. Ao
+  enviar uma solicitação, a resposta já traz um link assinado
+  (`/acesso?t=...`) que abre `/acompanhar` autenticado — sem sessão em banco,
+  sem senha para vazar ou adivinhar. A assinatura é HMAC-SHA256
+  (`CR_SESSION_SECRET`), comparada com `timingSafeEqual`, com validade de dias
+  configurável. A tabela `resident_sessions` foi removida (migração `0003`).
+- **Parceiro manteve login por código + telefone** (é uma credencial que a
+  empresa já usa para outras coisas), mas agora com limite duplo: por IP
+  (`10/5min`) e por código (`5/15min`), usando o mesmo `rateLimit()` que já
+  protegia `/ops/entrar`.
+- **Vazamento mais sutil, achado ao revisar o rascunho anterior:**
+  `partnerOpportunity()` devolvia nome e WhatsApp do morador na resposta do
+  servidor mesmo antes do parceiro demonstrar interesse — a tela só escondia o
+  dado, o que não é proteção nenhuma contra alguém lendo a resposta da rede.
+  Corrigido na camada de dados: os campos só saem do banco quando o status da
+  oportunidade já passou por `respondeu` (`opportunityContactUnlocked`, em
+  `lib/domain/states.ts`, é agora a fonte única dessa regra nos dois sentidos).
+- `setPartnerOpportunityStatus()` ganhou uma lista explícita do que o parceiro
+  pode se autodeclarar (`partnerDrivableOpportunityStatuses`) — estados só do
+  operador, como `sem_resposta`, não são alcançáveis por essa rota.
+
+### Os dois portais foram reescritos
+
+`app/(morador)/acompanhar/*` e `app/(partner)/parceiro/*` — shell compartilhado
+em `components/portal/shell.tsx`, ícones e formulário de acesso próprios. O
+diretório antigo `minhas-solicitacoes` e `components/audience/` saíram.
+
+Um bug de UX real apareceu só ao olhar o print: a Home do parceiro dizia
+"Oportunidades pausadas" para um parceiro cujo status verdadeiro era
+`aguardando_lancamento` (nunca pausou nada — nunca chegou a operar). Uma
+afirmação falsa para uma pessoa real. Corrigido com
+`partnerAvailabilityBadge()`, que cobre os cinco estados possíveis sem
+generalizar dois deles em um só rótulo.
+
+### PWA para os dois portais
+
+Replicado o padrão que já existia para `/ops`: manifest e ícones próprios por
+área (`app/manifest.ts`, `app/parceiro-app.webmanifest/`), com
+`viewportFit: "cover"` no layout raiz — sem isso, `env(safe-area-inset-*)`
+não resolve e o padding de fundo em telas com notch não aparece.
+`public/sw.js` cacheia só `/_next/static/` (nunca HTML, RSC ou resposta de
+API, que variam por cookie).
+
+### O que a verificação visual pegou e o teste automatizado não pegaria
+
+`npm run inspect` — que abre cada rota de verdade num Chromium headless, em
+4 larguras × 2 temas, e mede overflow real — encontrou até 403px de scroll
+horizontal em `/parceiro/oportunidades` no mobile. A causa: o shell usava
+`grid` incondicional; na única coluna do mobile, sem `grid-template-columns`
+explícito, o `<main>` cresceu até o `max-content` da descrição mais longa de
+um pedido. Corrigido tornando o `grid` condicional a partir de `lg:`. Um
+resíduo de ~7px nos headers em 320px também apareceu e foi resolvido com gaps
+menores abaixo do breakpoint `sm:`. Nenhum dos dois aparece em `tsc` ou em
+teste unitário — só em navegador.
+
+### Verificação feita
+
+- `npm run typecheck`, `npm run lint`, `npm run build`: limpos.
+- `npm test`: 43/43 (3 novas, exercitando diretamente a regra de
+  "dado pessoal só depois de interesse").
+- `npm run smoke`: 21/21 contra servidor de produção local — inclui o link de
+  acesso do morador e a privacidade do portal do parceiro.
+- `npm run inspect` (autenticado, Operations + Parceiro + Morador) e
+  `npm run inspect -- --publico`: zero overflow, zero erro de console, zero
+  resposta com falha, nas duas rodadas finais.
+- Dados de demonstração usados durante a verificação foram apagados do banco
+  (`npm run demo:limpar`) antes de publicar — o banco de produção não deve
+  carregar parceiro, prospect ou solicitação fictícios.
+
+### Fora do escopo desta sessão, de propósito
+
+O HANDOFF.md já registrava (§3.5) que o ecossistema completo descrito para
+esta fase do produto é maior do que "portal completo agora" — a decisão
+tomada foi entregar os dois portais com a base de segurança correta, não a
+visão inteira de uma vez. Ficaram fora, sem tentativa: motor de notificação
+via WhatsApp/push (as notificações hoje só existem dentro do portal), marcar
+notificação como lida, revogação de link por morador, métricas de tempo de
+resposta do parceiro e funil do morador em `/ops/analytics`, e qualquer
+automação de envio. Nada disso foi esquecido — foi adiado, e continua
+registrado em `BLOCKERS.md`.
+
+---
+
 ## 26/08/2026 — Operational Core
 
 O Canaã Resolve deixou de ser só um site. Existe agora um sistema onde a

@@ -50,6 +50,9 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   authors: [{ name: site.company, url: site.companyUrl }],
   creator: site.company,
+  // Instalado, o site (e o acompanhamento do morador, que vive sob o mesmo
+  // escopo) abre em tela cheia no iOS, sem a barra do Safari.
+  appleWebApp: { capable: true, statusBarStyle: "default", title: site.name },
 };
 
 export const viewport: Viewport = {
@@ -58,6 +61,10 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#0c1310" },
   ],
   colorScheme: "light dark",
+  // Sem isto, `env(safe-area-inset-bottom)` resolve para 0 — a barra fixa do
+  // mobile em /parceiros e a navegação inferior do Portal do Morador ficam
+  // sob a barra de gestos em vez de acima dela.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

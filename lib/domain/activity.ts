@@ -157,7 +157,7 @@ export async function applyTransition(options: TransitionOptions) {
           recipientId: options.id,
           title: copy.title,
           body: copy.body,
-          href: `/minhas-solicitacoes/${options.id}`,
+          href: `/acompanhar/${options.id}`,
         });
       }
     }
@@ -172,7 +172,7 @@ export async function applyTransition(options: TransitionOptions) {
           await tx.insert(notifications).values({ recipientType: "partner", recipientId: opportunity.partnerId, title: "Nova oportunidade", body: "Há um pedido compatível aguardando sua resposta.", href: `/parceiro/oportunidades/${options.id}` });
         }
         if (options.to === "respondeu" || options.to === "contato_realizado") {
-          await tx.insert(notifications).values({ recipientType: "resident", recipientId: opportunity.requestId, title: options.to === "respondeu" ? "Profissional encontrado" : "Contato em andamento", body: options.to === "respondeu" ? "Um profissional demonstrou interesse em ajudar." : "Um profissional registrou que entrou em contato.", href: `/minhas-solicitacoes/${opportunity.requestId}` });
+          await tx.insert(notifications).values({ recipientType: "resident", recipientId: opportunity.requestId, title: options.to === "respondeu" ? "Profissional encontrado" : "Contato em andamento", body: options.to === "respondeu" ? "Um profissional demonstrou interesse em ajudar." : "Um profissional registrou que entrou em contato.", href: `/acompanhar/${opportunity.requestId}` });
         }
       }
     }

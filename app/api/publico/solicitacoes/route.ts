@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { grantResidentAccess } from "@/lib/auth/audience";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { receiveServiceRequest } from "@/lib/domain/intake";
+import { normalizePhone } from "@/lib/domain/phone";
 import { fieldErrors, serviceRequestSchema } from "@/lib/forms";
 import { callerKey, rateLimit } from "@/lib/rate-limit";
 
@@ -44,7 +46,20 @@ export async function POST(request: Request) {
 
   try {
     const result = await receiveServiceRequest(parsed.data);
-    return NextResponse.json({ ok: true, codigo: result.code }, { status: 201 });
+
+    // Concede acesso a este navegador (o cookie sai no Set-Cookie da resposta)
+    // e devolve o link assinado, para quem acabou de pedir ajuda poder abrir o
+    // acompanhamento de qualquer aparelho depois. `token` vem `null` só quando
+    // `CR_SESSION_SECRET` não está configurado — nesse caso a gravação e o
+    // WhatsApp continuam intactos, só não existe link para mostrar.
+    const whatsapp = normalizePhone(parsed.data.telefone);
+    const token = whatsapp ? await grantResidentAccess(whatsapp) : null;
+    // A origem vem da própria requisição, não de uma constante — assim o link
+    // funciona igual em produção, preview e `npm run start` local.
+    const origem = new URL(request.url).origin;
+    const link = token ? `${origem}/acesso?t=${token}&r=${result.id}` : null;
+
+    return NextResponse.json({ ok: true, codigo: result.code, link }, { status: 201 });
   } catch (error) {
     // Nada de dado pessoal no log: só o que ajuda a entender a falha.
     console.error(

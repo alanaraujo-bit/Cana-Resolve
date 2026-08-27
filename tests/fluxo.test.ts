@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db, getPool } from "@/lib/db/client";
 import * as schema from "@/lib/db/schema";
 import { timelineOf } from "@/lib/domain/activity";
+import { partnerOpportunity, setPartnerOpportunityStatus } from "@/lib/domain/audience";
 import { betaStatus } from "@/lib/domain/beta";
 import { catalogSeed } from "@/lib/domain/catalog-seed";
 import { receivePartnerApplication, receiveServiceRequest } from "@/lib/domain/intake";
@@ -421,6 +422,73 @@ describe("do pedido do morador ao desfecho", () => {
     assert.deepEqual(
       pedidos.map((p) => p.code),
       ["CR-00001", "CR-00002"],
+    );
+  });
+});
+
+describe("Portal do Parceiro: dado pessoal do morador só depois de interesse", () => {
+  // HANDOFF.md §3.1: a versão original de `partnerOpportunity()` devolvia
+  // nome e WhatsApp do morador para qualquer parceiro que abrisse a
+  // oportunidade, mesmo antes de demonstrar interesse — a tela escondia o
+  // dado, mas ele já tinha atravessado para o componente de servidor, e
+  // qualquer coisa que chegue até ali está no payload que o navegador lê.
+  let partnerId = "";
+  let opportunityId = "";
+
+  before(async () => {
+    const [p] = await db.select().from(schema.partners);
+    partnerId = p.id;
+
+    const pedido = await receiveServiceRequest({
+      descricao: "Ar-condicionado da sala fazendo barulho estranho.",
+      categoria: "ar-condicionado",
+      nome: "Fixture de Privacidade",
+      telefone: "94990001111",
+      bairro: null,
+      urgencia: null,
+      consentimento: true,
+      origem: null,
+    });
+
+    await createOpportunities({
+      requestId: pedido.id,
+      partnerIds: [partnerId],
+      actor: operador,
+      jaEnviado: true,
+    });
+    const [oportunidade] = await db
+      .select()
+      .from(schema.opportunities)
+      .where(eq(schema.opportunities.requestId, pedido.id));
+    opportunityId = oportunidade.id;
+  });
+
+  it('antes de "Tenho interesse", o parceiro não recebe nome nem WhatsApp', async () => {
+    const item = await partnerOpportunity(partnerId, opportunityId);
+    assert.equal(item?.contactAllowed, false);
+    assert.equal(item?.residentName, null);
+    assert.equal(item?.residentWhatsapp, null);
+  });
+
+  it('depois de "Tenho interesse", os dois campos aparecem', async () => {
+    await setPartnerOpportunityStatus({ partnerId, opportunityId, to: "respondeu" });
+
+    const item = await partnerOpportunity(partnerId, opportunityId);
+    assert.equal(item?.contactAllowed, true);
+    assert.equal(item?.residentName, "Fixture de Privacidade");
+    assert.equal(item?.residentWhatsapp, "5594990001111");
+  });
+
+  it("o parceiro não pode se autodeclarar num estado que não é dele para escolher", async () => {
+    await assert.rejects(
+      () => setPartnerOpportunityStatus({ partnerId, opportunityId, to: "sem_resposta" }),
+      /não pode ser feita por aqui/,
+      '"sem resposta" é a operação registrando silêncio, não algo que o parceiro relata',
+    );
+    await assert.rejects(
+      () => setPartnerOpportunityStatus({ partnerId, opportunityId, to: "selecionado" }),
+      /não pode ser feita por aqui/,
+      "o parceiro não pode retroceder a oportunidade para o início do ciclo",
     );
   });
 });

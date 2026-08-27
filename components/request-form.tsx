@@ -79,6 +79,9 @@ export function RequestForm({
   const [sent, setSent] = useState(false);
   /** Código do pedido (CR-00021), quando o registro chega a tempo. */
   const [codigo, setCodigo] = useState<string | null>(null);
+  /** O link assinado de acompanhamento — chega junto do código, um instante depois. */
+  const [linkAcompanhar, setLinkAcompanhar] = useState<string | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState(false);
   const started = useRef(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -179,7 +182,10 @@ export function RequestForm({
       bairro: local || null,
       urgencia,
       consentimento: consent,
-    }).then(setCodigo);
+    }).then((resultado) => {
+      setCodigo(resultado?.codigo ?? null);
+      setLinkAcompanhar(resultado?.link ?? null);
+    });
 
     setSent(true);
   }
@@ -229,9 +235,28 @@ export function RequestForm({
               <span className="text-ink font-medium tabular-nums">{codigo}</span>.
               Guarde esse número se precisar falar com a gente.
             </p>
-            <a href="/acompanhar" className="text-brand-ink mt-3 inline-block text-sm font-semibold underline underline-offset-4">
-              Acompanhar esta solicitação
-            </a>
+            {linkAcompanhar ? (
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <a
+                  href={linkAcompanhar}
+                  className="text-brand-ink text-sm font-semibold underline underline-offset-4"
+                >
+                  Acompanhar esta solicitação
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(linkAcompanhar).then(() => {
+                      setLinkCopiado(true);
+                      setTimeout(() => setLinkCopiado(false), 2500);
+                    });
+                  }}
+                  className="text-faint text-[0.75rem] underline underline-offset-4 hover:text-muted"
+                >
+                  {linkCopiado ? "Link copiado" : "Copiar link para abrir de outro aparelho"}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">

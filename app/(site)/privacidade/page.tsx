@@ -14,7 +14,7 @@ export default function PrivacidadePage() {
     <LegalPage
       eyebrow="Institucional"
       title="Política de Privacidade"
-      updatedAt="26 de agosto de 2026"
+      updatedAt="27 de agosto de 2026"
     >
       <section>
         <h2>Em uma frase</h2>
@@ -84,14 +84,41 @@ export default function PrivacidadePage() {
         <h2>Com quem compartilhamos</h2>
         <p>
           Com os profissionais e empresas parceiras da categoria do seu pedido,
-          para que possam entrar em contato — e somente com aqueles a quem o
-          pedido é efetivamente encaminhado. O parceiro recebe o problema, o
-          bairro, a urgência, o seu primeiro nome e o seu WhatsApp: o necessário
-          para atender, e nada além.
+          em duas etapas. Primeiro, só o necessário para uma empresa decidir se
+          consegue atender: o código do pedido, o problema, a categoria, o
+          bairro e a urgência — sem o seu nome e sem o seu WhatsApp. Seu nome e
+          seu WhatsApp só são
+          liberados para uma empresa depois que ela confirma, na própria
+          plataforma, que tem interesse em atender aquele pedido específico.
+          Uma empresa que não demonstrou esse interesse nunca chega a ver esses
+          dois dados.
         </p>
         <p>
           Não vendemos os seus dados e não os usamos para publicidade de
           terceiros.
+        </p>
+      </section>
+
+      <section>
+        <h2>Como você acompanha o seu pedido</h2>
+        <p>
+          Não é preciso criar conta nem senha. Depois de enviar uma solicitação,
+          a tela de confirmação mostra um link de acompanhamento — o mesmo link
+          continua funcionando por bastante tempo (cerca de dois anos), em
+          qualquer aparelho onde você o abrir, sem pedir para entrar de novo.
+        </p>
+        <p>
+          Esse link é uma credencial: quem o tiver em mãos consegue ver o
+          histórico de solicitações associado ao seu WhatsApp. Trate-o como
+          trataria uma senha — evite encaminhá-lo. Hoje não temos uma forma de
+          revogar apenas o seu link individualmente; se ele for parar em mãos
+          erradas, avise no WhatsApp {site.whatsappDisplay} para decidirmos
+          juntos o que fazer.
+        </p>
+        <p>
+          As empresas parceiras, por sua vez, entram com um código próprio e o
+          WhatsApp cadastrado na análise da equipe — uma sessão distinta,
+          restrita ao perfil e às oportunidades daquela empresa.
         </p>
       </section>
 
@@ -120,10 +147,16 @@ export default function PrivacidadePage() {
       <section>
         <h2>Mudanças</h2>
         <p>
-          Esta página foi atualizada em 26 de agosto de 2026, quando o{" "}
-          {site.name} passou a guardar as solicitações e os cadastros na própria
-          plataforma. Antes disso, o conteúdo dos formulários existia apenas na
-          conversa do WhatsApp.
+          Em 27 de agosto de 2026, esta página passou a descrever o link de
+          acompanhamento do morador e a sessão do parceiro, junto da correção
+          de quando o nome e o WhatsApp do morador são liberados para uma
+          empresa parceira — ver &ldquo;Com quem compartilhamos&rdquo; e
+          &ldquo;Como você acompanha o seu pedido&rdquo; acima.
+        </p>
+        <p>
+          Antes, em 26 de agosto de 2026, o {site.name} havia passado a guardar
+          as solicitações e os cadastros na própria plataforma — até então, o
+          conteúdo dos formulários existia apenas na conversa do WhatsApp.
         </p>
         <p>
           Se algo mudar de novo no que coletamos, onde guardamos ou com quem

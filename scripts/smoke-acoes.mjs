@@ -17,6 +17,11 @@
  * telefones reservados, e são apagados no fim. Nenhum dado real é tocado —
  * por isso é seguro rodar contra produção, que é onde a verificação vale.
  *
+ * A limpeza roda no início de cada execução (apaga sobra da anterior) e no
+ * fim da execução atual. Se o processo morrer no meio — queda de rede, Ctrl+C,
+ * o runner indo abaixo — o parceiro fixture (`PA-TESTE`) fica visível em
+ * `/ops/parceiros` até a próxima execução (ou um `demo:limpar`) passar.
+ *
  *   npm run smoke
  *   INSPECT_BASE=https://canaaresolve.aionixdev.com npm run smoke
  */
@@ -34,7 +39,10 @@ const PORTA = 9339;
 /** Faixa reservada para verificação. Nunca vai existir de verdade em Canaã. */
 const TEL_MORADOR = "(94) 90000-0009";
 const TEL_EMPRESA = "(94) 90000-0008";
-const DIGITOS = ["5594900000009", "5594900000008"];
+const TEL_PARCEIRO = "(94) 90000-0007";
+const DIGITOS = ["5594900000009", "5594900000008", "5594900000007", "5594900000005"];
+const WHATSAPP_MORADOR_FIXTURE = "5594900000005";
+const CODIGO_PARCEIRO_FIXTURE = "PA-TESTE";
 
 function env() {
   const texto = readFileSync(".env.local", "utf8");
@@ -64,6 +72,29 @@ async function esperar(consulta, valores, ok, tentativas = 30) {
   return null;
 }
 
+/**
+ * O fixture do Portal do Parceiro não nasce do formulário público — não existe
+ * caminho público para "solicitação encaminhada a um parceiro específico".
+ * Por isso ele é montado direto no banco, com o mesmo código reservado
+ * (`PA-TESTE`, que a sequência real de códigos numéricos nunca produz) nas
+ * duas pontas: cria antes de rodar (limpa sobra de uma execução anterior) e
+ * depois (limpa o que este teste criou).
+ */
+async function faxinaParceiro() {
+  await sql.query(
+    `delete from activities where subject_id in (
+       select id from opportunities where partner_id in (
+         select id from partners where code = $1))`,
+    [CODIGO_PARCEIRO_FIXTURE],
+  );
+  await sql.query(
+    `delete from opportunities where partner_id in (select id from partners where code = $1)`,
+    [CODIGO_PARCEIRO_FIXTURE],
+  );
+  await sql.query("delete from service_requests where whatsapp = $1", [WHATSAPP_MORADOR_FIXTURE]);
+  await sql.query("delete from partners where code = $1", [CODIGO_PARCEIRO_FIXTURE]);
+}
+
 async function faxina() {
   // Ordem importa: histórico e encaminhamentos antes dos registros que eles
   // apontam. `cascade` cuidaria, mas ser explícito deixa claro o que sai.
@@ -84,6 +115,10 @@ async function faxina() {
   await sql.query("delete from prospects where whatsapp = any($1)", [DIGITOS]);
 }
 
+// Nesta ordem: faxinaParceiro() limpa atividades que apontam para a
+// oportunidade antes de faxina() apagar a solicitação e levar a oportunidade
+// junto pelo cascade — na ordem inversa, a atividade ficaria órfã no banco.
+await faxinaParceiro();
 await faxina();
 
 /* ---------------------------------------------------------------
@@ -269,6 +304,40 @@ if (pedido) {
 }
 
 /* ---------------------------------------------------------------
+   1.1 O link assinado de /acompanhar — sem login, sem formulário
+   --------------------------------------------------------------- */
+
+if (pedido) {
+  // O POST de /api/publico/solicitacoes grava o cookie no mesmo navegador
+  // (Set-Cookie da resposta): sem passar pelo link, /acompanhar já deveria
+  // reconhecer este aparelho e mostrar o pedido que acabou de nascer.
+  await abrir("/acompanhar");
+  const mostrouPedido = await js(
+    `document.body.innerText.includes(${JSON.stringify(pedido[0].code)})`,
+  );
+  conferir(
+    "o cookie do POST já autentica este navegador em /acompanhar",
+    mostrouPedido,
+    mostrouPedido ? pedido[0].code : "solicitação não apareceu",
+  );
+}
+
+// Sem cookie nenhum (perfil novo), /acompanhar não pode oferecer formulário
+// de código+telefone — não existe login de morador. Ver HANDOFF.md §3.1/§4.2.
+// O cookie é httpOnly, então só o protocolo de depuração consegue apagá-lo —
+// `document.cookie` não alcança.
+await envia("Network.clearBrowserCookies");
+await abrir("/acompanhar");
+conferir(
+  "sem cookie, /acompanhar não oferece formulário de código+telefone",
+  await js(`!document.querySelector('#codigo')`),
+);
+conferir(
+  "sem cookie, /acompanhar explica como conseguir o link em vez de pedir login",
+  await js(`document.body.innerText.toLowerCase().includes('link de acompanhamento')`),
+);
+
+/* ---------------------------------------------------------------
    2. /parceiros — o cadastro da empresa
    --------------------------------------------------------------- */
 
@@ -305,6 +374,82 @@ conferir(
   "o cadastro entrou no funil comercial",
   Boolean(cadastro?.[0]?.prospect_id),
   cadastro?.[0]?.prospect_id ? "prospect criado" : "sem prospect",
+);
+
+/* ---------------------------------------------------------------
+   2.1 Portal do Parceiro — login, e a oportunidade só revela o
+   contato do morador depois de "Tenho interesse"
+   --------------------------------------------------------------- */
+
+const NOME_MORADOR_FIXTURE = "Verificação Automática Portal Parceiro";
+
+const { rows: categoriaRows } = await sql.query("select id from categories limit 1");
+const categoriaId = categoriaRows[0]?.id ?? null;
+
+const { rows: parceiroRows } = await sql.query(
+  `insert into partners (code, name, whatsapp, status, serves_whole_city)
+   values ($1, 'Empresa de Verificação Automática', $2, 'ativo', true)
+   returning id`,
+  [CODIGO_PARCEIRO_FIXTURE, DIGITOS[2]],
+);
+const parceiroId = parceiroRows[0].id;
+
+const { rows: pedidoParceiroRows } = await sql.query(
+  `insert into service_requests (code, description, category_id, resident_name, whatsapp, status)
+   values ('CR-TESTE', 'Verificação automática: preciso de um profissional.', $1, $2, $3, 'encaminhada')
+   returning id`,
+  [categoriaId, NOME_MORADOR_FIXTURE, WHATSAPP_MORADOR_FIXTURE],
+);
+const pedidoParceiroId = pedidoParceiroRows[0].id;
+
+const { rows: oportunidadeRows } = await sql.query(
+  `insert into opportunities (request_id, partner_id, status, sent_at)
+   values ($1, $2, 'encaminhado', now())
+   returning id`,
+  [pedidoParceiroId, parceiroId],
+);
+const oportunidadeId = oportunidadeRows[0].id;
+
+await abrir("/parceiro/entrar");
+await js(preencher("#codigo", CODIGO_PARCEIRO_FIXTURE));
+await js(preencher("#telefone", TEL_PARCEIRO));
+await js(`document.querySelector('form').requestSubmit()`);
+for (let i = 0; i < 40; i++) {
+  await sleep(300);
+  if (!(await js("location.pathname.includes('entrar')"))) break;
+}
+conferir("o login do parceiro (código + WhatsApp) funciona", !(await js("location.pathname.includes('entrar')")));
+
+await abrir(`/parceiro/oportunidades/${oportunidadeId}`);
+const escondeuAntes = await js(
+  `!document.body.innerText.includes(${JSON.stringify(NOME_MORADOR_FIXTURE)})`,
+);
+conferir(
+  "antes do interesse, a tela não expõe o nome do morador",
+  escondeuAntes,
+  escondeuAntes ? "" : "o nome apareceu antes da hora — regressão do que HANDOFF §3.1 pedia para corrigir",
+);
+
+const clicouInteresse = await js(`(() => {
+  const btn = [...document.querySelectorAll('button')]
+    .find((b) => /tenho interesse/i.test(b.textContent));
+  if (!btn) return false;
+  btn.click();
+  return true;
+})()`);
+conferir("o botão \"Tenho interesse\" existe e responde", clicouInteresse);
+
+const respondeu = await esperar(
+  "select status from opportunities where id = $1",
+  [oportunidadeId],
+  (r) => r[0]?.status === "respondeu",
+);
+conferir("aceitar a oportunidade muda o estado no banco", Boolean(respondeu));
+
+await abrir(`/parceiro/oportunidades/${oportunidadeId}`);
+conferir(
+  "depois do interesse, o contato do morador aparece",
+  await js(`document.body.innerText.includes(${JSON.stringify(NOME_MORADOR_FIXTURE)})`),
 );
 
 /* ---------------------------------------------------------------
@@ -377,14 +522,16 @@ if (pedido) {
 
 ws.close();
 edge.kill();
+await faxinaParceiro();
 await faxina();
 
 const sobrou = await sql.query(
   `select
      (select count(*) from service_requests where whatsapp = any($1))::int +
      (select count(*) from partner_applications where whatsapp = any($1))::int +
-     (select count(*) from prospects where whatsapp = any($1))::int as n`,
-  [DIGITOS],
+     (select count(*) from prospects where whatsapp = any($1))::int +
+     (select count(*) from partners where code = $2)::int as n`,
+  [DIGITOS, CODIGO_PARCEIRO_FIXTURE],
 );
 conferir("nada de teste ficou no banco", sobrou.rows[0].n === 0, `${sobrou.rows[0].n} restante(s)`);
 

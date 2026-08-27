@@ -90,22 +90,13 @@ export const sessions = pgTable(
    --------------------------------------------------------------- */
 
 /**
- * Um morador não precisa criar uma conta antes de pedir ajuda. Depois, ele
- * confirma que possui o código do pedido e o mesmo WhatsApp informado no
- * atendimento; a sessão abaixo dá acesso somente às solicitações daquele
- * telefone. O token cru nunca é persistido.
+ * Um morador não cria conta. O acesso é um link assinado (HMAC, verificado em
+ * `lib/auth/audience.ts`), enviado depois do pedido — não uma linha aqui.
+ * Existiu uma tabela `resident_sessions` (código + WhatsApp, sem freio de
+ * tentativas); foi removida por ser exatamente a superfície de força bruta
+ * descrita em HANDOFF.md §3.1, e um link assinado não precisa de estado no
+ * banco para ser verificado.
  */
-export const residentSessions = pgTable(
-  "resident_sessions",
-  {
-    tokenHash: text("token_hash").primaryKey(),
-    whatsapp: text("whatsapp").notNull(),
-    createdAt: createdAt(),
-    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  },
-  (t) => [index("resident_sessions_whatsapp_idx").on(t.whatsapp)],
-);
 
 /** Sessões do Partner App: uma empresa só pode ver o próprio perfil e oportunidades. */
 export const partnerSessions = pgTable(

@@ -15,10 +15,12 @@
  *   node scripts/inspect.mjs --rota=/ops/comercial
  */
 import { spawn } from "node:child_process";
+import { createHmac } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import pg from "pg";
 
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const BASE = process.env.INSPECT_BASE ?? "http://localhost:3000";
@@ -38,6 +40,10 @@ const ROTAS_PUBLICAS = [
   "/entrar",
   "/termos",
   "/privacidade",
+  // Sem sessão nenhuma — nem formulário de login (o morador não tem um) nem
+  // dado nenhum ainda. Cobertas aqui porque não dependem de fixture nenhuma.
+  "/acompanhar",
+  "/parceiro/entrar",
 ];
 
 const ROTAS = rotaUnica
@@ -60,14 +66,38 @@ const ROTAS = rotaUnica
 const LARGURAS = rotaUnica ? [390, 1440] : [320, 390, 768, 1440];
 const TEMAS = ["light", "dark"];
 
+function lerEnvLocal() {
+  try {
+    return readFileSync(".env.local", "utf8");
+  } catch {
+    return "";
+  }
+}
+
 function credenciais() {
-  const env = readFileSync(".env.local", "utf8");
+  const env = lerEnvLocal();
   const pega = (chave) =>
     env.match(new RegExp(`^${chave}=(.*)$`, "m"))?.[1]?.replace(/^["']|["']$/g, "");
   return {
     email: process.env.OPS_EMAIL ?? pega("OPS_EMAIL"),
     senha: process.env.OPS_SENHA ?? pega("OPS_SENHA"),
+    databaseUrl: process.env.DATABASE_URL ?? pega("DATABASE_URL"),
+    sessionSecret: process.env.CR_SESSION_SECRET ?? pega("CR_SESSION_SECRET"),
   };
+}
+
+/**
+ * O mesmo HMAC de `lib/auth/audience.ts`, reimplementado aqui porque este
+ * script roda como Node puro — sem o runtime do Next, que é onde
+ * `server-only` faria sentido. Serve só para montar o cookie de morador sem
+ * precisar passar pelo formulário de `/solicitar` a cada inspeção.
+ */
+function assinarTokenMorador(whatsapp, segredo) {
+  const payload = Buffer.from(
+    JSON.stringify({ w: whatsapp, exp: Date.now() + 730 * 86_400_000 }),
+  ).toString("base64url");
+  const assinatura = createHmac("sha256", segredo).update(payload).digest("base64url");
+  return `${payload}.${assinatura}`;
 }
 
 /* ---------------------------------------------------------------
@@ -223,7 +253,7 @@ async function medir(cdp) {
    Execução
    --------------------------------------------------------------- */
 
-const { email, senha } = credenciais();
+const { email, senha, databaseUrl, sessionSecret } = credenciais();
 if (!email || !senha) {
   console.error(
     "Defina OPS_EMAIL e OPS_SENHA (no ambiente ou no .env.local) para a inspeção entrar no sistema.",
@@ -349,7 +379,12 @@ cdp.eventos.length = 0;
 // ---- percorrer ----
 for (const tema of TEMAS) {
   await cdp.avalia(
+    // `data-theme-pref` também, e não só `data-theme`: é o que `ThemeToggle`
+    // lê para saber qual botão destacar (components/theme.tsx). Sem isto, a
+    // troca de tema pinta a página certo, mas a captura mostra o seletor de
+    // tema com o botão errado marcado.
     `document.documentElement.setAttribute('data-theme', '${tema}');
+     document.documentElement.setAttribute('data-theme-pref', '${tema}');
      localStorage.setItem('cr-theme', '${tema}');`,
   );
 
@@ -362,38 +397,160 @@ for (const tema of TEMAS) {
     });
 
     for (const rota of ROTAS) {
-      await irPara(cdp, `${BASE}${rota}`);
-      await cdp.avalia(
-        `document.documentElement.setAttribute('data-theme', '${tema}')`,
-      );
-      await sleep(200);
-
-      const medida = await medir(cdp);
-      const contexto = `${largura}px ${tema}`;
-
-      if (medida.overflow > 1) {
-        problemas.push(
-          `${rota} ${contexto}: rolagem horizontal de ${medida.overflow}px — ${medida.excedentes.join(" | ")}`,
-        );
-      }
-      if (medida.vazio) problemas.push(`${rota} ${contexto}: página praticamente vazia`);
-
-      coletarErros(rota, contexto);
-
-      if (salvarImagens && largura !== 768) {
-        const { data } = await cdp.envia("Page.captureScreenshot", {
-          format: "png",
-          captureBeyondViewport: true,
-        });
-        const nome = `${rota.replace(/\//g, "_") || "_raiz"}-${largura}-${tema}.png`;
-        writeFileSync(`.inspect/telas/${nome}`, Buffer.from(data, "base64"));
-      }
-
-      console.log(
-        `${medida.overflow > 1 ? "✗" : "·"} ${rota.padEnd(24)} ${String(largura).padStart(4)}px ${tema.padEnd(5)} ${medida.textoInicial}`,
-      );
-      if (process.env.INSPECT_DEBUG) console.log("   ", medida.diagnostico);
+      await visitarRota(rota, largura, tema);
     }
+  }
+}
+
+/**
+ * O corpo de uma visita — extraído para ser reaproveitado pelas varreduras do
+ * Portal do Parceiro e do Portal do Morador, mais abaixo. A sessão muda (ops,
+ * parceiro ou morador); a checagem de overflow, console e captura é a mesma.
+ */
+async function visitarRota(rota, largura, tema) {
+  await irPara(cdp, `${BASE}${rota}`);
+  await cdp.avalia(`document.documentElement.setAttribute('data-theme', '${tema}')`);
+  await sleep(200);
+
+  const medida = await medir(cdp);
+  const contexto = `${largura}px ${tema}`;
+
+  if (medida.overflow > 1) {
+    problemas.push(
+      `${rota} ${contexto}: rolagem horizontal de ${medida.overflow}px — ${medida.excedentes.join(" | ")}`,
+    );
+  }
+  if (medida.vazio) problemas.push(`${rota} ${contexto}: página praticamente vazia`);
+
+  coletarErros(rota, contexto);
+
+  if (salvarImagens && largura !== 768) {
+    const { data } = await cdp.envia("Page.captureScreenshot", {
+      format: "png",
+      captureBeyondViewport: true,
+    });
+    const nome = `${rota.replace(/\//g, "_") || "_raiz"}-${largura}-${tema}.png`;
+    writeFileSync(`.inspect/telas/${nome}`, Buffer.from(data, "base64"));
+  }
+
+  console.log(
+    `${medida.overflow > 1 ? "✗" : "·"} ${rota.padEnd(28)} ${String(largura).padStart(4)}px ${tema.padEnd(5)} ${medida.textoInicial}`,
+  );
+  if (process.env.INSPECT_DEBUG) console.log("   ", medida.diagnostico);
+}
+
+/* ---------------------------------------------------------------
+   Portal do Parceiro e Portal do Morador — só na varredura completa,
+   e só quando existir dado de demonstração para entrar de verdade
+   (`npm run demo:popular`). Sem isso, não há "oportunidade" nem
+   "solicitação" real para abrir, e a inspeção pula esta parte avisando —
+   não é uma falha, é a ausência de fixture.
+   --------------------------------------------------------------- */
+
+if (!rotaUnica && !args.includes("--publico") && databaseUrl) {
+  const cliente = new pg.Client({ connectionString: databaseUrl, ssl: { rejectUnauthorized: false } });
+  await cliente.connect();
+
+  const { rows: parceiroRows } = await cliente.query(`
+    select p.code, p.whatsapp, o.id::text as oportunidade_id
+    from partners p
+    join opportunities o on o.partner_id = p.id
+    order by o.created_at desc
+    limit 1
+  `);
+  const { rows: pedidoRows } = await cliente.query(`
+    select whatsapp, id::text as id from service_requests order by created_at desc limit 1
+  `);
+  await cliente.end();
+
+  const parceiroDemo = parceiroRows[0];
+  const pedidoDemo = pedidoRows[0];
+
+  if (parceiroDemo) {
+    await cdp.envia("Emulation.setDeviceMetricsOverride", { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+    await irPara(cdp, `${BASE}/parceiro/entrar`);
+    // O perfil do Edge sobrevive entre execuções (mesmo diretório em
+    // `tmpdir()`): se uma rodada anterior já deixou o cookie do parceiro
+    // gravado, o proxy já redirecionou para `/parceiro` antes do formulário
+    // existir — tentar preencher `#codigo` quebraria em vez de só pular o
+    // login, igual à sessão do Operations já trata mais abaixo.
+    const precisaEntrarParceiro = await cdp.avalia("location.pathname.includes('entrar')");
+    if (precisaEntrarParceiro) {
+      await cdp.avalia(`(() => {
+        const set = (sel, valor) => {
+          const el = document.querySelector(sel);
+          const proto = Object.getPrototypeOf(el);
+          Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, valor);
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        set('#codigo', ${JSON.stringify(parceiroDemo.code)});
+        set('#telefone', ${JSON.stringify(parceiroDemo.whatsapp)});
+        document.querySelector('form').requestSubmit();
+      })()`);
+      for (let i = 0; i < 30; i++) {
+        await sleep(300);
+        if (!(await cdp.avalia("location.pathname.includes('entrar')"))) break;
+      }
+    }
+
+    if (await cdp.avalia("location.pathname.includes('entrar')")) {
+      // Diferente de "sem dado nenhum" (linha abaixo): aqui existe um
+      // parceiro de demonstração e o login falhou mesmo assim — real o
+      // bastante para não silenciar. (Se você rodou a inspeção várias vezes
+      // seguidas, o freio de tentativas por código pode ser a causa — ver
+      // lib/auth/audience.ts.)
+      problemas.push(
+        "Portal do Parceiro: login do parceiro de demonstração falhou — varredura pulada. Confira se o freio de tentativas (lib/rate-limit.ts) não foi atingido por execuções repetidas.",
+      );
+      console.log("✗ Não consegui entrar como parceiro de demonstração — pulando a varredura do Portal do Parceiro.\n");
+    } else {
+      const rotasParceiro = [
+        "/parceiro",
+        "/parceiro/oportunidades",
+        `/parceiro/oportunidades/${parceiroDemo.oportunidade_id}`,
+        "/parceiro/perfil",
+        "/parceiro/notificacoes",
+      ];
+      for (const tema of TEMAS) {
+        await cdp.avalia(`document.documentElement.setAttribute('data-theme', '${tema}'); document.documentElement.setAttribute('data-theme-pref', '${tema}'); localStorage.setItem('cr-theme', '${tema}');`);
+        for (const largura of LARGURAS) {
+          await cdp.envia("Emulation.setDeviceMetricsOverride", { width: largura, height: largura < 500 ? 844 : 900, deviceScaleFactor: 1, mobile: largura < 500 });
+          for (const rota of rotasParceiro) await visitarRota(rota, largura, tema);
+        }
+      }
+    }
+  } else {
+    console.log("Sem parceiro de demonstração com oportunidade — pulando a varredura do Portal do Parceiro. Rode `npm run demo:popular`.\n");
+  }
+
+  if (pedidoDemo && sessionSecret) {
+    const token = assinarTokenMorador(pedidoDemo.whatsapp, sessionSecret);
+    // O cookie é httpOnly: só o protocolo de depuração consegue gravá-lo,
+    // `document.cookie` não alcança.
+    await cdp.envia("Network.setCookie", {
+      name: "cr_morador_acesso",
+      value: token,
+      url: BASE,
+      httpOnly: true,
+      secure: BASE.startsWith("https"),
+      path: "/",
+    });
+
+    const rotasMorador = ["/acompanhar", `/acompanhar/${pedidoDemo.id}`, "/acompanhar/notificacoes"];
+    for (const tema of TEMAS) {
+      await cdp.avalia(`document.documentElement.setAttribute('data-theme', '${tema}'); document.documentElement.setAttribute('data-theme-pref', '${tema}'); localStorage.setItem('cr-theme', '${tema}');`);
+      for (const largura of LARGURAS) {
+        await cdp.envia("Emulation.setDeviceMetricsOverride", { width: largura, height: largura < 500 ? 844 : 900, deviceScaleFactor: 1, mobile: largura < 500 });
+        for (const rota of rotasMorador) await visitarRota(rota, largura, tema);
+      }
+    }
+  } else if (!sessionSecret) {
+    // Numa produção configurada, essa variável tem que existir — sinaliza
+    // como problema, não como um "não se aplica".
+    problemas.push("CR_SESSION_SECRET ausente — varredura do Portal do Morador pulada.");
+    console.log("✗ CR_SESSION_SECRET ausente — pulando a varredura do Portal do Morador.\n");
+  } else {
+    console.log("Sem solicitação de demonstração — pulando a varredura do Portal do Morador. Rode `npm run demo:popular`.\n");
   }
 }
 

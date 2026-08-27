@@ -14,7 +14,13 @@ import {
   services,
 } from "@/lib/db/schema";
 import { applyTransition, recordActivity, timelineOf } from "@/lib/domain/activity";
-import { opportunityStates, type OpportunityStatus } from "@/lib/domain/states";
+import {
+  opportunityContactUnlocked,
+  opportunityStates,
+  partnerDrivableOpportunityStatuses,
+  type OpportunityStatus,
+  type Tone,
+} from "@/lib/domain/states";
 
 export const residentStatus: Record<string, { title: string; hint: string }> = {
   nova: { title: "Solicitação recebida", hint: "Recebemos seu pedido e vamos entender os detalhes." },
@@ -31,6 +37,31 @@ export const residentStatus: Record<string, { title: string; hint: string }> = {
 
 export function residentState(status: string) {
   return residentStatus[status] ?? { title: "Atualização disponível", hint: "Há uma atualização na sua solicitação." };
+}
+
+/**
+ * O selo de disponibilidade que o próprio parceiro vê na Home.
+ *
+ * Um binário "ativo ou não" diria "Oportunidades pausadas" para um parceiro
+ * que nunca foi pausado — só está `aguardando_lancamento`, porque a operação
+ * ainda não abriu para moradores. São situações diferentes e a tela precisa
+ * dizer qual das duas é a verdadeira, não a mais parecida.
+ */
+export function partnerAvailabilityBadge(status: string): { label: string; tone: Tone } {
+  switch (status) {
+    case "ativo":
+      return { label: "Recebendo oportunidades", tone: "positive" };
+    case "pausado":
+      return { label: "Você pausou as oportunidades", tone: "neutral" };
+    case "aguardando_lancamento":
+      return { label: "Aguardando o lançamento da operação", tone: "progress" };
+    case "suspenso":
+      return { label: "Fora da distribuição no momento", tone: "negative" };
+    case "encerrado":
+      return { label: "Fora da rede", tone: "negative" };
+    default:
+      return { label: "Status indisponível", tone: "neutral" };
+  }
 }
 
 export async function residentRequests(whatsapp: string) {
@@ -90,7 +121,7 @@ export async function residentRequest(whatsapp: string, id: string) {
     related: related.map((item) => ({
       ...item,
       // Contato só entra na DTO depois de aceitação/retorno real do parceiro.
-      contactAllowed: ["respondeu", "contato_realizado", "orcamento", "contratado"].includes(item.status),
+      contactAllowed: opportunityContactUnlocked.includes(item.status as OpportunityStatus),
     })),
     timeline: await timelineOf("request", request.id, 30),
   };
@@ -157,6 +188,8 @@ export async function partnerOpportunity(partnerId: string, opportunityId: strin
       neighborhood: serviceRequests.neighborhood,
       urgency: serviceRequests.urgency,
       categoryName: categories.name,
+      // Nome e WhatsApp do morador vêm da consulta, mas só atravessam para a
+      // tela mais abaixo, depois de conferir `contactAllowed` — nunca antes.
       residentName: serviceRequests.residentName,
       residentWhatsapp: serviceRequests.whatsapp,
     })
@@ -166,15 +199,49 @@ export async function partnerOpportunity(partnerId: string, opportunityId: strin
     .where(and(eq(opportunities.id, opportunityId), eq(opportunities.partnerId, partnerId)))
     .limit(1);
   if (!item) return null;
+
+  const contactAllowed = opportunityContactUnlocked.includes(item.status as OpportunityStatus);
+  const { residentName, residentWhatsapp, ...rest } = item;
+
   return {
-    ...item,
-    contactAllowed: !["selecionado", "encaminhado", "recusou", "indisponivel"].includes(item.status),
+    ...rest,
+    // Sem interesse confirmado, o dado pessoal do morador nem entra no objeto
+    // que a página recebe — não é uma questão de escondê-lo na tela, porque
+    // qualquer coisa que chegue ao componente de servidor vai para o payload
+    // que o navegador consegue ler.
+    residentName: contactAllowed ? residentName : null,
+    residentWhatsapp: contactAllowed ? residentWhatsapp : null,
+    contactAllowed,
     timeline: await timelineOf("opportunity", item.id, 30),
   };
 }
 
 export async function partnerProfile(partnerId: string) {
-  const [partner] = await db.select().from(partners).where(eq(partners.id, partnerId)).limit(1);
+  const [partner] = await db
+    .select({
+      id: partners.id,
+      code: partners.code,
+      name: partners.name,
+      ownerName: partners.ownerName,
+      whatsapp: partners.whatsapp,
+      email: partners.email,
+      description: partners.description,
+      servesWholeCity: partners.servesWholeCity,
+      neighborhoods: partners.neighborhoods,
+      availability: partners.availability,
+      status: partners.status,
+      founder: partners.founder,
+      betaPaidAt: partners.betaPaidAt,
+      betaStartedAt: partners.betaStartedAt,
+      onboardingDoneAt: partners.onboardingDoneAt,
+      createdAt: partners.createdAt,
+      // De propósito fora da seleção: `notes` (anotação interna do operador) e
+      // `prospectId` (referência ao funil comercial). Nenhum dos dois é dado
+      // que o parceiro deveria ler sobre a própria análise.
+    })
+    .from(partners)
+    .where(eq(partners.id, partnerId))
+    .limit(1);
   if (!partner) return null;
   const [categoryRows, serviceRows] = await Promise.all([
     db.select({ id: categories.id, name: categories.name, primary: partnerCategories.isPrimary })
@@ -195,6 +262,14 @@ export async function partnerNotifications(partnerId: string) {
 }
 
 export async function setPartnerOpportunityStatus(input: { partnerId: string; opportunityId: string; to: OpportunityStatus; reason?: string }) {
+  // `opportunityStates.is()` já garante que `to` é um estado da máquina — mas a
+  // máquina descreve para onde uma oportunidade *pode* ir, não o que o próprio
+  // parceiro tem autoridade para declarar. "Sem resposta" é a operação
+  // registrando silêncio; "Selecionado" é o começo do ciclo. Sem esta conferência,
+  // a Server Action aceitaria qualquer um dos dois vindo do parceiro.
+  if (!partnerDrivableOpportunityStatuses.includes(input.to)) {
+    throw new Error("Esta atualização não pode ser feita por aqui.");
+  }
   const [row] = await db.select({ id: opportunities.id, status: opportunities.status })
     .from(opportunities).where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.partnerId, input.partnerId))).limit(1);
   if (!row) throw new Error("Oportunidade não encontrada.");

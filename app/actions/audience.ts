@@ -3,22 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { endAudienceSession, getPartnerViewer, getResidentViewer, startPartnerSession, startResidentSession } from "@/lib/auth/audience";
+import { endAudienceSession, getPartnerViewer, getResidentViewer, startPartnerSession } from "@/lib/auth/audience";
 import { residentRequests, residentResolution, setPartnerAvailability, setPartnerOpportunityStatus } from "@/lib/domain/audience";
 import { opportunityStates, type OpportunityStatus } from "@/lib/domain/states";
 
 export type AccessState = { error?: string } | undefined;
 
-export async function residentAccess(_state: AccessState, formData: FormData): Promise<AccessState> {
-  const result = await startResidentSession(String(formData.get("codigo") ?? ""), String(formData.get("telefone") ?? ""));
-  if (!result.ok) return { error: result.error === "indisponivel" ? "Não foi possível acessar agora. Tente novamente em alguns minutos." : "Confira o código e o WhatsApp usados na solicitação." };
-  redirect("/minhas-solicitacoes");
-}
-
+/**
+ * Não existe `residentAccess`. O morador não tem formulário de código+telefone
+ * para entrar — o acesso chega pelo link assinado que `/acesso` recebe. Ver
+ * `lib/auth/audience.ts` e HANDOFF.md §3.1/§4.2.
+ */
 export async function partnerAccess(_state: AccessState, formData: FormData): Promise<AccessState> {
   const result = await startPartnerSession(String(formData.get("codigo") ?? ""), String(formData.get("telefone") ?? ""));
-  if (!result.ok) return { error: result.error === "indisponivel" ? "Não foi possível acessar agora. Tente novamente em alguns minutos." : "Confira o código de parceiro e o WhatsApp cadastrado." };
-  redirect("/parceiro");
+  if (result.ok) {
+    const proximo = String(formData.get("proximo") ?? "");
+    // Só caminhos internos: um "proximo" vindo de fora não pode virar redirect.
+    redirect(/^\/parceiro(\/|$)/.test(proximo) ? proximo : "/parceiro");
+  }
+  if (result.error === "muitas_tentativas") {
+    const minutos = Math.max(1, Math.ceil(result.retryAfter / 60));
+    return { error: `Muitas tentativas. Tente de novo em ${minutos} min.` };
+  }
+  return {
+    error:
+      result.error === "indisponivel"
+        ? "Não foi possível acessar agora. Tente novamente em alguns minutos."
+        : "Confira o código de parceiro e o WhatsApp cadastrado.",
+  };
 }
 
 export async function leaveResident() { await endAudienceSession("resident"); redirect("/acompanhar"); }
@@ -53,6 +65,6 @@ export async function updateResidentResolution(formData: FormData) {
   const requests = await residentRequests(viewer.whatsapp);
   if (!requests.some((request) => request.id === requestId)) throw new Error("Solicitação não encontrada.");
   await residentResolution({ whatsapp: viewer.whatsapp, requestId, answer: answer as "sim" | "ainda_nao" | "nao_precisei" | "outro" });
-  revalidatePath("/minhas-solicitacoes");
-  revalidatePath(`/minhas-solicitacoes/${requestId}`);
+  revalidatePath("/acompanhar");
+  revalidatePath(`/acompanhar/${requestId}`);
 }

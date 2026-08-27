@@ -22,7 +22,7 @@ export function attribution(): Record<string, string> {
   return out;
 }
 
-async function post(url: string, body: unknown): Promise<string | null> {
+async function post(url: string, body: unknown): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -32,8 +32,8 @@ async function post(url: string, body: unknown): Promise<string | null> {
       keepalive: true,
     });
     if (!response.ok) return null;
-    const data = (await response.json()) as { ok?: boolean; codigo?: string };
-    return data.ok && data.codigo ? data.codigo : null;
+    const data = (await response.json()) as { ok?: boolean } & Record<string, unknown>;
+    return data.ok ? data : null;
   } catch {
     return null;
   }
@@ -49,13 +49,21 @@ export type SolicitacaoPayload = {
   consentimento: boolean;
 };
 
-export function enviarSolicitacao(payload: SolicitacaoPayload) {
+/**
+ * `link` é o acompanhamento assinado (ver `/acesso`) — só existe quando
+ * `CR_SESSION_SECRET` está configurado no ambiente que respondeu.
+ */
+export type SolicitacaoResultado = { codigo: string; link: string | null } | null;
+
+export async function enviarSolicitacao(payload: SolicitacaoPayload): Promise<SolicitacaoResultado> {
   const dados = attribution();
-  return post("/api/publico/solicitacoes", {
+  const data = await post("/api/publico/solicitacoes", {
     ...payload,
     origem: dados.origem ?? null,
     atribuicao: dados,
   });
+  if (!data || typeof data.codigo !== "string") return null;
+  return { codigo: data.codigo, link: typeof data.link === "string" ? data.link : null };
 }
 
 export type CadastroPayload = {
@@ -67,11 +75,12 @@ export type CadastroPayload = {
   comoConheceu?: string | null;
 };
 
-export function enviarCadastro(payload: CadastroPayload) {
+export async function enviarCadastro(payload: CadastroPayload): Promise<string | null> {
   const dados = attribution();
-  return post("/api/publico/cadastros", {
+  const data = await post("/api/publico/cadastros", {
     ...payload,
     origem: dados.origem ?? null,
     atribuicao: dados,
   });
+  return data && typeof data.codigo === "string" ? data.codigo : null;
 }

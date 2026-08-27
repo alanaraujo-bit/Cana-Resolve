@@ -101,11 +101,15 @@ com HTTPS e está como alias do deploy de produção.
 
 ---
 
-## 8. `CR_SESSION_SECRET` no `.env.local` não é usado
+## 8. ~~`CR_SESSION_SECRET` no `.env.local` não é usado~~ — passou a ser essencial
 
-Foi gerado antes de a sessão passar a ser guardada no banco. Com o token
-aleatório e o SHA-256 na tabela `sessions`, não há nada para assinar. Pode ser
-apagado do `.env.local` — nenhum código lê essa variável.
+**Atualizado em 27/08/2026 — não apague esta variável.** Ela assina o link de
+acompanhamento do morador (`lib/auth/audience.ts`, HMAC-SHA256): sem ela, a
+solicitação continua sendo gravada, mas ninguém recebe link de
+acompanhamento. Precisa do **mesmo valor** em produção (Vercel) e em
+`.env.local` — um valor diferente em cada lugar invalidaria os links
+conforme o ambiente muda. Ver `.env.local.exemplo` para como gerar um novo,
+caso precise trocar (o que invalida todos os links já enviados).
 
 ---
 
@@ -121,19 +125,13 @@ continuarem funcionando. Depois, "Sair de todos os aparelhos" na mesma tela.
 
 ---
 
-## 10. O trabalho da outra sessão não está no git — nem no ar
+## 10. ~~O trabalho da outra sessão não está no git — nem no ar~~ — resolvido
 
-Os portais criados pela outra sessão (`/parceiro/*`, `/acompanhar`,
-`/minhas-solicitacoes`) estão apenas no diretório de trabalho: não foram
-commitados e **não estão em produção** — o domínio devolve 404 para todos eles.
-Conferido em 26/08/2026 contra `canaaresolve.aionixdev.com`.
-
-O que **está** no ar é só o que foi commitado: o site público e o Operations.
-
-**O que fazer:** decidir se o portal do parceiro e o do morador entram agora
-(o briefing original pedia para não construí-los ainda) e, se entrarem,
-terminá-los com o mesmo padrão do resto. Ver `HANDOFF.md`, que descreve o
-estado exato de cada arquivo e o que falta.
+**Fechado em 27/08/2026.** A decisão (HANDOFF.md §4) foi entrar com o portal
+completo agora. `/parceiro/*` e `/acompanhar/*` foram reescritos com a base de
+segurança do item 3.1 (ver `PROGRESS.md`, 27/08/2026), commitados e publicados
+em produção. `minhas-solicitacoes` foi removido — substituído por
+`/acompanhar`, que não usa login.
 
 ## 11. Prazo de retenção de dados não foi definido
 
@@ -160,3 +158,33 @@ Serve para o volume de hoje. Se aparecer abuso, o passo barato é um campo
 armadilha no formulário (invisível para gente, preenchido por robô) e, depois,
 um contador compartilhado — o lugar de trocar é dentro de `lib/rate-limit.ts`,
 sem tocar em nenhuma rota.
+
+---
+
+## 14. Recursos adiados conscientemente nos portais do Morador e do Parceiro
+
+**Registrado em 27/08/2026.** Os dois portais foram entregues com a base de
+segurança correta (ver `PROGRESS.md`, 27/08/2026), mas o HANDOFF.md já
+apontava (§3.5) que o ecossistema completo descrito para esta fase é maior do
+que "portal completo agora". Ficou de fora, sem tentativa de implementação
+parcial:
+
+- **Entrega de notificação por WhatsApp/push.** As notificações hoje só
+  existem dentro do portal (`/acompanhar/notificacoes`,
+  `/parceiro/notificacoes`) — não há envio ativo para fora do site. Alguém só
+  fica sabendo se voltar a abrir o link ou logar.
+- **Marcar notificação como lida.** A lista mostra tudo; não há estado de
+  lido/não lido persistido.
+- **Revogação de link por morador.** O link de acompanhamento (`/acesso`) vale
+  pelo prazo definido em `lib/auth/audience.ts`; não existe forma do próprio
+  morador invalidar um link antigo (ex.: se repassou o número).
+- **`/ops/analytics` não mede os portais.** Tempo de resposta do parceiro
+  depois de receber uma oportunidade, e o funil do morador entre "solicitação
+  criada" e "contratado", não aparecem — a tela continua só com os agregados
+  que já existiam antes desta sessão.
+- **Nenhuma automação de envio.** O link de acompanhamento sai na resposta da
+  API pública; quem manda por WhatsApp para o morador ainda é o fluxo humano
+  existente, não um disparo automático.
+
+Nenhum desses é um bug — são escolhas de escopo. Ficam aqui para não serem
+confundidos com "esquecido" quando alguém for procurar por eles.

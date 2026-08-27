@@ -568,6 +568,43 @@ export const opportunityLive: OpportunityStatus[] = [
   "orcamento",
 ];
 
+/**
+ * A partir de quando o contato vira mútuo.
+ *
+ * Uma única lista, lida dos dois lados: é o que libera o WhatsApp do parceiro
+ * para o morador (`residentRequest`) e é o que libera nome e WhatsApp do
+ * morador para o parceiro (`partnerOpportunity`). Antes disso, "Selecionado" e
+ * "Encaminhado" não demonstraram interesse nenhum — mostrar o contato do
+ * morador nesse ponto seria expor dado pessoal para todo parceiro compatível,
+ * não só para quem a operação de fato escolher.
+ */
+export const opportunityContactUnlocked: OpportunityStatus[] = [
+  "respondeu",
+  "contato_realizado",
+  "orcamento",
+  "contratado",
+];
+
+/**
+ * O que o próprio parceiro pode declarar sobre uma oportunidade.
+ *
+ * Não é a mesma coisa que "para onde a máquina permite ir": `sem_resposta` é a
+ * operação registrando que ninguém respondeu, não o parceiro relatando algo
+ * sobre si mesmo. Sem esta lista, a Server Action do Partner App aceitaria
+ * qualquer estado que `opportunityStates.is()` reconheça — inclusive retroceder
+ * para "Selecionado" ou se autodeclarar "Sem resposta".
+ */
+export const partnerDrivableOpportunityStatuses: OpportunityStatus[] = [
+  "respondeu",
+  "contato_realizado",
+  "orcamento",
+  "contratado",
+  "recusou",
+  "indisponivel",
+  "cliente_nao_respondeu",
+  "nao_fechou",
+];
+
 /* ---------------------------------------------------------------
    Transições
    --------------------------------------------------------------- */
