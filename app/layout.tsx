@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import { RouteTransition } from "@/components/route-transition";
 import { themeScript } from "@/lib/theme-script";
 import { site } from "@/lib/site";
+import { PwaBootstrap } from "@/components/pwa";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
@@ -76,19 +74,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <style>{`.cr-reveal{opacity:1;transform:none;filter:none}.cr-enter{animation:none}`}</style>
         </noscript>
       </head>
-      <body className="flex min-h-full flex-col">
-        <a
-          href="#conteudo"
-          className="bg-brand text-on-brand sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[60] focus:rounded-lg focus:px-4 focus:py-2 focus:text-sm focus:font-medium"
-        >
-          Pular para o conteúdo
-        </a>
-        <SiteHeader />
-        <main id="conteudo" className="flex-1">
-          <RouteTransition>{children}</RouteTransition>
-        </main>
-        <SiteFooter />
-      </body>
+      <body className="flex min-h-full flex-col"><PwaBootstrap />{children}</body>
     </html>
   );
 }

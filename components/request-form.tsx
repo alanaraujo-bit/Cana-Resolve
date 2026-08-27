@@ -12,6 +12,7 @@ import { buttonClass, cx } from "@/components/ui";
 import { site } from "@/lib/site";
 import { waLink } from "@/lib/whatsapp";
 import { track } from "@/lib/analytics";
+import { enviarSolicitacao } from "@/lib/intake-client";
 
 type Errors = Partial<Record<"descricao" | "nome" | "telefone" | "consent", string>>;
 
@@ -76,6 +77,8 @@ export function RequestForm({
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState(false);
+  /** Código do pedido (CR-00021), quando o registro chega a tempo. */
+  const [codigo, setCodigo] = useState<string | null>(null);
   const started = useRef(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -165,6 +168,19 @@ export function RequestForm({
     }
     track("consumidor_request_submit", { categoria: categoria || "nao_informada" });
     document.dispatchEvent(new CustomEvent("cr:solicitacao-enviada"));
+
+    // Grava o pedido antes de tudo, mas sem segurar o WhatsApp: se o registro
+    // falhar, o caminho da pessoa continua exatamente o mesmo de antes.
+    enviarSolicitacao({
+      descricao,
+      categoria: categoria || null,
+      nome,
+      telefone,
+      bairro: local || null,
+      urgencia,
+      consentimento: consent,
+    }).then(setCodigo);
+
     setSent(true);
   }
 
@@ -206,6 +222,18 @@ export function RequestForm({
           Falta um toque: envie a mensagem na conversa que abriu. Se ela não
           abriu sozinha, use o botão abaixo.
         </p>
+        {codigo ? (
+          <div className="mt-4">
+            <p className="text-faint text-[0.8125rem]">
+              Seu pedido ficou registrado como{" "}
+              <span className="text-ink font-medium tabular-nums">{codigo}</span>.
+              Guarde esse número se precisar falar com a gente.
+            </p>
+            <a href="/acompanhar" className="text-brand-ink mt-3 inline-block text-sm font-semibold underline underline-offset-4">
+              Acompanhar esta solicitação
+            </a>
+          </div>
+        ) : null}
         <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <a
             href={waLink(mensagem)}

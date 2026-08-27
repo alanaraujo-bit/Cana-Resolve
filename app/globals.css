@@ -931,3 +931,79 @@ html[data-vt="tema"]::view-transition-new(root) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Operations — comportamento de aplicativo
+
+   O objetivo aqui é eliminar os acidentes de página web, não desligar
+   recursos do aparelho. Texto de interface para de se comportar como
+   documento; campo, valor e conteúdo selecionável continuam exatamente
+   como o sistema espera.
+   --------------------------------------------------------------- */
+
+.ops-root {
+  /* A tela não deve "puxar" nem quicar além do conteúdo. */
+  overscroll-behavior-y: contain;
+  /* Sem o atraso de 300ms de duplo toque para zoom. */
+  touch-action: manipulation;
+  /* Rótulos, ícones e barras não são texto de leitura. */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Nada pode escapar para os lados. */
+  overflow-x: clip;
+  /* O rolar interno do painel não vaza para a barra do navegador. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* O que existe para ser lido, copiado ou digitado continua sendo. */
+.ops-root input,
+.ops-root textarea,
+.ops-root select,
+.ops-root [contenteditable],
+.ops-root .ops-select {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Área de toque confortável sem inflar o desenho: o alvo cresce, o
+   elemento não. Só no que é ponteiro grosso — no mouse, não faz falta. */
+@media (pointer: coarse) {
+  .ops-root a,
+  .ops-root button,
+  .ops-root [role="button"] {
+    position: relative;
+  }
+
+  .ops-root nav a::after,
+  .ops-root nav button::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+}
+
+/* A folha do celular sobe, não aparece do nada. */
+@keyframes cr-sheet {
+  from {
+    transform: translateY(12%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Zebrado discreto para listas longas: ajuda o olho a seguir a linha
+   sem desenhar uma grade. */
+.ops-zebra tbody tr:nth-child(even) {
+  background-color: color-mix(in oklab, var(--cr-surface-2) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ops-root * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

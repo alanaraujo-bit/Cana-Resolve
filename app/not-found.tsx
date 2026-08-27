@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { IconArrowRight } from "@/components/icons";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { buttonClass, Container, Eyebrow } from "@/components/ui";
 
+/**
+ * O 404 de toda a aplicação.
+ *
+ * Vive na raiz, acima dos dois layouts, então traz o próprio cabeçalho e
+ * rodapé: quem cai aqui veio de um link antigo do site, e precisa encontrar a
+ * casa de novo.
+ */
 export default function NotFound() {
   return (
+    <>
+      <SiteHeader />
+      <main className="flex-1">
     <section className="relative isolate overflow-hidden">
       {/* O mesmo fundo do hero, para que o erro continue parecendo a casa. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
@@ -45,5 +57,8 @@ export default function NotFound() {
         </div>
       </Container>
     </section>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

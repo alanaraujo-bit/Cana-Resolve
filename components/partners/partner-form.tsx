@@ -8,6 +8,7 @@ import { track } from "@/lib/analytics";
 import { categoryName, categoryOptions } from "@/lib/categories";
 import { cadastroDepois, heardOptions } from "@/lib/partners";
 import { partnerLeadMessage, waLink } from "@/lib/whatsapp";
+import { enviarCadastro } from "@/lib/intake-client";
 
 type Errors = Partial<Record<"nome" | "empresa" | "telefone" | "categoria", string>>;
 
@@ -80,6 +81,8 @@ export function PartnerForm({ compact = false }: { compact?: boolean }) {
   const [comoConheceu, setComoConheceu] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState(false);
+  /** O cadastro chegou ao Canaã Resolve, e não apenas ao WhatsApp. */
+  const [registrado, setRegistrado] = useState(false);
   const started = useRef(false);
   const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -182,6 +185,19 @@ export function PartnerForm({ compact = false }: { compact?: boolean }) {
       como_conheceu: comoConheceu || "nao_informado",
     });
     document.dispatchEvent(new CustomEvent("cr:parceiro-enviado"));
+
+    // O cadastro passa a existir do nosso lado antes da conversa. Se falhar,
+    // o WhatsApp abre do mesmo jeito — a página nunca fica pior do que era.
+    enviarCadastro({
+      nome,
+      empresa,
+      telefone,
+      categoria,
+      atendeCanaa,
+      comoConheceu:
+        heardOptions.find((o) => o.id === comoConheceu)?.label ?? null,
+    }).then((codigo) => setRegistrado(Boolean(codigo)));
+
     setSent(true);
   }
 
@@ -260,8 +276,9 @@ export function PartnerForm({ compact = false }: { compact?: boolean }) {
         </div>
 
         <p className="text-faint mt-6 text-[0.8125rem] leading-relaxed">
-          Nada é cobrado agora. O pagamento da condição de lançamento só entra
-          na conversa depois que a sua participação for confirmada.
+          {registrado
+            ? "Seu cadastro já está com a nossa equipe. Nada é cobrado agora: o pagamento da condição de lançamento só entra na conversa depois que a sua participação for confirmada."
+            : "Nada é cobrado agora. O pagamento da condição de lançamento só entra na conversa depois que a sua participação for confirmada."}
         </p>
       </div>
     );

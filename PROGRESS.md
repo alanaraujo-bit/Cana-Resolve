@@ -5,6 +5,133 @@ inversa: o mais recente primeiro.
 
 ---
 
+## 26/08/2026 — Operational Core
+
+O Canaã Resolve deixou de ser só um site. Existe agora um sistema onde a
+operação inteira acontece: `/ops`.
+
+### Infraestrutura
+
+- **Banco:** Postgres na Railway (projeto `canaa-resolve`). Um proxy TCP
+  público foi criado para a Vercel conseguir conectar de fora. `DATABASE_URL`
+  está no ambiente de produção da Vercel e no `.env.local`.
+- **Driver:** `node-postgres` + Drizzle. O driver HTTP foi descartado de
+  propósito: ele não suporta transações, e toda mudança de estado grava o
+  registro e a linha de histórico no mesmo commit.
+- Dependências novas: `drizzle-orm`, `drizzle-kit`, `pg`, `zod`, `server-only`,
+  `tsx`. Nenhuma substitui algo que já existia.
+- Comandos: `npm run db:setup` (migra e planta o catálogo), `db:operator`,
+  `db:status`, `npm test`, `npm run inspect`.
+
+### As três decisões que sustentam o resto
+
+1. **Solicitação não é Oportunidade.** A necessidade do morador e cada
+   encaminhamento dela para um parceiro são entidades separadas, com ciclos
+   próprios. Dois parceiros podem receber o mesmo pedido e terminar em lugares
+   completamente diferentes — juntar isso numa tabela de "leads" apagaria
+   justamente a informação que interessa.
+
+2. **Todo estado passa por uma máquina.** `lib/domain/states.ts` define as
+   cinco máquinas e as transições permitidas; `applyTransition` é o único
+   caminho para mudar qualquer estado, e grava o histórico na mesma transação.
+   Um pedido não salta de "Nova" para "Resolvida" nem por bug de interface
+   nem por requisição forjada.
+
+3. **Os 90 dias do Fundador não começam no pagamento.** `betaStartedAt` só é
+   escrito por `registerLaunch()`. Pagar reserva a participação; o relógio
+   corre a partir do momento em que existem pedidos chegando. Há teste para
+   isso.
+
+### O lead deixou de sumir
+
+`/solicitar` e `/parceiros` gravam antes de abrir o WhatsApp. O envio não é
+aguardado: se falhar, a conversa abre do mesmo jeito e a experiência volta a
+ser a de antes. Quando dá certo, a tela mostra o código do pedido.
+
+Um cadastro cujo WhatsApp já esteja no funil se junta ao prospect existente
+— a deduplicação é pelo número normalizado, o único dado que a mesma empresa
+escreve igual em qualquer contexto.
+
+### As dez telas
+
+| Rota | O que resolve |
+| --- | --- |
+| `/ops` | O que precisa de decisão agora, não um painel de totais |
+| `/ops/solicitacoes` | Os pedidos, com triagem, matching e desfechos |
+| `/ops/comercial` | O funil B2B, com próxima ação datada |
+| `/ops/cadastros` | A fila de qualificação — ninguém entra sem análise |
+| `/ops/parceiros` | A rede, o perfil e a condição de Fundador |
+| `/ops/oportunidades` | Cada encaminhamento e seu desfecho |
+| `/ops/catalogo` | Categorias e serviços, administráveis |
+| `/ops/analytics` | Só o que existe no banco |
+| `/ops/config` | O lançamento da operação, acesso e sessões |
+| `/ops/entrar` | Sessão em banco, senha em scrypt |
+
+### Matching assistido, com fairness desde a fundação
+
+`lib/domain/matching.ts` ordena por compatibilidade (serviço > categoria
+principal > categoria; região) e por distribuição justa (quem recebeu menos em
+30 dias sobe até 20 pontos). **Nenhum sinal comercial entra na conta** — nem
+plano, nem valor pago, nem ser Fundador. Cada candidato volta com os motivos
+de estar ali e as ressalvas que pesam contra; quem decide é a pessoa.
+
+### Segurança
+
+- Sessão: token aleatório no cookie, SHA-256 no banco. Encerrar o acesso de
+  alguém é apagar uma linha.
+- Senha: scrypt com parâmetros guardados no próprio hash. Login errado e
+  e-mail inexistente gastam o mesmo tempo.
+- `proxy.ts` é só um porteiro otimista. A conferência que vale é
+  `requireOperator()`, chamada em toda página **e em toda Server Action** —
+  uma action é um endpoint como qualquer outro.
+
+### Bugs reais encontrados e corrigidos
+
+- **Subconsulta sem qualificação de tabela.** O Drizzle interpola a coluna sem
+  o nome da tabela dentro de um template `sql`; numa subconsulta o nome passa a
+  resolver contra a tabela de dentro. Quebrava `/ops/parceiros` com erro 500 e,
+  pior, zerava silenciosamente o contador de encaminhamentos em
+  `/ops/solicitacoes`.
+- **Hidratação quebrada no site inteiro.** `components/pwa.tsx` lia
+  `navigator.onLine` durante a renderização; o Node moderno tem um `navigator`
+  global cujo `onLine` é `undefined`, então o servidor mandava a faixa de "sem
+  conexão" em toda página.
+- **Tempo relativo divergindo entre servidor e navegador.** "há 34 minutos"
+  virava "há 35" no meio da hidratação.
+- **Tabela de desktop espremida no celular.** Trocada por lista de cartões em
+  telas estreitas — a mesma informação, outro desenho.
+
+### Bugs reais encontrados na revisão visual
+
+- **Função atravessando a fronteira servidor/cliente.** As telas de detalhe
+  passavam `campoExtra` — uma função — para o `StatusChanger`, que é um
+  Client Component. Erro 500 em produção, invisível para o `tsc`. A correção
+  não foi contornar: "encerrar um parceiro pede um motivo" virou regra do
+  domínio, declarada em `states.ts` junto do estado. Agora vale igual em
+  qualquer tela de onde a transição seja disparada.
+- **Pool de conexões esgotado.** A Visão Geral disparava quinze consultas em
+  paralelo contra um banco em outro país. Viraram **uma** consulta com
+  `count(*) filter (where …)`.
+
+### Verificação feita
+
+- `tsc --noEmit`, `eslint` e `npm test`: limpos. **40 testes.**
+- Os testes de fluxo rodam contra um **Postgres de verdade** (banco
+  `canaa_test`, mesmo servidor) e percorrem o cenário do briefing inteiro:
+  cadastro → deduplicação → aprovação → pagamento (que não inicia o prazo) →
+  onboarding → lançamento → pedido → matching → encaminhamento → contratação.
+- `npm run inspect`: Edge sem interface entra no Operations e percorre as dez
+  rotas em 390, 768 e 1440 px, nos dois temas — **contra a build de produção**,
+  não o servidor de desenvolvimento. Nenhum overflow, nenhum erro de console,
+  nenhuma resposta com falha. O mesmo comando com `--publico` cobre as seis
+  rotas do site em 320, 390, 768 e 1440 px: sem regressão depois da mudança
+  para route groups.
+- `npm run smoke`: prova pelo navegador o que teste de unidade não alcança —
+  formulário → Server Action → banco → revalidação → tela com o estado novo.
+- `npm run demo:popular` / `demo:limpar`: cenário completo para revisar as
+  telas com conteúdo de verdade, e a faxina para começar do zero.
+
+---
 ## 26/08/2026 — Publicação em produção
 
 - O novo modelo comercial foi publicado: commit `3d55b8e` enviado para o `main` no GitHub e deploy de produção concluído na Vercel.
