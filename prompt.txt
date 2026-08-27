@@ -1,0 +1,2049 @@
+# CANAÃ RESOLVE — ECOSSISTEMA COMPLETO
+
+## Morador + Parceiro + Operations + PWA Premium
+
+Você deverá agora evoluir o **Canaã Resolve** para sua primeira experiência completa de produto.
+
+O Operational Core definido anteriormente continua sendo a fundação administrativa e operacional do negócio.
+
+Esta nova etapa deve construir sobre essa fundação e entregar as experiências utilizadas diretamente pelos dois lados do marketplace:
+
+1. **Morador / Cliente**
+2. **Profissional / Empresa Parceira**
+
+Além deles, o:
+
+3. **Canaã Resolve Operations**
+
+continua sendo o centro privado utilizado pela equipe do Canaã Resolve para administrar, acompanhar e intervir na operação.
+
+O objetivo final é que essas três superfícies formem **um único ecossistema coerente**, compartilhando dados, regras, identidade e estados.
+
+Não construa três produtos desconectados.
+
+---
+
+# 1. VISÃO DO ECOSSISTEMA
+
+O Canaã Resolve deve funcionar conceitualmente assim:
+
+**Morador possui um problema**
+
+↓
+
+**Canaã Resolve entende a necessidade**
+
+↓
+
+**Sistema identifica parceiros compatíveis**
+
+↓
+
+**Operação distribui a oportunidade**
+
+↓
+
+**Parceiros recebem**
+
+↓
+
+**Parceiro interessado responde**
+
+↓
+
+**Morador e parceiro entram em contato**
+
+↓
+
+**Serviço pode ser contratado diretamente**
+
+↓
+
+**Resultado retorna ao Canaã Resolve**
+
+O verdadeiro produto continua sendo:
+
+# OPORTUNIDADE COMERCIAL
+
+Não transforme o Canaã Resolve em um simples diretório de prestadores.
+
+O morador não deve precisar navegar por dezenas de empresas para descobrir quem pode ajudá-lo.
+
+O Canaã Resolve deve reduzir esse trabalho.
+
+---
+
+# 2. PRINCÍPIO FUNDAMENTAL
+
+Existirão agora três experiências.
+
+## Morador
+
+Deve sentir:
+
+> “Preciso resolver alguma coisa. Vou abrir o Canaã Resolve.”
+
+## Parceiro
+
+Deve sentir:
+
+> “Aqui estão pessoas de Canaã que estão precisando justamente do que eu faço.”
+
+## Operador Canaã Resolve
+
+Deve sentir:
+
+> “Consigo acompanhar e controlar toda a operação por aqui.”
+
+Essas três percepções precisam permanecer claras em todas as decisões.
+
+---
+
+# 3. NÃO RECONSTRUIR O QUE JÁ EXISTE
+
+Antes de iniciar alterações:
+
+analise integralmente:
+
+* código existente;
+* Operational Core;
+* banco;
+* autenticação;
+* design system;
+* componentes;
+* rotas;
+* APIs;
+* analytics;
+* formulários;
+* PWA existente;
+* infraestrutura;
+* produção.
+
+A nova etapa deve **estender o produto**, não criar um segundo sistema paralelo.
+
+Preserve as boas decisões já implementadas.
+
+Refatore somente quando houver ganho estrutural real.
+
+---
+
+# 4. IDENTIDADE ÚNICA
+
+Morador, Parceiro e Operations devem parecer partes do mesmo Canaã Resolve.
+
+Compartilhe quando adequado:
+
+* identidade;
+* tokens visuais;
+* tipografia;
+* ícones;
+* componentes;
+* microinterações;
+* princípios de UX;
+* estados;
+* linguagem.
+
+Entretanto, não force exatamente a mesma interface para públicos diferentes.
+
+Cada experiência possui necessidades distintas.
+
+---
+
+# 5. EXPERIÊNCIA DO MORADOR
+
+Crie uma experiência própria para o usuário que procura serviços.
+
+Ela deve funcionar extremamente bem mesmo para pessoas com pouca familiaridade tecnológica.
+
+O usuário não deve precisar entender termos como:
+
+* lead;
+* matching;
+* prestador;
+* ticket;
+* pipeline;
+* oportunidade.
+
+Ele simplesmente possui:
+
+> **um problema que deseja resolver.**
+
+Construa toda a experiência a partir dessa premissa.
+
+---
+
+# 6. ENTRADA DO MORADOR
+
+O usuário deve conseguir começar rapidamente.
+
+A experiência principal continua baseada em:
+
+> **O que você precisa resolver hoje?**
+
+Ele poderá:
+
+* descrever livremente o problema;
+* escolher uma categoria;
+* receber sugestões quando adequado;
+* informar dados mínimos;
+* enviar a solicitação.
+
+Evite transformar isso em um formulário burocrático.
+
+Prefira progressão natural e disclosure progressivo.
+
+---
+
+# 7. INTELIGÊNCIA NA DESCRIÇÃO DO PROBLEMA
+
+O usuário não deve precisar saber que:
+
+> “ar não gela”
+
+pertence tecnicamente à categoria:
+
+> “Ar-condicionado e refrigeração”.
+
+O produto deve ajudar.
+
+Pode existir classificação ou sugestão inteligente de categoria e serviço, desde que:
+
+* não pareça mágica falsa;
+* seja corrigível;
+* nunca bloqueie o usuário;
+* nunca invente certeza inexistente.
+
+Exemplo:
+
+Usuário escreve:
+
+> “Meu ar liga mas não está gelando.”
+
+O sistema pode sugerir:
+
+**Ar-condicionado e refrigeração**
+
+e eventualmente:
+
+**Manutenção**
+
+Mas o usuário continua podendo ajustar.
+
+---
+
+# 8. SOLICITAÇÃO GUIADA
+
+A criação de solicitação deve capturar apenas o necessário.
+
+Dependendo do caso:
+
+* descrição;
+* categoria;
+* serviço;
+* bairro;
+* localização aproximada;
+* urgência;
+* nome;
+* contato;
+* informações adicionais realmente úteis.
+
+Não exija dados sem finalidade clara.
+
+Use perguntas contextuais somente quando agregarem valor.
+
+Exemplo:
+
+Guincho pode precisar de informações diferentes de informática.
+
+A arquitetura deve permitir essas diferenças sem criar formulários completamente independentes e impossíveis de manter.
+
+---
+
+# 9. CONTA DO MORADOR
+
+O produto deve possuir uma experiência de identidade capaz de permitir posteriormente:
+
+* histórico;
+* acompanhamento;
+* notificações;
+* solicitações anteriores;
+* preferências.
+
+Porém:
+
+> **não coloque uma parede de cadastro antes de entregar valor.**
+
+Não queremos:
+
+Home
+→ Criar conta
+→ confirmar e-mail
+→ preencher perfil
+→ finalmente solicitar.
+
+Isso destrói conversão.
+
+Prefira uma experiência em que o usuário consiga iniciar a necessidade primeiro e tenha sua identidade associada de maneira progressiva e natural.
+
+A implementação técnica da autenticação fica a seu critério.
+
+---
+
+# 10. ÁREA DO MORADOR
+
+Quando identificado, o morador deverá possuir uma experiência própria.
+
+Pode contemplar:
+
+* início;
+* nova solicitação;
+* solicitações;
+* detalhes;
+* atualizações;
+* perfil;
+* configurações;
+* notificações.
+
+Não reproduza um dashboard corporativo.
+
+Esse é um aplicativo para consumidor.
+
+A interface precisa ser extremamente simples.
+
+---
+
+# 11. HOME DO MORADOR
+
+Quando o usuário já possui contexto, a Home pode mostrar:
+
+### Principal
+
+**O que você precisa resolver hoje?**
+
+### Acompanhamento
+
+Solicitações atuais.
+
+Exemplo:
+
+**Ar-condicionado não gela**
+
+> Procurando profissionais disponíveis.
+
+### Histórico
+
+Problemas resolvidos anteriormente.
+
+### Ações rápidas
+
+Quando fizer sentido:
+
+* solicitar novamente;
+* atualizar solicitação;
+* falar com parceiro relacionado.
+
+Não transforme a Home em feed.
+
+---
+
+# 12. ACOMPANHAMENTO DE SOLICITAÇÃO
+
+Depois de solicitar, o morador precisa saber que algo está acontecendo.
+
+A experiência pode utilizar estados amigáveis.
+
+Não exponha termos administrativos crus.
+
+Internamente:
+
+**Nova**
+→ triagem
+→ distribuição
+→ atendimento
+
+Para o consumidor pode aparecer de forma mais humana:
+
+**Solicitação recebida**
+
+↓
+
+**Estamos procurando profissionais compatíveis**
+
+↓
+
+**Profissional encontrado**
+
+↓
+
+**Contato em andamento**
+
+↓
+
+**Concluída**
+
+Esses textos devem refletir dados reais.
+
+Nunca mostre progresso fictício apenas para preencher a tela.
+
+---
+
+# 13. DETALHES DA SOLICITAÇÃO
+
+O morador poderá visualizar:
+
+* descrição;
+* categoria;
+* data;
+* bairro;
+* urgência;
+* status;
+* atualizações relevantes;
+* parceiros relacionados quando aplicável.
+
+Ele também deve conseguir:
+
+* cancelar quando permitido;
+* complementar informações;
+* corrigir informação pertinente;
+* solicitar ajuda;
+* eventualmente repetir uma necessidade anterior.
+
+Regras precisam evitar alterações destrutivas depois que o atendimento já estiver avançado.
+
+---
+
+# 14. PARCEIRO ENCONTRADO
+
+Quando um parceiro realmente estiver relacionado à solicitação, o morador pode visualizar uma apresentação adequada.
+
+Exemplo:
+
+**Clima Canaã**
+
+Ar-condicionado e refrigeração
+
+* serviços pertinentes;
+* área atendida;
+* informações comerciais públicas;
+* identificação de Parceiro Canaã Resolve.
+
+Não invente:
+
+* avaliações inexistentes;
+* número de serviços inexistente;
+* ranking;
+* “melhor profissional”;
+* selo falso.
+
+---
+
+# 15. CONTATO ENTRE MORADOR E PARCEIRO
+
+Nesta fase, contratação, negociação e pagamento do serviço continuam acontecendo diretamente entre morador e profissional.
+
+Não é necessário transformar o Canaã Resolve em intermediador financeiro.
+
+A experiência deve facilitar:
+
+* contato;
+* WhatsApp;
+* telefone quando adequado;
+* demais canais realmente disponíveis.
+
+Se houver comunicação dentro do produto, ela deve possuir justificativa clara.
+
+Não construa um sistema gigantesco de chat apenas porque marketplaces normalmente possuem chat.
+
+A solução deve respeitar o estágio do negócio.
+
+---
+
+# 16. MÚLTIPLOS PARCEIROS
+
+Uma solicitação pode ser encaminhada para mais de um parceiro.
+
+O morador não deve ficar confuso.
+
+Se diferentes profissionais aceitarem ou entrarem em contato, a experiência deve apresentar claramente:
+
+* quem são;
+* qual empresa;
+* que serviço oferecem;
+* situação.
+
+Não crie mecanismos de leilão ou disputa por preço sem decisão comercial explícita.
+
+---
+
+# 17. CONCLUSÃO DA SOLICITAÇÃO
+
+Precisamos tentar descobrir o resultado sem tornar a experiência irritante.
+
+Quando fizer sentido, pergunte algo simples como:
+
+> **Conseguiu resolver?**
+
+Possíveis respostas:
+
+* Sim;
+* Ainda não;
+* Não precisei mais;
+* Outro.
+
+Se houve parceiro relacionado, podemos posteriormente capturar informações úteis do resultado.
+
+Não force avaliações públicas ou questionários extensos nesta etapa.
+
+---
+
+# 18. EXPERIÊNCIA DO PARCEIRO
+
+Agora construa uma experiência própria para:
+
+* profissionais;
+* autônomos;
+* MEIs;
+* empresas.
+
+Ela deve ser percebida como:
+
+> **uma ferramenta de oportunidades comerciais locais.**
+
+Não como:
+
+> “um painel onde estou pagando para aparecer em um site.”
+
+---
+
+# 19. APP DO PARCEIRO
+
+O Parceiro deve possuir uma área autenticada própria.
+
+Conceitualmente pode conter:
+
+* Início;
+* Oportunidades;
+* Histórico;
+* Perfil;
+* Serviços;
+* Disponibilidade;
+* Plano / condição comercial;
+* Notificações;
+* Configurações.
+
+A arquitetura de navegação pode ser aprimorada.
+
+---
+
+# 20. HOME DO PARCEIRO
+
+A Home precisa responder:
+
+> **“Tem algo que precisa da minha atenção?”**
+
+Priorize:
+
+* novas oportunidades;
+* oportunidades aguardando resposta;
+* contatos em andamento;
+* pendências do perfil;
+* status de disponibilidade;
+* avisos importantes.
+
+Evite começar com dezenas de métricas.
+
+---
+
+# 21. NOVA OPORTUNIDADE
+
+Quando uma solicitação compatível for disponibilizada ao parceiro, ele deve receber informação suficiente para decidir.
+
+Exemplo:
+
+# Nova oportunidade
+
+**Ar-condicionado não está gelando**
+
+**Cidade Nova**
+
+Urgência:
+
+**Hoje**
+
+Informações pertinentes devem aparecer sem expor dados pessoais antes do momento correto.
+
+O parceiro poderá:
+
+**Tenho interesse**
+
+ou
+
+**Não consigo atender**
+
+Use linguagem natural.
+
+---
+
+# 22. ACEITAR OU RECUSAR
+
+O parceiro precisa conseguir responder rapidamente.
+
+Ao aceitar:
+
+o estado deve ser atualizado e a operação deve saber imediatamente.
+
+Ao recusar:
+
+quando útil, coletar motivo simples:
+
+* indisponível;
+* fora da área;
+* não realizo esse serviço;
+* agenda cheia;
+* outro.
+
+Isso posteriormente melhora matching e dados.
+
+Não transforme recusa em burocracia.
+
+---
+
+# 23. DADOS DO MORADOR
+
+O parceiro somente deve receber dados pessoais necessários quando realmente estiver elegível para aquela oportunidade.
+
+Evite expor número de telefone e informações desnecessárias para todos os parceiros compatíveis antes de qualquer decisão de distribuição.
+
+Privacidade deve fazer parte da arquitetura.
+
+---
+
+# 24. OPORTUNIDADE EM ANDAMENTO
+
+Depois de aceitar, a oportunidade deverá possuir uma experiência clara.
+
+O parceiro pode informar estados como:
+
+* entrei em contato;
+* cliente respondeu;
+* orçamento enviado;
+* serviço contratado;
+* não fechou;
+* cliente não respondeu;
+* outro.
+
+Use estados simples.
+
+Não obrigue o parceiro a atualizar vinte campos.
+
+Quanto mais fácil for registrar o resultado, melhores serão os dados.
+
+---
+
+# 25. HISTÓRICO DO PARCEIRO
+
+O parceiro deverá conseguir visualizar suas oportunidades anteriores.
+
+Pode enxergar informações como:
+
+* data;
+* tipo de serviço;
+* bairro;
+* resultado;
+* situação.
+
+Isso aumenta percepção de valor da plataforma.
+
+---
+
+# 26. PERFIL DO PARCEIRO
+
+Cada parceiro deve possuir um perfil profissional administrável.
+
+Pode incluir:
+
+* nome comercial;
+* responsável;
+* descrição;
+* contatos;
+* logo;
+* imagens relevantes;
+* serviços;
+* categorias;
+* área atendida;
+* horários;
+* informações comerciais pertinentes.
+
+Não transforme isso em página de rede social.
+
+O objetivo é ajudar na confiança e conversão.
+
+---
+
+# 27. SERVIÇOS
+
+O parceiro deverá conseguir informar claramente o que atende.
+
+Estrutura:
+
+**Categorias → Serviços**
+
+Exemplo:
+
+**Ar-condicionado**
+
+* instalação;
+* limpeza;
+* manutenção;
+* carga de gás.
+
+Esses dados precisam alimentar o matching.
+
+O sistema deve impedir que o parceiro receba oportunidades completamente incompatíveis com os serviços cadastrados.
+
+---
+
+# 28. ÁREA DE ATENDIMENTO
+
+O parceiro deve conseguir declarar de forma simples onde atende.
+
+Inicialmente, Canaã dos Carajás é o núcleo.
+
+Pode existir:
+
+* toda Canaã;
+* bairros/regiões específicos;
+* outras configurações quando realmente necessárias.
+
+Não introduza GIS complexo sem necessidade.
+
+---
+
+# 29. DISPONIBILIDADE
+
+Uma funcionalidade extremamente importante:
+
+O parceiro deve conseguir indicar se está disponível para receber novas oportunidades.
+
+Exemplo:
+
+**Recebendo oportunidades**
+
+ON / OFF
+
+Ou experiência equivalente.
+
+Isso evita encaminhar solicitações para alguém:
+
+* viajando;
+* sem equipe;
+* com agenda cheia;
+* temporariamente indisponível.
+
+Também permita estados mais específicos futuramente sem tornar a V1 complexa.
+
+---
+
+# 30. PAUSAR OPORTUNIDADES
+
+Parceiro pode querer:
+
+> “Não quero receber nada até segunda.”
+
+A experiência deve permitir pausa de maneira amigável.
+
+Quando houver duração conhecida, pode existir opção de retorno automático.
+
+Não obrigue o parceiro a cancelar sua participação só porque está temporariamente indisponível.
+
+---
+
+# 31. PARCEIRO FUNDADOR
+
+O aplicativo deve representar corretamente quando alguém pertence ao Beta Fundador.
+
+Mostrar de maneira elegante:
+
+**Parceiro Fundador**
+
+Pode conter:
+
+* situação;
+* início do Beta;
+* término quando iniciado;
+* condição;
+* informações comerciais pertinentes.
+
+Não usar contadores agressivos ou dark patterns.
+
+---
+
+# 32. PLANO E PAGAMENTO
+
+Nesta fase, não é obrigatório transformar o produto em uma plataforma financeira complexa.
+
+O aplicativo pode mostrar:
+
+* condição atual;
+* pagamento registrado;
+* período;
+* status;
+* informações comerciais.
+
+Se a infraestrutura existente permitir cobrança online com qualidade e sem complexidade desnecessária, pode ser avaliada.
+
+Mas não introduza uma arquitetura financeira gigantesca apenas para cobrar R$79.
+
+O Operational Core continua sendo a fonte de verdade comercial.
+
+---
+
+# 33. NOTIFICAÇÕES
+
+O ecossistema precisa possuir uma estratégia coerente de notificações.
+
+Possíveis eventos:
+
+### Morador
+
+* solicitação recebida;
+* parceiro encontrado;
+* atualização importante;
+* necessidade de ação.
+
+### Parceiro
+
+* nova oportunidade;
+* oportunidade prestes a expirar se futuramente aplicável;
+* atualização;
+* pendência;
+* status comercial importante.
+
+### Operations
+
+* nova solicitação;
+* novo cadastro;
+* oportunidade sem resposta;
+* problema operacional.
+
+Utilize:
+
+* notificações in-app;
+* push PWA quando tecnicamente suportado e autorizado;
+* WhatsApp quando fizer sentido operacional.
+
+Não envie notificações redundantes ou excessivas.
+
+Permissões de push devem ser solicitadas no momento adequado, não imediatamente ao abrir o aplicativo.
+
+---
+
+# 34. CENTRAL DE NOTIFICAÇÕES
+
+Morador e Parceiro podem possuir uma central simples com:
+
+* novas;
+* lidas;
+* contexto;
+* ação associada.
+
+Não crie apenas um sino decorativo.
+
+Cada notificação deve levar a algo útil.
+
+---
+
+# 35. EXPERIÊNCIA PWA
+
+Tanto Morador quanto Parceiro devem receber uma experiência PWA de altíssima qualidade.
+
+Quando instalado, precisa parecer:
+
+> **um aplicativo.**
+
+Não:
+
+> “um site salvo na tela inicial.”
+
+---
+
+# 36. REQUISITOS PWA
+
+Cuide adequadamente de:
+
+* manifest;
+* ícones;
+* standalone;
+* theme color;
+* splash quando suportada;
+* instalação;
+* atualização;
+* service worker;
+* cache;
+* recuperação;
+* safe areas;
+* notch;
+* barras do sistema;
+* orientação quando pertinente;
+* viewport;
+* teclado;
+* estados offline úteis;
+* deep links;
+* abertura a partir de notificações.
+
+Toda capacidade precisa possuir fallback coerente.
+
+---
+
+# 37. COMPORTAMENTO NATIVO
+
+Evite:
+
+* seleção acidental de UI;
+* zoom que destrói layout;
+* overflow horizontal;
+* arrastar página lateralmente;
+* bounce inadequado;
+* controles pequenos;
+* hover obrigatório;
+* interfaces desktop espremidas;
+* menus de navegador interferindo constantemente;
+* textos parecendo documento web;
+* inputs que provocam zoom inesperado;
+* conteúdo ficando atrás do teclado;
+* elementos ignorando safe area.
+
+Scroll deve ser:
+
+* vertical;
+* suave;
+* previsível;
+* contextual.
+
+Use superfícies fixas e scroll interno quando isso representar melhor o comportamento de aplicativo.
+
+---
+
+# 38. NAVEGAÇÃO MOBILE
+
+A navegação deve ser projetada especificamente para toque.
+
+Avalie conforme cada experiência:
+
+* bottom navigation;
+* tabs;
+* stacks;
+* sheets;
+* drawers;
+* modais;
+* header contextual;
+* gesture/back behavior.
+
+Não copie automaticamente padrões do desktop.
+
+Morador e Parceiro podem possuir navegações diferentes.
+
+---
+
+# 39. DESKTOP E WEB
+
+Mesmo que o foco dos usuários finais seja PWA/mobile, a aplicação deve funcionar excelentemente no desktop.
+
+O parceiro pode querer trabalhar pelo computador.
+
+O morador pode acessar pelo navegador.
+
+Não trate desktop como fallback ruim.
+
+---
+
+# 40. EXPERIÊNCIA CONTÍNUA
+
+O usuário deve poder começar no navegador e depois instalar o app sem perder contexto.
+
+Exemplo:
+
+Morador:
+
+entra por link do Instagram
+
+↓
+
+faz solicitação
+
+↓
+
+posteriormente instala PWA
+
+↓
+
+sua solicitação continua ali.
+
+Parceiro:
+
+recebe convite
+
+↓
+
+abre link
+
+↓
+
+entra
+
+↓
+
+instala PWA
+
+↓
+
+continua usando normalmente.
+
+---
+
+# 41. DEEP LINKS
+
+Links relevantes devem abrir diretamente o contexto correto quando possível.
+
+Exemplos:
+
+* solicitação;
+* oportunidade;
+* cadastro;
+* notificação.
+
+No PWA instalado, utilize comportamento adequado quando suportado.
+
+---
+
+# 42. MATCHING
+
+O motor de compatibilidade continua baseado inicialmente em dados claros.
+
+Pode considerar:
+
+* categoria;
+* serviço;
+* área;
+* status;
+* disponibilidade;
+* elegibilidade.
+
+Operations continua podendo:
+
+* revisar;
+* escolher;
+* encaminhar;
+* intervir.
+
+Não esconda decisões críticas atrás de algoritmo opaco.
+
+---
+
+# 43. DISTRIBUIÇÃO
+
+Nesta fase, preserve a capacidade de operação assistida.
+
+Fluxo:
+
+Solicitação entra
+
+↓
+
+sistema identifica compatíveis
+
+↓
+
+Operations revisa
+
+↓
+
+seleciona parceiros
+
+↓
+
+parceiros recebem oportunidade.
+
+A arquitetura deve permitir evolução futura para automação parcial ou total.
+
+Mas não automatize prematuramente apenas para parecer sofisticado.
+
+---
+
+# 44. FAIRNESS
+
+Regra obrigatória:
+
+> plano mais caro não compra automaticamente os melhores leads.
+
+Compatibilidade deve priorizar:
+
+* capacidade de atender;
+* relevância;
+* disponibilidade;
+* experiência do morador.
+
+O produto precisa preservar confiança.
+
+---
+
+# 45. PRIVACIDADE
+
+Dados do morador devem ser tratados cuidadosamente.
+
+Não exponha:
+
+* telefone;
+* endereço;
+* dados pessoais;
+* descrição sensível;
+
+para empresas sem necessidade operacional.
+
+Utilize compartilhamento progressivo.
+
+---
+
+# 46. SEGURANÇA
+
+Agora existirão três superfícies com diferentes permissões.
+
+Proteja corretamente:
+
+### Morador
+
+acessa apenas seus próprios dados.
+
+### Parceiro
+
+acessa apenas:
+
+* seu perfil;
+* suas oportunidades;
+* dados explicitamente liberados para ele.
+
+### Operations
+
+possui acesso operacional conforme autorização.
+
+Não dependa apenas de controles visuais no frontend.
+
+Autorização precisa existir no backend.
+
+---
+
+# 47. MODELO DE PAPÉIS
+
+Prepare arquitetura para diferentes papéis futuros.
+
+Inicialmente podem existir:
+
+* usuário/morador;
+* parceiro;
+* operador;
+* administrador.
+
+Não crie RBAC empresarial gigante sem necessidade.
+
+Mas também não espalhe verificações improvisadas pelo código.
+
+---
+
+# 48. DESIGN SYSTEM
+
+Agora o design system se torna ainda mais importante.
+
+Ele deve possuir componentes reutilizáveis e consistentes para:
+
+* botões;
+* inputs;
+* headers;
+* navegação;
+* cards;
+* listas;
+* sheets;
+* modais;
+* estados;
+* badges;
+* feedback;
+* skeletons;
+* empty states;
+* banners;
+* notificações;
+* formulários;
+* filtros;
+* timelines.
+
+Tudo precisa funcionar:
+
+* Light;
+* Dark;
+* mobile;
+* desktop;
+* touch.
+
+---
+
+# 49. EXPERIÊNCIA VISUAL
+
+Queremos um produto:
+
+**premium**
+**amigável**
+**local**
+**humano**
+**moderno**
+**limpo**
+**confiável**
+**sofisticado sem elitismo**
+
+Não queremos:
+
+* dashboard genérico;
+* template;
+* cartoon;
+* neon;
+* sci-fi;
+* excesso de gradiente;
+* cards intermináveis;
+* interface com aparência de IA;
+* efeitos gratuitos;
+* visual exageradamente corporativo.
+
+---
+
+# 50. MICROCOPY
+
+Moradores não devem receber termos internos.
+
+Errado:
+
+> Lead encaminhado.
+
+Melhor:
+
+> Encontramos profissionais que podem ajudar.
+
+Parceiro não precisa receber jargão técnico.
+
+Errado:
+
+> Opportunity state changed to accepted.
+
+Melhor:
+
+> Você aceitou esta oportunidade.
+
+Toda escrita precisa ser revisada como parte da UX.
+
+---
+
+# 51. ACESSIBILIDADE
+
+Não sacrifique acessibilidade apenas para a PWA parecer nativa.
+
+Preserve:
+
+* leitores de tela;
+* contraste;
+* foco;
+* navegação;
+* tamanhos;
+* inputs;
+* labels;
+* seleção quando necessária;
+* zoom de acessibilidade quando apropriado.
+
+A intenção é eliminar comportamento acidental de website, não limitar o usuário.
+
+---
+
+# 52. OFFLINE
+
+Não precisamos fingir que tudo funciona offline.
+
+Defina uma experiência inteligente.
+
+Quando fizer sentido:
+
+pode ser possível visualizar conteúdo recente já carregado.
+
+Ações que exigem servidor precisam comunicar claramente ausência de conexão.
+
+Se implementar fila offline, garanta consistência.
+
+Não salve ações críticas de maneira insegura apenas para alegar “offline-first”.
+
+---
+
+# 53. PERFORMANCE
+
+O aplicativo precisa abrir rápido.
+
+Especialmente porque muitos moradores poderão acessar por:
+
+* redes móveis;
+* aparelhos intermediários;
+* links compartilhados.
+
+Priorize:
+
+* bundle controlado;
+* lazy loading adequado;
+* cache inteligente;
+* imagens otimizadas;
+* queries eficientes;
+* navegação rápida;
+* estabilidade visual.
+
+---
+
+# 54. ANALYTICS DO MORADOR
+
+O Operations deve conseguir compreender:
+
+* visita;
+* origem;
+* início da solicitação;
+* abandono;
+* conclusão;
+* categoria;
+* bairro;
+* urgência;
+* encaminhamento;
+* tempo de resposta;
+* resultado conhecido;
+* recorrência.
+
+Não comprometa privacidade para obter analytics.
+
+---
+
+# 55. ANALYTICS DO PARCEIRO
+
+Precisamos conseguir conhecer:
+
+* oportunidades recebidas;
+* aceitas;
+* recusadas;
+* não respondidas;
+* tempo de resposta;
+* contatos;
+* orçamentos;
+* contratações conhecidas;
+* disponibilidade;
+* categorias;
+* motivos de recusa.
+
+Esses dados futuramente serão extremamente importantes para matching.
+
+---
+
+# 56. ANALYTICS PARA O PRÓPRIO PARCEIRO
+
+O parceiro pode receber algumas métricas úteis.
+
+Exemplos:
+
+* oportunidades recebidas;
+* oportunidades atendidas;
+* respostas;
+* histórico recente.
+
+Não exiba métricas sem dados suficientes.
+
+Não invente ROI.
+
+---
+
+# 57. RESULTADOS E FEEDBACK
+
+Precisamos melhorar progressivamente a qualidade dos dados de desfecho.
+
+Idealmente podemos confrontar:
+
+### Parceiro
+
+> “Esse cliente fechou o serviço?”
+
+### Morador
+
+> “Conseguiu resolver?”
+
+Essas respostas podem ajudar a identificar inconsistências.
+
+Não implemente um sistema pesado de reconciliação agora.
+
+Mas preserve a capacidade.
+
+---
+
+# 58. INTEGRIDADE DOS ESTADOS
+
+Morador, Parceiro e Operations observam partes diferentes do mesmo processo.
+
+Evite estados contraditórios.
+
+Exemplo:
+
+Operations não pode mostrar:
+
+> Contratado
+
+enquanto o aplicativo do parceiro continua exibindo:
+
+> Nova oportunidade.
+
+Centralize regras de domínio.
+
+---
+
+# 59. TEMPO REAL
+
+Quando tecnicamente justificável, atualizações importantes devem aparecer rapidamente.
+
+Exemplo:
+
+Parceiro aceita oportunidade.
+
+Operations deve perceber sem precisar aguardar minutos.
+
+Morador pode receber atualização pertinente.
+
+Escolha a estratégia técnica apropriada.
+
+Não adicione infraestrutura complexa se uma solução mais simples entregar excelente experiência.
+
+---
+
+# 60. BUSCA E DESCOBERTA
+
+O foco principal continua sendo:
+
+> problema → conexão.
+
+Não transforme a Home do morador em catálogo.
+
+Entretanto, arquiteturalmente podem existir páginas de parceiros ou categorias quando:
+
+* ajudam confiança;
+* SEO;
+* compartilhamento;
+* contextualização.
+
+Elas são complementares.
+
+O núcleo continua sendo resolução de necessidades.
+
+---
+
+# 61. PERFIL PÚBLICO DO PARCEIRO
+
+Se implementado, um perfil público deve transmitir:
+
+* identidade;
+* serviços;
+* área atendida;
+* informações comerciais;
+* confiança.
+
+Não mostrar dados internos.
+
+Não mostrar métricas operacionais privadas.
+
+Não criar rankings falsos.
+
+---
+
+# 62. ONBOARDING DO PARCEIRO
+
+Quando alguém se torna parceiro, deve existir onboarding claro.
+
+O sistema pode ajudá-lo a completar:
+
+* identidade;
+* serviços;
+* região;
+* contatos;
+* disponibilidade;
+* perfil.
+
+Mostre progresso apenas quando realmente útil.
+
+Não transforme em formulário de 30 minutos.
+
+---
+
+# 63. ONBOARDING DO MORADOR
+
+Não precisamos de tutorial tradicional.
+
+O aplicativo deve ser autoexplicativo.
+
+No primeiro uso, se algum guidance for realmente necessário, use orientação contextual mínima.
+
+Não mostrar carrossel com seis telas ensinando algo simples.
+
+---
+
+# 64. SUPORTE
+
+Morador e parceiro devem conseguir identificar facilmente como pedir ajuda quando necessário.
+
+Não esconda suporte.
+
+Integre o canal apropriado sem poluir a interface.
+
+---
+
+# 65. PÁGINAS PÚBLICAS EXISTENTES
+
+Preserve e integre:
+
+* Home;
+* `/solicitar`;
+* `/parceiros`;
+* Termos;
+* Privacidade;
+* SEO;
+* metadata;
+* compartilhamento;
+* analytics.
+
+Essas páginas continuam sendo canais importantes de aquisição.
+
+---
+
+# 66. EXPERIÊNCIA `/PARCEIROS`
+
+A landing comercial continua sendo ferramenta de aquisição.
+
+Depois da conversão, a pessoa deve ser conduzida naturalmente para a experiência autenticada adequada.
+
+Não transforme `/parceiros` diretamente no dashboard.
+
+Ela continua sendo uma página de venda.
+
+---
+
+# 67. EXPERIÊNCIA `/SOLICITAR`
+
+`/solicitar` continua funcionando para pessoas sem conta.
+
+Posteriormente, usuários identificados podem receber experiência mais integrada ao app.
+
+Evite criar dois fluxos completamente diferentes que produzam entidades incompatíveis.
+
+---
+
+# 68. UMA ÚNICA FONTE DE VERDADE
+
+Não crie:
+
+* banco do site;
+* banco do parceiro;
+* banco do admin;
+* estados duplicados.
+
+O ecossistema deve possuir uma fonte de verdade coerente para o domínio.
+
+Cada aplicativo apenas apresenta perspectivas diferentes.
+
+---
+
+# 69. ESCALABILIDADE
+
+O lançamento acontece em:
+
+**Canaã dos Carajás — PA.**
+
+Não transforme tudo em multi-city complexo antes da validação.
+
+Entretanto, não hardcode decisões irreversíveis que impossibilitem expansão geográfica futura.
+
+---
+
+# 70. MONETIZAÇÃO
+
+Modelo inicial continua B2B.
+
+Morador utiliza gratuitamente nesta fase.
+
+Parceiro Fundador:
+
+**R$79 pelos primeiros 90 dias de operação oficial.**
+
+Condições futuras ainda são hipóteses.
+
+Não transforme valores futuros em regras permanentes.
+
+---
+
+# 71. CONTRATAÇÃO E PAGAMENTO DO SERVIÇO
+
+Nesta fase:
+
+* cliente negocia diretamente;
+* parceiro executa diretamente;
+* pagamento acontece diretamente;
+* Canaã Resolve não recebe comissão;
+* Canaã Resolve não garante serviço;
+* Canaã Resolve não garante contratação.
+
+Não implemente escrow, carteira ou checkout do serviço sem mudança explícita de estratégia.
+
+---
+
+# 72. CONFIANÇA
+
+O produto deve comunicar corretamente que:
+
+* parceiros fazem parte da rede;
+* Canaã Resolve realiza conexão;
+* serviço é prestado pelo parceiro;
+* contratação é direta.
+
+Evite criar impressão jurídica ou operacional de que o profissional é funcionário do Canaã Resolve.
+
+---
+
+# 73. CRITÉRIO DE PRONTO — MORADOR
+
+Considere a experiência pronta quando for possível:
+
+1. chegar pelo site;
+2. informar um problema;
+3. concluir solicitação;
+4. ter solicitação persistida;
+5. receber identificação;
+6. acompanhar situação;
+7. receber atualização;
+8. visualizar parceiro relacionado;
+9. entrar em contato;
+10. registrar resultado;
+11. reencontrar histórico posteriormente.
+
+Tudo funcionando:
+
+* desktop;
+* mobile;
+* PWA;
+* Light;
+* Dark;
+* estados de erro;
+* loading;
+* ausência de dados.
+
+---
+
+# 74. CRITÉRIO DE PRONTO — PARCEIRO
+
+Considere a experiência pronta quando for possível:
+
+1. entrar;
+2. concluir perfil;
+3. configurar serviços;
+4. configurar área;
+5. configurar disponibilidade;
+6. receber oportunidade;
+7. visualizar contexto;
+8. aceitar ou recusar;
+9. receber dados liberados;
+10. registrar contato;
+11. registrar orçamento;
+12. registrar resultado;
+13. consultar histórico;
+14. visualizar condição comercial;
+15. pausar oportunidades;
+16. receber notificações.
+
+---
+
+# 75. CRITÉRIO DE PRONTO — OPERATIONS
+
+Operations deve conseguir observar e controlar os fluxos acima.
+
+Precisa ser possível:
+
+* visualizar solicitações;
+* visualizar parceiros;
+* visualizar compatibilidade;
+* encaminhar oportunidades;
+* acompanhar respostas;
+* intervir;
+* visualizar resultados;
+* corrigir estados quando autorizado;
+* investigar histórico;
+* analisar métricas.
+
+---
+
+# 76. TESTES DE JORNADA
+
+Não valide apenas componentes isolados.
+
+Teste jornadas completas.
+
+## Jornada A — Morador
+
+Usuário sem conta
+
+→ entra pelo Instagram
+
+→ descreve problema
+
+→ envia
+
+→ solicitação aparece no Operations
+
+→ operador encaminha
+
+→ parceiro recebe
+
+→ parceiro aceita
+
+→ morador recebe atualização
+
+→ contato acontece
+
+→ resultado é registrado.
+
+## Jornada B — Parceiro
+
+Prospect
+
+→ cadastro
+
+→ análise
+
+→ aprovação
+
+→ pagamento registrado
+
+→ onboarding
+
+→ configura serviços
+
+→ disponível
+
+→ recebe oportunidade
+
+→ aceita
+
+→ fala com cliente
+
+→ registra resultado.
+
+## Jornada C — Mobile
+
+Repita as jornadas importantes usando experiência mobile/PWA.
+
+Não presuma que responsividade CSS significa experiência mobile validada.
+
+---
+
+# 77. AUDITORIA VISUAL
+
+Inspecione visualmente as telas em diferentes tamanhos.
+
+Procure:
+
+* overflow;
+* elementos cortados;
+* hierarquia ruim;
+* textos confusos;
+* espaçamento inconsistente;
+* componentes genéricos;
+* excesso de informação;
+* estados quebrados;
+* problemas de safe area;
+* teclado cobrindo elementos;
+* touch targets ruins;
+* Light/Dark inconsistentes.
+
+Corrija antes de considerar pronto.
+
+---
+
+# 78. NENHUMA FUNCIONALIDADE FALSA
+
+Não crie botão sem função.
+
+Não crie métricas fictícias.
+
+Não mostre rating fake.
+
+Não crie “visualizado” sem telemetria.
+
+Não use lorem ipsum.
+
+Não use empresas falsas em produção.
+
+Não esconda TODOs importantes atrás de interfaces bonitas.
+
+---
+
+# 79. DADOS DE DESENVOLVIMENTO
+
+Quando precisar de dados para testes, utilize fixtures/seeds claramente identificados e separados de produção.
+
+A experiência final em produção não pode depender de dados falsos.
+
+---
+
+# 80. OBSERVABILIDADE
+
+Precisamos conseguir investigar problemas que afetem:
+
+* solicitações;
+* cadastros;
+* login;
+* oportunidades;
+* notificações;
+* persistência;
+* matching;
+* integrações.
+
+Logs não devem expor dados pessoais desnecessariamente.
+
+---
+
+# 81. TESTES
+
+Testes devem priorizar comportamento relevante.
+
+Especialmente:
+
+* permissões;
+* identidade;
+* solicitação;
+* distribuição;
+* oportunidade;
+* mudança de estado;
+* notificações;
+* privacidade;
+* associação entre entidades;
+* PWA;
+* fluxos críticos.
+
+---
+
+# 82. QUALIDADE FINAL
+
+Não considere finalizado porque:
+
+> “o código está pronto”.
+
+Considere finalizado quando:
+
+> **o produto está utilizável.**
+
+Isso envolve:
+
+* código;
+* UX;
+* design;
+* dados;
+* segurança;
+* responsividade;
+* performance;
+* integração;
+* testes;
+* observabilidade;
+* conteúdo.
+
+---
+
+# 83. AUTONOMIA
+
+Você possui autonomia técnica ampla.
+
+Escolha a melhor maneira de construir.
+
+Não peça decisões técnicas triviais.
+
+Quando existir ambiguidade, utilize:
+
+* contexto do projeto;
+* princípios deste briefing;
+* análise de produto;
+* análise de UX;
+* engenharia sólida.
+
+Se identificar uma solução claramente superior para atingir determinado objetivo, utilize-a.
+
+Não altere regras comerciais fundamentais sem justificativa.
+
+---
+
+# 84. EVITE OVERENGINEERING
+
+Mesmo sendo um produto premium:
+
+premium não significa complexo.
+
+Não introduza:
+
+* dezenas de microserviços;
+* event sourcing desnecessário;
+* infraestrutura empresarial sem escala;
+* múltiplas filas sem necessidade;
+* abstrações acadêmicas;
+* dependências supérfluas.
+
+Queremos:
+
+> engenharia proporcional + experiência excepcional.
+
+---
+
+# 85. RESULTADO FINAL
+
+Ao término desta etapa, o Canaã Resolve deve possuir um ecossistema real:
+
+# MORADOR
+
+Aplicação para:
+
+> pedir ajuda, acompanhar e resolver.
+
+# PARCEIRO
+
+Aplicação para:
+
+> receber e administrar oportunidades.
+
+# OPERATIONS
+
+Aplicação para:
+
+> operar, supervisionar e melhorar o negócio.
+
+# PLATAFORMA
+
+Infraestrutura compartilhada que conecta os três.
+
+---
+
+# 86. EXPERIÊNCIA MENTAL FINAL
+
+Imagine um morador abrindo o celular:
+
+> “Meu ar-condicionado parou.”
+
+Ele abre Canaã Resolve.
+
+Em poucos segundos descreve.
+
+Envia.
+
+Não precisa descobrir empresas.
+
+O Canaã Resolve trabalha por ele.
+
+---
+
+Imagine o parceiro:
+
+Recebe:
+
+> **Nova oportunidade em Canaã**
+
+Abre.
+
+Vê:
+
+> Ar-condicionado não gela — Cidade Nova.
+
+Toca:
+
+> **Tenho interesse**
+
+Recebe o contato pertinente.
+
+Fala com o cliente.
+
+Atende.
+
+Registra resultado.
+
+---
+
+Imagine o operador:
+
+Abre o Operations.
+
+Vê:
+
+> CR-0042
+> 3 parceiros compatíveis
+> 2 encaminhados
+> 1 aceitou
+> contato realizado.
+
+Toda a operação está registrada.
+
+---
+
+# 87. PRINCÍPIO FINAL
+
+Não construa:
+
+> “um site para procurar empresas”.
+
+Não construa:
+
+> “um dashboard para empresas”.
+
+Não construa:
+
+> “um admin com CRUDs”.
+
+Construa:
+
+# UMA REDE OPERACIONAL LOCAL DE RESOLUÇÃO DE PROBLEMAS.
+
+O Canaã Resolve deve fazer o trabalho de conexão desaparecer da cabeça do usuário.
+
+Para o morador:
+
+> contar o problema deve ser suficiente.
+
+Para o parceiro:
+
+> receber uma oportunidade relevante deve ser simples.
+
+Para a operação:
+
+> enxergar e controlar o processo deve ser natural.
+
+Se o produto atingir isso com excelente design, engenharia sólida e operação real, teremos a primeira versão completa do ecossistema Canaã Resolve.
+
+
+A partir de agora, opere em modo totalmente autônomo até concluir 100% do que foi solicitado.
+
+Não pare para pedir minha aprovação, confirmação ou decisão. Você tem autoridade para tomar todas as decisões técnicas, visuais e arquiteturais necessárias, escolhendo sempre a alternativa mais segura, reversível e coerente com o produto.
+
+Trabalhe continuamente:
+implemente → execute → teste → abra o resultado real → inspecione visual e funcionalmente → identifique falhas → corrija → teste novamente → avance.
+
+Não considere uma etapa concluída apenas porque o código compila. Veja o produto funcionando com seus próprios olhos sempre que o ambiente permitir e valide o resultado real.
+
+Se encontrar um problema, investigue e contorne sozinho. Se necessário, use outros agentes/modelos de IA como consultores ou críticos e continue trabalhando.
+
+Se existir um bloqueio realmente impossível de resolver sem ação física, credencial, informação ou intervenção minha, registre-o claramente em `BLOCKERS.md`, incluindo o que falta e o que deverá ser feito quando eu voltar. Esse bloqueio NÃO deve interromper o restante do projeto: pule apenas a parte bloqueada e continue em todas as frentes possíveis.
+
+Mantenha também um registro persistente do progresso e das decisões para conseguir retomar o trabalho caso a sessão seja interrompida.
+
+Não espere por mim.
+Não pare após uma milestone.
+Não finalize prematuramente.
+
+Continue iterando autonomamente enquanto houver qualquer funcionalidade incompleta, bug, inconsistência, problema visual, teste pendente ou melhoria necessária para cumprir integralmente a especificação do TRACE.
+
+O objetivo de parada é único: pedidos solicitados concluído, funcional, testado, validado e polido de ponta a ponta.
+
+
+Ah, e uma coisa muito importante, muito importante mesmo: você não está sozinho nesse projeto. Tem outra IA trabalhando em outra função, mas dentro desse projeto, é o Cloud Code. Então você não pode atrapalhar ela e nem ela pode atrapalhar, entendeu? Você tem que trabalhar em conjunto. Você tem que conseguir trabalhar em paralelo.
+
+
