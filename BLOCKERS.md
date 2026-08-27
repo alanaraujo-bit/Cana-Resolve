@@ -106,3 +106,60 @@ com HTTPS e está como alias do deploy de produção.
 Foi gerado antes de a sessão passar a ser guardada no banco. Com o token
 aleatório e o SHA-256 na tabela `sessions`, não há nada para assinar. Pode ser
 apagado do `.env.local` — nenhum código lê essa variável.
+
+---
+
+## 9. Troque a senha do operador
+
+O acesso ao Operations foi criado com uma senha gerada automaticamente, que
+está em texto puro no `.env.local` e apareceu na conversa que gerou este
+sistema. Ela dá acesso a todos os dados pessoais de moradores e empresas.
+
+**O que fazer:** entrar em `/ops/config`, trocar a senha, e atualizar
+`OPS_SENHA` no `.env.local` para `npm run inspect` e `npm run smoke`
+continuarem funcionando. Depois, "Sair de todos os aparelhos" na mesma tela.
+
+---
+
+## 10. Produção roda código que não está no git
+
+O deploy é feito com `vercel --prod`, que envia o diretório inteiro — não só
+o que está commitado. Como a outra sessão (item 0) deixou arquivos sem commit,
+o que está no ar inclui `/parceiro/*`, `/acompanhar`,
+`/minhas-solicitacoes`, `app/manifest.ts` e `public/sw.js`, que não estão
+no repositório.
+
+**Consequência:** um deploy feito a partir de um clone limpo mudaria a
+produção silenciosamente, tirando essas rotas do ar. Elas não estão linkadas
+em lugar nenhum do site nem no sitemap, e estão atrás do próprio login — o
+risco imediato é baixo, mas o estado não é reproduzível.
+
+**O que fazer:** commitar (ou remover) esses arquivos antes do próximo deploy.
+
+---
+
+## 11. Prazo de retenção de dados não foi definido
+
+A Política de Privacidade agora diz a verdade sobre o que é guardado, onde e
+como pedir exclusão. O que ela **não** diz é por quanto tempo — porque isso
+ainda não foi decidido.
+
+**O que falta:** um prazo (ex.: solicitações resolvidas apagadas ou
+anonimizadas após X meses) e quem executa. Enquanto não existir, o texto diz
+"enquanto for útil para atender você e para o histórico da operação", que é
+honesto mas frouxo. Quando decidir, atualizar
+`app/(site)/privacidade/page.tsx` e criar a rotina.
+
+---
+
+## 12. As rotas públicas de gravação não têm proteção contra volume
+
+`POST /api/publico/solicitacoes` e `/cadastros` gravam no banco sem
+autenticação — como tem de ser, são formulários públicos. O freio é um contador
+em memória por instância (`lib/rate-limit.ts`), que não é compartilhado entre
+instâncias.
+
+Serve para o volume de hoje. Se aparecer abuso, o passo barato é um campo
+armadilha no formulário (invisível para gente, preenchido por robô) e, depois,
+um contador compartilhado — o lugar de trocar é dentro de `lib/rate-limit.ts`,
+sem tocar em nenhuma rota.

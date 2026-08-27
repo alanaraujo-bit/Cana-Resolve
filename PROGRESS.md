@@ -126,8 +126,12 @@ de estar ali e as ressalvas que pesam contra; quem decide é a pessoa.
   nenhuma resposta com falha. O mesmo comando com `--publico` cobre as seis
   rotas do site em 320, 390, 768 e 1440 px: sem regressão depois da mudança
   para route groups.
-- `npm run smoke`: prova pelo navegador o que teste de unidade não alcança —
-  formulário → Server Action → banco → revalidação → tela com o estado novo.
+- `npm run smoke`: 14 conferências pelo navegador, **rodadas contra
+  produção**. Provam a coisa que pode apodrecer sem ninguém notar — os
+  formulários públicos gravando de verdade, já que por contrato o WhatsApp abre
+  mesmo quando a gravação falha — e o caminho completo formulário → Server
+  Action → banco → revalidação → tela. Cria os próprios registros com telefones
+  reservados e apaga tudo no fim, conferindo que não sobrou nada.
 - `npm run demo:popular` / `demo:limpar`: cenário completo para revisar as
   telas com conteúdo de verdade, e a faxina para começar do zero.
 
@@ -239,6 +243,14 @@ rotas × 5 larguras × 2 temas para que isso não volte.
   cartões e paralaxe do hero.
 - Em `prefers-reduced-motion: reduce`, os 29 blocos de revelação da home
   aparecem todos visíveis e nenhuma animação roda.
+
+### Honestidade do texto
+
+Os dois formulários ainda diziam "nada é armazenado neste site", e a Política
+de Privacidade prometia por escrito ser atualizada **antes** de a plataforma
+passar a guardar solicitações. As duas coisas foram corrigidas no mesmo dia em
+que a gravação entrou: o texto dos formulários, a seção nova "Onde os dados
+ficam" e a descrição exata do que o parceiro recebe num encaminhamento.
 
 ### No ar
 
