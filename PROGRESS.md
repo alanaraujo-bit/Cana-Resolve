@@ -83,6 +83,16 @@ teste unitário — só em navegador.
   (`npm run demo:limpar`) antes de publicar — o banco de produção não deve
   carregar parceiro, prospect ou solicitação fictícios.
 
+### Publicação
+
+Commit `f846bb0` enviado ao `main` no GitHub; a integração Vercel↔GitHub
+disparou o deploy de produção sozinha. Confirmado contra
+`canaaresolve.aionixdev.com`: `/parceiro/entrar` e `/acompanhar` respondem
+200, `/minhas-solicitacoes` responde 404, e as duas verificações — 21/21 em
+`npm run smoke` e zero problemas em `npm run inspect -- --publico` — rodaram
+com `INSPECT_BASE` apontando para a URL de produção, não para o servidor
+local.
+
 ### Fora do escopo desta sessão, de propósito
 
 O HANDOFF.md já registrava (§3.5) que o ecossistema completo descrito para

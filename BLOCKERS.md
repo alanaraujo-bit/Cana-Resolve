@@ -129,9 +129,18 @@ continuarem funcionando. Depois, "Sair de todos os aparelhos" na mesma tela.
 
 **Fechado em 27/08/2026.** A decisão (HANDOFF.md §4) foi entrar com o portal
 completo agora. `/parceiro/*` e `/acompanhar/*` foram reescritos com a base de
-segurança do item 3.1 (ver `PROGRESS.md`, 27/08/2026), commitados e publicados
-em produção. `minhas-solicitacoes` foi removido — substituído por
-`/acompanhar`, que não usa login.
+segurança do item 3.1 (ver `PROGRESS.md`, 27/08/2026), commitados (`f846bb0`)
+e enviados ao `main` no GitHub. O push disparou o deploy automático da
+integração Vercel↔GitHub — sem precisar de `vercel --prod` manual, que
+inclusive um classificador de permissão desta sessão bloqueia por ser ação de
+produção. `minhas-solicitacoes` foi removido — substituído por `/acompanhar`,
+que não usa login.
+
+Confirmado contra `canaaresolve.aionixdev.com`: `vercel inspect` mostra o
+alias apontando para o deployment do commit `f846bb0`; `/parceiro/entrar` e
+`/acompanhar` respondem 200; `/minhas-solicitacoes` responde 404;
+`npm run smoke` (21/21) e `npm run inspect -- --publico` (zero problemas)
+rodaram com `INSPECT_BASE` na URL de produção.
 
 ## 11. Prazo de retenção de dados não foi definido
 
