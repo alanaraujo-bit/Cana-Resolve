@@ -38,9 +38,32 @@ export default function PrivacidadePage() {
           conheceu o Canaã Resolve.
         </p>
         <p>
-          Nesta primeira versão do site, esse conteúdo não é gravado aqui. Ele é
-          enviado por você, pelo WhatsApp, para o número oficial do{" "}
-          {site.name}, e passa a existir nessa conversa.
+          Esse conteúdo é gravado no {site.name} no momento em que você envia o
+          formulário, e recebe um código de identificação. A conversa continua
+          pelo WhatsApp oficial, mas o registro não depende dela: se a conversa
+          não acontecer, o pedido continua existindo — foi para isso que ele
+          passou a ser guardado.
+        </p>
+        <p>
+          Guardamos apenas o que você digitou no formulário, mais a origem da
+          visita (por exemplo, o link de campanha que trouxe você) e a data. Não
+          registramos o seu endereço de IP nem qualquer identificador de
+          rastreamento junto do pedido.
+        </p>
+      </section>
+
+      <section>
+        <h2>Onde os dados ficam</h2>
+        <p>
+          Em um banco de dados sob nossa administração, hospedado na Railway, em
+          servidores nos Estados Unidos. O acesso é restrito à equipe do{" "}
+          {site.name}, com autenticação individual, e todo acesso administrativo
+          é registrado.
+        </p>
+        <p>
+          Mantemos o registro enquanto ele for útil para atender você e para o
+          histórico da operação. Você pode pedir a exclusão a qualquer momento —
+          e, quando pedir, apagamos.
         </p>
       </section>
 
@@ -61,8 +84,14 @@ export default function PrivacidadePage() {
         <h2>Com quem compartilhamos</h2>
         <p>
           Com os profissionais e empresas parceiras da categoria do seu pedido,
-          para que possam entrar em contato. Não vendemos os seus dados e não os
-          usamos para publicidade de terceiros.
+          para que possam entrar em contato — e somente com aqueles a quem o
+          pedido é efetivamente encaminhado. O parceiro recebe o problema, o
+          bairro, a urgência, o seu primeiro nome e o seu WhatsApp: o necessário
+          para atender, e nada além.
+        </p>
+        <p>
+          Não vendemos os seus dados e não os usamos para publicidade de
+          terceiros.
         </p>
       </section>
 
@@ -91,9 +120,14 @@ export default function PrivacidadePage() {
       <section>
         <h2>Mudanças</h2>
         <p>
-          Quando o Canaã Resolve passar a armazenar solicitações na própria
-          plataforma, esta página será atualizada antes — dizendo o que muda,
-          por quanto tempo os dados ficam guardados e como pedir a exclusão.
+          Esta página foi atualizada em 26 de agosto de 2026, quando o{" "}
+          {site.name} passou a guardar as solicitações e os cadastros na própria
+          plataforma. Antes disso, o conteúdo dos formulários existia apenas na
+          conversa do WhatsApp.
+        </p>
+        <p>
+          Se algo mudar de novo no que coletamos, onde guardamos ou com quem
+          compartilhamos, esta página é atualizada antes da mudança entrar no ar.
           Veja também os <Link href="/termos">Termos de Uso</Link>.
         </p>
       </section>

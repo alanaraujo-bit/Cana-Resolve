@@ -493,8 +493,9 @@ export function RequestForm({
             Enviar pedido pelo WhatsApp
           </a>
           <p className="text-faint mt-4 text-[0.8125rem] leading-relaxed">
-            Nesta primeira versão, você envia o pedido à equipe do Canaã Resolve
-            pelo WhatsApp — nada é armazenado neste site. Veja a{" "}
+            O pedido fica registrado no Canaã Resolve e a conversa continua pelo
+            WhatsApp da equipe. Guardamos o que você escreveu aqui para
+            encaminhar e acompanhar — nada além disso. Veja a{" "}
             <Link href="/privacidade" className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300">
               Política de Privacidade
             </Link>

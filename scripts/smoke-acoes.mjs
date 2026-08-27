@@ -1,13 +1,24 @@
 /**
- * Prova que as ações do Operations funcionam pelo navegador.
+ * Prova, pelo navegador, o que teste de unidade não alcança.
  *
- * Os testes de fluxo (`npm test`) provam o domínio; este script prova a
- * ligação — formulário, Server Action, revalidação e a tela voltando com o
- * estado novo. É a parte que um teste de unidade não alcança e que quebra
- * calada: uma prop que não atravessa a fronteira entre servidor e cliente não
- * aparece em `tsc`, aparece em produção.
+ * Duas metades:
  *
- *   node scripts/smoke-acoes.mjs
+ * 1. **Os formulários públicos.** É a verificação mais importante do
+ *    repositório, porque é a única coisa que pode apodrecer sem ninguém
+ *    perceber: por contrato, se a gravação falhar, o WhatsApp abre do mesmo
+ *    jeito e a tela não muda. Um formulário que parou de gravar parece
+ *    perfeito. Aqui a prova é o registro aparecendo no banco.
+ *
+ * 2. **As ações do Operations.** Formulário → Server Action → domínio → banco
+ *    → revalidação → tela com o estado novo. Uma prop que não atravessa a
+ *    fronteira servidor/cliente não aparece no `tsc`; aparece em produção.
+ *
+ * **Só mexe no que ele mesmo cria.** Todos os registros nascem aqui, com
+ * telefones reservados, e são apagados no fim. Nenhum dado real é tocado —
+ * por isso é seguro rodar contra produção, que é onde a verificação vale.
+ *
+ *   npm run smoke
+ *   INSPECT_BASE=https://canaaresolve.aionixdev.com npm run smoke
  */
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -20,16 +31,64 @@ const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 const BASE = process.env.INSPECT_BASE ?? "http://localhost:3000";
 const PORTA = 9339;
 
+/** Faixa reservada para verificação. Nunca vai existir de verdade em Canaã. */
+const TEL_MORADOR = "(94) 90000-0009";
+const TEL_EMPRESA = "(94) 90000-0008";
+const DIGITOS = ["5594900000009", "5594900000008"];
+
 function env() {
   const texto = readFileSync(".env.local", "utf8");
   const pega = (k) =>
-    process.env[k] ?? texto.match(new RegExp(`^${k}=(.*)$`, "m"))?.[1]?.replace(/^["']|["']$/g, "");
+    process.env[k] ??
+    texto.match(new RegExp(`^${k}=(.*)$`, "m"))?.[1]?.replace(/^["']|["']$/g, "");
   return { url: pega("DATABASE_URL"), email: pega("OPS_EMAIL"), senha: pega("OPS_SENHA") };
 }
 
 const { url, email, senha } = env();
 const sql = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
 await sql.connect();
+
+const falhas = [];
+function conferir(nome, ok, detalhe = "") {
+  console.log(`${ok ? "✔" : "✗"} ${nome}${detalhe ? ` — ${detalhe}` : ""}`);
+  if (!ok) falhas.push(nome);
+}
+
+/** Espera uma condição no banco: a gravação é assíncrona por contrato. */
+async function esperar(consulta, valores, ok, tentativas = 30) {
+  for (let i = 0; i < tentativas; i++) {
+    const r = await sql.query(consulta, valores);
+    if (ok(r.rows)) return r.rows;
+    await sleep(500);
+  }
+  return null;
+}
+
+async function faxina() {
+  // Ordem importa: histórico e encaminhamentos antes dos registros que eles
+  // apontam. `cascade` cuidaria, mas ser explícito deixa claro o que sai.
+  await sql.query(
+    `delete from activities where subject_id in (
+       select id from service_requests where whatsapp = any($1)
+       union select id from partner_applications where whatsapp = any($1)
+       union select id from prospects where whatsapp = any($1))`,
+    [DIGITOS],
+  );
+  await sql.query(
+    `delete from interactions where subject_id in (
+       select id from service_requests where whatsapp = any($1))`,
+    [DIGITOS],
+  );
+  await sql.query("delete from service_requests where whatsapp = any($1)", [DIGITOS]);
+  await sql.query("delete from partner_applications where whatsapp = any($1)", [DIGITOS]);
+  await sql.query("delete from prospects where whatsapp = any($1)", [DIGITOS]);
+}
+
+await faxina();
+
+/* ---------------------------------------------------------------
+   Navegador
+   --------------------------------------------------------------- */
 
 const perfil = join(tmpdir(), "cr-smoke-perfil");
 mkdirSync(perfil, { recursive: true });
@@ -56,6 +115,10 @@ for (let i = 0; i < 40 && !alvo; i++) {
   } catch {
     /* subindo */
   }
+}
+if (!alvo) {
+  console.error("O Edge não respondeu na porta de depuração.");
+  process.exit(1);
 }
 
 const ws = new WebSocket(alvo);
@@ -96,27 +159,55 @@ async function js(expr) {
   return r.result.value;
 }
 
+/**
+ * Segura o link do WhatsApp sem tirar o clique de React.
+ *
+ * `preventDefault` na fase de captura impede a aba de abrir; como não
+ * interrompe a propagação, o `onClick` do formulário — que é quem grava — roda
+ * exatamente como rodaria para uma pessoa. Remover o `target` faria a página
+ * navegar para o `wa.me` e a tela de confirmação nunca apareceria.
+ */
+const segurarWhatsApp = `(() => {
+  window.open = () => null;
+  document.addEventListener(
+    "click",
+    (e) => {
+      const alvo = e.target;
+      if (alvo instanceof Element && alvo.closest('a[href^="https://wa.me"]')) {
+        e.preventDefault();
+      }
+    },
+    true,
+  );
+  return true;
+})()`;
+
+/** Escreve num campo controlado por React sem que ele ignore o valor. */
+const preencher = (sel, valor) => `(() => {
+  const el = document.querySelector(${JSON.stringify(sel)});
+  if (!el) return false;
+  const proto = Object.getPrototypeOf(el);
+  Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, ${JSON.stringify(valor)});
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+})()`;
+
 async function abrir(caminho) {
   await envia("Page.navigate", { url: BASE + caminho });
+  const destino = caminho.split("?")[0];
   for (let i = 0; i < 80; i++) {
     await sleep(150);
-    const pronto = await js("[location.pathname, document.readyState].join('|')").catch(() => "");
-    const [p, estado] = String(pronto).split("|");
-    if (p === caminho.split("?")[0] && estado === "complete") break;
+    const estado = await js("[location.pathname, document.readyState].join('|')").catch(() => "");
+    const [p, pronto] = String(estado).split("|");
+    if (p === destino && pronto === "complete") break;
   }
-  // Espera a hidratação: sem ela, o formulário faz um POST nativo que não
-  // chega a Server Action nenhuma.
+  // Antes da hidratação, enviar o formulário faz um POST nativo que não chega
+  // a lugar nenhum — e o teste passaria sem testar nada.
   for (let i = 0; i < 40; i++) {
     if (await js("!!window.next").catch(() => false)) break;
     await sleep(250);
   }
   await sleep(900);
-}
-
-const falhas = [];
-function conferir(nome, ok, detalhe = "") {
-  console.log(`${ok ? "✔" : "✗"} ${nome}${detalhe ? ` — ${detalhe}` : ""}`);
-  if (!ok) falhas.push(nome);
 }
 
 await envia("Page.enable");
@@ -128,135 +219,181 @@ await envia("Emulation.setDeviceMetricsOverride", {
   mobile: false,
 });
 
-// ---- entrar ----
-await abrir("/ops/entrar");
-if (await js("location.pathname.includes('entrar')")) {
-  await js(`(() => {
-    const set = (sel, v) => {
-      const el = document.querySelector(sel);
-      Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value').set.call(el, v);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    };
-    set('#email', ${JSON.stringify(email)});
-    set('#senha', ${JSON.stringify(senha)});
-    document.querySelector('form').requestSubmit();
-  })()`);
-  for (let i = 0; i < 40; i++) {
-    await sleep(400);
-    if (!(await js("location.pathname.includes('entrar')"))) break;
-  }
-}
-conferir("entrar no Operations", !(await js("location.pathname.includes('entrar')")));
+console.log(`Verificando ${BASE}\n`);
 
-// ---- um pedido para mexer ----
-const { rows } = await sql.query(
-  "select id::text, code, status from service_requests where status = 'nova' or status = 'em_triagem' order by code limit 1",
-);
-if (rows.length === 0) {
-  console.log("Nenhuma solicitação aberta para exercitar. Rode `npm run demo:popular`.");
-  process.exit(0);
-}
-const pedido = rows[0];
+/* ---------------------------------------------------------------
+   1. /solicitar — o pedido do morador
+   --------------------------------------------------------------- */
 
-// ---- 1. mudança de estado, com o campo que a máquina exige ----
-await abrir(`/ops/solicitacoes/${pedido.id}`);
+await abrir("/solicitar");
 
-const temBotao = await js(`(() => {
-  const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim() === 'Cancelada');
-  if (!b) return false;
-  b.click();
+await js(preencher("#descricao", "Verificacao automatica: o ar-condicionado nao esta gelando."));
+await js(preencher("#nome", "Verificacao Automatica"));
+await js(preencher("#telefone", TEL_MORADOR));
+await js(`(() => {
+  const c = document.querySelector('#consent');
+  if (c && !c.checked) c.click();
+  return c?.checked ?? false;
+})()`);
+
+// O envio é um link para o WhatsApp: bloqueamos a abertura da aba para o
+// navegador de verificação não sair da página.
+await js(segurarWhatsApp);
+
+const enviouPedido = await js(`(() => {
+  const btn = [...document.querySelectorAll('button, a')]
+    .find(b => /enviar pedido pelo whatsapp/i.test(b.textContent));
+  if (!btn) return false;
+  btn.click();
   return true;
 })()`);
-conferir("o destino 'Cancelada' aparece", temBotao);
+conferir("o formulário de /solicitar aceita o envio", enviouPedido);
 
-await sleep(400);
-const pediuMotivo = await js(
-  `!!document.querySelector('input[name=\"motivo\"], select[name=\"motivo\"]')`,
+const pedido = await esperar(
+  "select id::text, code from service_requests where whatsapp = $1",
+  [DIGITOS[0]],
+  (r) => r.length > 0,
 );
-conferir("a máquina de estados pede o motivo", pediuMotivo);
-
-await js(`(() => {
-  const campo = document.querySelector('input[name="motivo"]');
-  if (campo) {
-    Object.getOwnPropertyDescriptor(Object.getPrototypeOf(campo), 'value')
-      .set.call(campo, 'Fumaça: verificação automática.');
-    campo.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-  [...document.querySelectorAll('button')]
-    .find(b => b.textContent.trim() === 'Confirmar')?.click();
-})()`);
-
-let virou = false;
-for (let i = 0; i < 30; i++) {
-  await sleep(500);
-  const r = await sql.query("select status, close_reason from service_requests where id = $1", [
-    pedido.id,
-  ]);
-  if (r.rows[0].status === "cancelada") {
-    virou = true;
-    conferir("o motivo foi gravado", Boolean(r.rows[0].close_reason), r.rows[0].close_reason ?? "");
-    break;
-  }
-}
-conferir("a Server Action mudou o estado no banco", virou);
-
-const avisoNaTela = await js(
-  `document.body.innerText.includes('Cancelada') || document.body.innerText.includes('cancelada')`,
-);
-conferir("a tela voltou refletindo a mudança", avisoNaTela);
-
-// ---- 2. registro de interação ----
-await abrir(`/ops/solicitacoes/${pedido.id}`);
-const antes = Number(
-  (await sql.query("select count(*)::int as n from interactions where subject_id = $1", [pedido.id]))
-    .rows[0].n,
+conferir(
+  "a solicitação foi gravada antes do WhatsApp",
+  Boolean(pedido),
+  pedido ? pedido[0].code : "nada chegou ao banco",
 );
 
-await js(`(() => {
-  const t = document.querySelector('textarea[name="corpo"]');
-  Object.getOwnPropertyDescriptor(Object.getPrototypeOf(t), 'value')
-    .set.call(t, 'Anotação criada pela verificação automática.');
-  t.dispatchEvent(new Event('input', { bubbles: true }));
-  t.closest('form').requestSubmit();
-})()`);
-
-let anotou = false;
-for (let i = 0; i < 30; i++) {
-  await sleep(500);
-  const n = Number(
-    (await sql.query("select count(*)::int as n from interactions where subject_id = $1", [pedido.id]))
-      .rows[0].n,
+if (pedido) {
+  await sleep(1200);
+  const mostrouCodigo = await js(
+    `document.body.innerText.includes(${JSON.stringify(pedido[0].code)})`,
   );
-  if (n > antes) {
-    anotou = true;
-    break;
-  }
+  conferir("a tela de confirmação mostra o código do pedido", mostrouCodigo, pedido[0].code);
 }
-conferir("a anotação foi registrada", anotou);
 
-// ---- 3. devolve o pedido ao estado anterior ----
-await sql.query(
-  "update service_requests set status = $2, close_reason = null, closed_at = null where id = $1",
-  [pedido.id, pedido.status],
+/* ---------------------------------------------------------------
+   2. /parceiros — o cadastro da empresa
+   --------------------------------------------------------------- */
+
+await abrir("/parceiros");
+
+await js(preencher("#nome", "Responsavel Verificacao"));
+await js(preencher("#empresa", "Empresa de Verificacao"));
+await js(preencher("#telefone", TEL_EMPRESA));
+await js(`(() => {
+  const b = [...document.querySelectorAll('button')]
+    .find(x => /ar-condicionado/i.test(x.textContent));
+  if (b) { b.click(); return true; }
+  return false;
+})()`);
+
+await js(segurarWhatsApp);
+
+const enviouCadastro = await js(`(() => {
+  const btn = [...document.querySelectorAll('button, a')]
+    .find(b => /enviar meu interesse/i.test(b.textContent));
+  if (!btn) return false;
+  btn.click();
+  return true;
+})()`);
+conferir("o formulário de /parceiros aceita o envio", enviouCadastro);
+
+const cadastro = await esperar(
+  "select id::text, prospect_id::text from partner_applications where whatsapp = $1",
+  [DIGITOS[1]],
+  (r) => r.length > 0,
 );
-await sql.query(
-  "delete from interactions where subject_id = $1 and body like 'Anotação criada pela verificação%'",
-  [pedido.id],
+conferir("o cadastro foi gravado antes do WhatsApp", Boolean(cadastro));
+conferir(
+  "o cadastro entrou no funil comercial",
+  Boolean(cadastro?.[0]?.prospect_id),
+  cadastro?.[0]?.prospect_id ? "prospect criado" : "sem prospect",
 );
-await sql.query(
-  "delete from activities where subject_id = $1 and summary like '%Cancelada%'",
-  [pedido.id],
-);
+
+/* ---------------------------------------------------------------
+   3. O Operations agindo sobre o pedido que acabou de entrar
+   --------------------------------------------------------------- */
+
+if (pedido) {
+  await abrir("/ops/entrar");
+  if (await js("location.pathname.includes('entrar')")) {
+    await js(preencher("#email", email));
+    await js(preencher("#senha", senha));
+    await js(`document.querySelector('form').requestSubmit()`);
+    for (let i = 0; i < 40; i++) {
+      await sleep(400);
+      if (!(await js("location.pathname.includes('entrar')"))) break;
+    }
+  }
+  conferir("entrar no Operations", !(await js("location.pathname.includes('entrar')")));
+
+  await abrir(`/ops/solicitacoes/${pedido[0].id}`);
+
+  const apareceu = await js(`(() => {
+    const b = [...document.querySelectorAll('button')]
+      .find(x => x.textContent.trim() === 'Cancelada');
+    if (!b) return false;
+    b.click();
+    return true;
+  })()`);
+  conferir("o destino permitido aparece na tela", apareceu);
+
+  await sleep(400);
+  conferir(
+    "a máquina de estados exige o motivo",
+    await js(`!!document.querySelector('input[name="motivo"], select[name="motivo"]')`),
+  );
+
+  await js(preencher('input[name="motivo"]', "Verificação automática."));
+  await js(`[...document.querySelectorAll('button')]
+    .find(b => b.textContent.trim() === 'Confirmar')?.click()`);
+
+  const mudou = await esperar(
+    "select status, close_reason from service_requests where id = $1",
+    [pedido[0].id],
+    (r) => r[0]?.status === "cancelada",
+  );
+  conferir("a Server Action mudou o estado no banco", Boolean(mudou));
+  conferir("o motivo foi gravado", Boolean(mudou?.[0]?.close_reason), mudou?.[0]?.close_reason ?? "");
+  conferir(
+    "a tela voltou refletindo a mudança",
+    await js(`document.body.innerText.toLowerCase().includes('cancelada')`),
+  );
+
+  await js(preencher('textarea[name="corpo"]', "Anotação da verificação automática."));
+  await js(`document.querySelector('textarea[name="corpo"]').closest('form').requestSubmit()`);
+  conferir(
+    "a anotação foi registrada",
+    Boolean(
+      await esperar(
+        "select 1 from interactions where subject_id = $1",
+        [pedido[0].id],
+        (r) => r.length > 0,
+      ),
+    ),
+  );
+}
+
+/* ---------------------------------------------------------------
+   Faxina
+   --------------------------------------------------------------- */
 
 ws.close();
 edge.kill();
+await faxina();
+
+const sobrou = await sql.query(
+  `select
+     (select count(*) from service_requests where whatsapp = any($1))::int +
+     (select count(*) from partner_applications where whatsapp = any($1))::int +
+     (select count(*) from prospects where whatsapp = any($1))::int as n`,
+  [DIGITOS],
+);
+conferir("nada de teste ficou no banco", sobrou.rows[0].n === 0, `${sobrou.rows[0].n} restante(s)`);
+
 await sql.end();
 
 console.log("");
 if (falhas.length === 0) {
-  console.log("Todas as ações responderam pelo navegador.");
+  console.log("Tudo respondeu: formulários públicos gravando e ações do Operations agindo.");
 } else {
   console.log(`${falhas.length} falha(s): ${falhas.join(", ")}`);
-  process.exitCode = 1;
 }
 process.exit(falhas.length === 0 ? 0 : 1);

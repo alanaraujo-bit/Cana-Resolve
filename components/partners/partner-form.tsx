@@ -527,8 +527,9 @@ export function PartnerForm({ compact = false }: { compact?: boolean }) {
               ))}
             </ul>
             <p className="text-faint mt-4 text-[0.8125rem] leading-relaxed">
-              Nesta primeira versão o cadastro chega à equipe pelo WhatsApp —
-              nada é armazenado neste site. Veja a{" "}
+              O cadastro fica registrado no Canaã Resolve e a conversa continua
+              pelo WhatsApp da equipe. Guardamos os dados da sua empresa para
+              analisar e retornar — nada além disso. Veja a{" "}
               <Link href="/privacidade" className="text-brand-ink decoration-brand-line hover:decoration-current underline underline-offset-4 transition-[text-decoration-color] duration-300">
                 Política de Privacidade
               </Link>
