@@ -121,22 +121,19 @@ continuarem funcionando. Depois, "Sair de todos os aparelhos" na mesma tela.
 
 ---
 
-## 10. Produção roda código que não está no git
+## 10. O trabalho da outra sessão não está no git — nem no ar
 
-O deploy é feito com `vercel --prod`, que envia o diretório inteiro — não só
-o que está commitado. Como a outra sessão (item 0) deixou arquivos sem commit,
-o que está no ar inclui `/parceiro/*`, `/acompanhar`,
-`/minhas-solicitacoes`, `app/manifest.ts` e `public/sw.js`, que não estão
-no repositório.
+Os portais criados pela outra sessão (`/parceiro/*`, `/acompanhar`,
+`/minhas-solicitacoes`) estão apenas no diretório de trabalho: não foram
+commitados e **não estão em produção** — o domínio devolve 404 para todos eles.
+Conferido em 26/08/2026 contra `canaaresolve.aionixdev.com`.
 
-**Consequência:** um deploy feito a partir de um clone limpo mudaria a
-produção silenciosamente, tirando essas rotas do ar. Elas não estão linkadas
-em lugar nenhum do site nem no sitemap, e estão atrás do próprio login — o
-risco imediato é baixo, mas o estado não é reproduzível.
+O que **está** no ar é só o que foi commitado: o site público e o Operations.
 
-**O que fazer:** commitar (ou remover) esses arquivos antes do próximo deploy.
-
----
+**O que fazer:** decidir se o portal do parceiro e o do morador entram agora
+(o briefing original pedia para não construí-los ainda) e, se entrarem,
+terminá-los com o mesmo padrão do resto. Ver `HANDOFF.md`, que descreve o
+estado exato de cada arquivo e o que falta.
 
 ## 11. Prazo de retenção de dados não foi definido
 
