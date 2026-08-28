@@ -2,6 +2,40 @@
 
 Registro de onde o trabalho está, para retomar sem arqueologia.
 
+## Onde as coisas estão — 28/08/2026
+
+Quatro fases construídas e verificadas: fundação e login, Home, Central de
+Oportunidades, Perfil profissional. Tudo versionado; o `.env` não.
+
+**O que é real e o que não é** — a distinção que mais confunde quem chega:
+
+| | Estado |
+| --- | --- |
+| Entrada no aplicativo | **real**, contra a API em produção e os parceiros do banco |
+| Oportunidades e perfil | **exemplos declarados** — a API de dados não existe |
+| Escolher e comprimir imagem | **real** no aparelho; não há para onde enviar depois |
+| Google e Apple | não ligados — a API responde 501 dizendo isso |
+| Push, avaliações, plano, chat | não construídos |
+
+A separação vive em duas variáveis: `EXPO_PUBLIC_AUTH_API_URL` está preenchida,
+`EXPO_PUBLIC_DATA_API_URL` está vazia. Enquanto a segunda estiver assim, os
+módulos de dados usam exemplos. **Juntá-las numa variável só foi o erro que se
+pagou hoje**: ligar o login apagou os exemplos e deixou o aplicativo inteiro
+mostrando erro.
+
+**Para entrar**, um parceiro precisa de senha, e o cadastro público não pede
+nenhuma. Quem dá a primeira é `npm run parceiro:senha` na raiz do repositório.
+Em 28/08/2026 existe uma credencial, no `PA-0002`.
+
+**O próximo passo óbvio**, se ninguém disser o contrário, é a **API de dados**:
+oportunidades e perfil lendo e gravando no Postgres de produção. É o que falta
+para o aplicativo ser real depois da tela de login. O contrato já está escrito
+em `tipos.ts` de cada módulo, e só o `repositorio.ts` precisa mudar — as telas
+não.
+
+As Fases 05 e 06 foram pedidas em 28/08/2026, mas **os briefings não chegaram**
+nesta sessão; o da Fase 04 veio truncado no §37. Não invente o escopo delas.
+
 ## Fase 01 — Onboarding + Autenticação · concluída
 
 **Feito**
