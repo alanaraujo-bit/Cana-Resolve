@@ -187,6 +187,17 @@ export const partners = pgTable(
     description: text("description"),
     document: text("document"),
 
+    /**
+     * Credencial do aplicativo. `null` enquanto o parceiro nunca definiu senha
+     * — e a maioria nunca definiu: o cadastro entra pelo formulário público,
+     * que não pede senha nenhuma. Quem não tem hash simplesmente não entra,
+     * e a rota de login não distingue isso de senha errada.
+     *
+     * Formato em `lib/auth/senha.ts`: `scrypt$N$r$p$salt$hash`.
+     */
+    passwordHash: text("password_hash"),
+    passwordSetAt: timestamp("password_set_at", { withTimezone: true }),
+
     servesWholeCity: boolean("serves_whole_city").notNull().default(true),
     neighborhoods: jsonb("neighborhoods").$type<string[]>().notNull().default([]),
     availability: text("availability"),
@@ -212,6 +223,15 @@ export const partners = pgTable(
     uniqueIndex("partners_code_key").on(t.code),
     uniqueIndex("partners_whatsapp_key").on(t.whatsapp),
     index("partners_status_idx").on(t.status),
+    /**
+     * O e-mail é a identidade de login no aplicativo, então precisa ser único —
+     * mas só entre quem tem e-mail. O cadastro público não pede e-mail, e a
+     * maioria dos parceiros está sem: um índice único simples trataria todos
+     * esses vazios como o mesmo valor e barraria o segundo cadastro.
+     */
+    uniqueIndex("partners_email_key")
+      .on(sql`lower(${t.email})`)
+      .where(sql`${t.email} is not null and ${t.email} <> ''`),
   ],
 );
 

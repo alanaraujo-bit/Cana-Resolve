@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // O aplicativo é um projeto à parte, com a sua própria verificação.
+    "mobile/**",
   ]),
 ]);
 

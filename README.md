@@ -16,10 +16,9 @@ Já foi mais. Saíram daqui, de propósito e por inteiro:
 
 - **O Operations (`/ops`)** — funil comercial, triagem, rede de parceiros,
   encaminhamentos, analytics. Vai para um repositório próprio.
-- **O Portal do Morador e o Portal do Parceiro**, e a API HTTP que estava
-  sendo construída para eles. Morador e parceiro passam a ter **app nativo**,
-  em Expo / React Native, publicado na Play Store e na App Store. Nada disso
-  se constrói aqui.
+- **O Portal do Morador e o Portal do Parceiro.** Morador e parceiro passam a
+  ter **app nativo**, em Expo / React Native, publicado na Play Store e na App
+  Store. As telas deles não se constroem aqui.
 - **A PWA.** O site não é mais instalável: competiria com o app das lojas e
   entregaria menos.
 
@@ -27,9 +26,19 @@ Tudo isso está no histórico do git — `git log` até `4ff3d91` mostra o
 repositório completo, e qualquer arquivo volta com
 `git checkout 4ff3d91 -- <caminho>`.
 
-**Se você chegou aqui para construir o app ou o painel, é no outro
-repositório.** Aqui, a régua é: se não aparece para quem visita o site, ou não
-serve para gravar quem preencheu um formulário, não entra.
+**O Operations continua fora daqui.** Já o aplicativo nativo nasceu em
+[`mobile/`](mobile/README.md) — projeto Expo à parte, com `package.json` e
+`node_modules` próprios, que não toca em nada do site.
+
+Para o site, a régua segue a mesma: se não aparece para quem visita, ou não
+serve para gravar quem preencheu um formulário, não entra em `app/`.
+
+**Uma exceção, decidida em 28/08/2026: a API do aplicativo.** A entrada do
+parceiro (`app/api/v1/auth/`) mora aqui, e não num serviço à parte como o
+commit `e2d3654` previa. O motivo é prático: o deploy deste repositório já está
+de pé e ligado ao Postgres, e um serviço novo custaria dias para entregar a
+mesma tela de login. A régua ganhou uma linha — o que o **app** precisa do
+servidor entra em `app/api/v1/`, e só isso. Telas do app continuam fora.
 
 ## Stack
 
@@ -62,17 +71,22 @@ npm run typecheck
 app/
   (site)/               a landing, /solicitar, /parceiros, /privacidade, /termos
   api/publico/          onde os dois formulários gravam
+  api/v1/auth/          a entrada do aplicativo do parceiro
 components/
   sections/             as seções da home
   partners/             as seções de /parceiros
 lib/
+  auth/                 senha (scrypt) e sessão do parceiro
   db/                   esquema, conexão e migrações
   domain/               entrada, códigos, telefone, catálogo semente
   forms.ts              o contrato dos formulários (servidor e cliente)
 scripts/
   db.ts                 migrar, plantar catálogo, status
+  senha-parceiro.ts     dá a primeira senha a um parceiro (não há tela ainda)
   smoke-acoes.mjs       verificação dos formulários pelo navegador
 tests/                  regras puras e a entrada contra Postgres de verdade
+
+mobile/                 o aplicativo nativo (Expo) — projeto independente
 ```
 
 ## Decisões que valem manter

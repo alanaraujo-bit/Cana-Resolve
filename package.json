@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "test": "node --conditions=react-server --import tsx --test --test-concurrency=1 \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/smoke-acoes.mjs"
+    "smoke": "node scripts/smoke-acoes.mjs",
+    "parceiro:senha": "tsx scripts/senha-parceiro.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
