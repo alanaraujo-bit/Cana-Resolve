@@ -3,10 +3,6 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   title: { default: "Parceiro", template: "%s · Parceiro Canaã Resolve" },
   robots: { index: false, follow: false },
-  // Instalado, o Portal do Parceiro abre em tela cheia — mesmo tratamento do
-  // manifest dedicado que o Operations já usa.
-  manifest: "/parceiro-app.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "CR Parceiro" },
 };
 
 export const viewport: Viewport = {

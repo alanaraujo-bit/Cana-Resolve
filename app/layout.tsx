@@ -3,7 +3,6 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { themeScript } from "@/lib/theme-script";
 import { site } from "@/lib/site";
-import { PwaBootstrap } from "@/components/pwa";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
@@ -50,9 +49,6 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   authors: [{ name: site.company, url: site.companyUrl }],
   creator: site.company,
-  // Instalado, o site (e o acompanhamento do morador, que vive sob o mesmo
-  // escopo) abre em tela cheia no iOS, sem a barra do Safari.
-  appleWebApp: { capable: true, statusBarStyle: "default", title: site.name },
 };
 
 export const viewport: Viewport = {
@@ -62,8 +58,7 @@ export const viewport: Viewport = {
   ],
   colorScheme: "light dark",
   // Sem isto, `env(safe-area-inset-bottom)` resolve para 0 — a barra fixa do
-  // mobile em /parceiros e a navegação inferior do Portal do Morador ficam
-  // sob a barra de gestos em vez de acima dela.
+  // mobile em /parceiros fica sob a barra de gestos em vez de acima dela.
   viewportFit: "cover",
 };
 
@@ -81,7 +76,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <style>{`.cr-reveal{opacity:1;transform:none;filter:none}.cr-enter{animation:none}`}</style>
         </noscript>
       </head>
-      <body className="flex min-h-full flex-col"><PwaBootstrap />{children}</body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }
