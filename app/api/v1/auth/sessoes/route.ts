@@ -26,6 +26,37 @@ import { callerKey, rateLimit } from "@/lib/rate-limit";
  * Eles respondem 501 dizendo isso, em vez de fingir uma verificação.
  */
 
+/**
+ * CORS, só para o desenvolvimento local.
+ *
+ * No aparelho não existe CORS: o `fetch` do React Native não tem origem e
+ * nunca faz preflight, então o aplicativo de verdade entra sem nada disto. Quem
+ * precisa é a prévia no navegador (`expo start --web`), que roda em
+ * `localhost` e é barrada pelo navegador antes mesmo de sair da máquina.
+ *
+ * Por isso a liberação é estreita: máquina local e rede local, nada além. Um
+ * `*` aqui deixaria qualquer página da internet disparar tentativas de login
+ * pelo navegador de quem a visita — e esta é a rota onde isso compensa.
+ */
+const ORIGEM_LOCAL =
+  /^http:\/\/(localhost|127\.0\.0\.1|\[::1\]|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+
+function cabecalhosDeCors(request: Request): Record<string, string> {
+  const origem = request.headers.get("origin");
+  if (!origem || !ORIGEM_LOCAL.test(origem)) return {};
+  return {
+    "Access-Control-Allow-Origin": origem,
+    "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "content-type, authorization, x-cr-plataforma",
+    "Access-Control-Max-Age": "600",
+    Vary: "Origin",
+  };
+}
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, { status: 204, headers: cabecalhosDeCors(request) });
+}
+
 /** O corpo que o aplicativo manda. `tipo` é o que separa os caminhos. */
 const corpo = z.discriminatedUnion("tipo", [
   z.object({
@@ -46,17 +77,21 @@ const corpo = z.discriminatedUnion("tipo", [
   }),
 ]);
 
-const naoAutorizado = () =>
-  NextResponse.json({ ok: false, erro: "credenciais" }, { status: 401 });
+type Cabecalhos = Record<string, string>;
+
+const naoAutorizado = (cors: Cabecalhos) =>
+  NextResponse.json({ ok: false, erro: "credenciais" }, { status: 401, headers: cors });
 
 export async function POST(request: Request) {
+  const cors = cabecalhosDeCors(request);
+
   // Freio por origem: login é a superfície onde tentativa em massa compensa.
   // Seis por minuto é folgado para quem erra a senha e apertado para um robô.
   const limite = rateLimit(callerKey(request.headers, "auth"), 6, 60_000);
   if (!limite.ok) {
     return NextResponse.json(
       { ok: false, erro: "muitas_tentativas" },
-      { status: 429, headers: { "Retry-After": String(limite.retryAfter) } },
+      { status: 429, headers: { ...cors, "Retry-After": String(limite.retryAfter) } },
     );
   }
 
@@ -64,13 +99,16 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ ok: false, erro: "corpo_invalido" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, erro: "corpo_invalido" },
+      { status: 400, headers: cors },
+    );
   }
 
   const lido = corpo.safeParse(payload);
   // Corpo malformado num login não merece detalhe de validação: seria um mapa
   // dos campos aceitos. Quem escreve o cliente tem o contrato.
-  if (!lido.success) return naoAutorizado();
+  if (!lido.success) return naoAutorizado(cors);
 
   if (lido.data.tipo !== "senha") {
     return NextResponse.json(
@@ -82,27 +120,30 @@ export async function POST(request: Request) {
             ? "Entrada pelo Google ainda não está ligada."
             : "Entrada pela Apple ainda não está ligada.",
       },
-      { status: 501 },
+      { status: 501, headers: cors },
     );
   }
 
   if (!isDatabaseConfigured()) {
     console.error("[auth] DATABASE_URL ausente — ninguém consegue entrar");
-    return NextResponse.json({ ok: false, erro: "indisponivel" }, { status: 503 });
+    return NextResponse.json(
+      { ok: false, erro: "indisponivel" },
+      { status: 503, headers: cors },
+    );
   }
 
   try {
     const sessao = await entrarComSenha(lido.data.email, lido.data.senha);
-    if (!sessao) return naoAutorizado();
+    if (!sessao) return naoAutorizado(cors);
 
     return NextResponse.json(
       { token: sessao.token, conta: sessao.conta },
       // Uma resposta com credencial dentro não pode ficar em cache de ninguém.
-      { status: 201, headers: { "Cache-Control": "no-store" } },
+      { status: 201, headers: { ...cors, "Cache-Control": "no-store" } },
     );
   } catch (error) {
     console.error("[auth] falha ao entrar", error instanceof Error ? error.message : error);
-    return NextResponse.json({ ok: false, erro: "falha" }, { status: 500 });
+    return NextResponse.json({ ok: false, erro: "falha" }, { status: 500, headers: cors });
   }
 }
 
@@ -121,5 +162,8 @@ export async function DELETE(request: Request) {
     }
   }
 
-  return new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  return new NextResponse(null, {
+    status: 204,
+    headers: { ...cabecalhosDeCors(request), "Cache-Control": "no-store" },
+  });
 }
