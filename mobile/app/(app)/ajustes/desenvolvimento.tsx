@@ -5,6 +5,14 @@ import { LinhaDeAcao, LinhaDeValor } from '@/ajustes/componentes';
 import { ROTA_DE_AJUSTES } from '@/ajustes/rota';
 import { TelaDeAjuste } from '@/ajustes/Tela';
 import { authConfig } from '@/auth/config';
+import { responderConvite } from '@/notificacoes/convite';
+import { esquecerInstalacao } from '@/notificacoes/instalacao';
+import {
+  useNotificacoes,
+  type EstadoDoRegistro,
+} from '@/notificacoes/NotificacoesProvider';
+import { projectId, type Disponibilidade } from '@/notificacoes/sistema';
+import { frasePermissao } from '@/notificacoes/tipos';
 import { useSession } from '@/session/SessionProvider';
 import { space } from '@/theme';
 import { Bloco, Grupo, Nota, Text } from '@/ui';
@@ -25,6 +33,7 @@ import { Bloco, Grupo, Nota, Text } from '@/ui';
 export default function Desenvolvimento() {
   const router = useRouter();
   const { replayOnboarding, account, token } = useSession();
+  const { onde, permissao, registro } = useNotificacoes();
 
   if (!__DEV__) return <Redirect href={ROTA_DE_AJUSTES} />;
 
@@ -54,6 +63,27 @@ export default function Desenvolvimento() {
         </Bloco>
       </Grupo>
 
+      {/* Notificações. Aqui aparece o **estado**, e nunca o endereço de
+          entrega: o token de push não vai para a tela nem para o console, nem
+          em desenvolvimento (§54, §96). Quem precisa dele é o servidor. */}
+      <Grupo titulo="Notificações">
+        <Bloco>
+          <LinhaDeValor
+            primeira
+            titulo="Ambiente"
+            valor={frasesDeAmbiente[onde]}
+            explicacao="Push remoto só existe na build de desenvolvimento, em aparelho real."
+          />
+          <LinhaDeValor titulo="Permissão do sistema" valor={frasePermissao[permissao]} />
+          <LinhaDeValor titulo="Registro do aparelho" valor={frasesDeRegistro[registro]} />
+          <LinhaDeValor
+            titulo="Identificação da build"
+            valor={projectId() ? 'Configurada' : 'Ausente'}
+            explicacao="Sem ela, o serviço da Expo não emite token. Ver BLOCKERS.md."
+          />
+        </Bloco>
+      </Grupo>
+
       <Grupo titulo="Atalhos">
         <Bloco>
           <LinhaDeAcao
@@ -64,6 +94,16 @@ export default function Desenvolvimento() {
               void replayOnboarding();
               router.dismissAll();
             }}
+          />
+          <LinhaDeAcao
+            titulo="Convidar de novo para as notificações"
+            explicacao="Esquece a resposta e faz o convite reaparecer na Home"
+            onPress={() => void responderConvite.esquecer()}
+          />
+          <LinhaDeAcao
+            titulo="Esquecer esta instalação"
+            explicacao="O próximo registro entra como um aparelho novo no servidor"
+            onPress={() => void esquecerInstalacao()}
           />
         </Bloco>
       </Grupo>
@@ -77,6 +117,23 @@ export default function Desenvolvimento() {
     </TelaDeAjuste>
   );
 }
+
+const frasesDeAmbiente: Record<Disponibilidade, string> = {
+  pronta: 'Build de desenvolvimento, em aparelho',
+  'expo-go': 'Expo Go — sem push remoto',
+  'sem-aparelho': 'Simulador — sem push',
+  'sem-projeto': 'Sem identificação de build',
+  web: 'Navegador — sem push',
+};
+
+const frasesDeRegistro: Record<EstadoDoRegistro, string> = {
+  ocioso: 'Não tentado',
+  registrando: 'Registrando…',
+  registrado: 'Registrado no servidor',
+  'sem-permissao': 'Aguardando permissão',
+  indisponivel: 'Não se aplica aqui',
+  falhou: 'Falhou',
+};
 
 const estilos = StyleSheet.create({
   nota: { paddingHorizontal: space.xs },

@@ -23,6 +23,8 @@
  * sai do aparelho quando alguém sai da conta (`session/chaves.ts`).
  */
 
+import type { CategoriaDePreferencia } from '@/notificacoes/tipos';
+
 /** O único idioma que existe de verdade hoje. Ver `IDIOMAS` abaixo. */
 export type Idioma = 'pt-BR';
 
@@ -48,11 +50,30 @@ export type PreferenciasDaConta = {
   oportunidadesPausadas: boolean;
   /** Quando a pausa começou — a Home usa para lembrar desde quando. */
   pausadasEm: Date | null;
+
+  /**
+   * Que avisos ele quer receber (§36 da Fase 06).
+   *
+   * Três, e nenhum a mais — a especificação é explícita em não querer quinze
+   * interruptores. Segurança **não** está aqui: um alerta de acesso à conta
+   * não responde ao mesmo opt-out de uma comunicação comum (§37). Marketing
+   * também não, e a ausência é o que impede alguém de mandar campanha usando
+   * a autorização dada para receber oportunidade (§38).
+   *
+   * Isto é **preferência**, não permissão. O sistema operacional pode estar
+   * bloqueando a entrega com todos os três ligados — e a tela precisa dizer
+   * isso, em vez de fingir que está funcionando (§35, §88).
+   */
+  avisos: Record<CategoriaDePreferencia, boolean>;
 };
 
 export const preferenciasPadrao: PreferenciasDaConta = {
   oportunidadesPausadas: false,
   pausadasEm: null,
+  // Tudo ligado por padrão: quem chegou a conceder a permissão do sistema já
+  // disse que quer ser avisado. Um padrão desligado faria a permissão parecer
+  // quebrada.
+  avisos: { oportunidades: true, atualizacoes: true, comunicados: true },
 };
 
 /** Uma frase curta sobre o estado do recebimento, para a Home e os Ajustes. */

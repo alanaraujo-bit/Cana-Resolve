@@ -15,6 +15,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { authConfig } from '@/auth/config';
+import type { CategoriaDePreferencia } from '@/notificacoes/tipos';
 import { chaves } from '@/session/chaves';
 import { preferenciasPadrao, type PreferenciasDaConta } from './tipos';
 
@@ -27,7 +28,29 @@ export function apenasNesteAparelho(): boolean {
   return !authConfig.dataApiBaseUrl;
 }
 
-type Gravado = { oportunidadesPausadas?: boolean; pausadasEm?: string | null };
+type Gravado = {
+  oportunidadesPausadas?: boolean;
+  pausadasEm?: string | null;
+  avisos?: Partial<Record<CategoriaDePreferencia, boolean>>;
+};
+
+/**
+ * Lê os três interruptores de aviso, campo a campo.
+ *
+ * Uma categoria ausente — de uma versão anterior à Fase 06, ou de um dia em
+ * que uma quarta aparecer — cai no padrão dela, e não em `false`. Um
+ * interruptor que se desliga sozinho ao atualizar o aplicativo é o tipo de
+ * coisa que ninguém percebe até parar de receber oportunidade.
+ */
+function lerAvisos(gravado: Gravado['avisos']): PreferenciasDaConta['avisos'] {
+  const padrao = preferenciasPadrao.avisos;
+  if (!gravado) return { ...padrao };
+  return {
+    oportunidades: gravado.oportunidades ?? padrao.oportunidades,
+    atualizacoes: gravado.atualizacoes ?? padrao.atualizacoes,
+    comunicados: gravado.comunicados ?? padrao.comunicados,
+  };
+}
 
 export async function lerPreferencias(): Promise<PreferenciasDaConta> {
   try {
@@ -38,6 +61,7 @@ export async function lerPreferencias(): Promise<PreferenciasDaConta> {
     return {
       oportunidadesPausadas: lido.oportunidadesPausadas === true,
       pausadasEm: lido.pausadasEm ? new Date(lido.pausadasEm) : null,
+      avisos: lerAvisos(lido.avisos),
     };
   } catch {
     // Preferência ilegível não pode impedir o aplicativo de abrir: o padrão é
@@ -56,6 +80,7 @@ export async function salvarPreferencias(p: PreferenciasDaConta): Promise<void> 
   const gravado: Gravado = {
     oportunidadesPausadas: p.oportunidadesPausadas,
     pausadasEm: p.pausadasEm ? p.pausadasEm.toISOString() : null,
+    avisos: p.avisos,
   };
 
   await AsyncStorage.setItem(chaves.preferenciasDaConta, JSON.stringify(gravado));

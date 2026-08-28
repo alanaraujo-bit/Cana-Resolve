@@ -20,11 +20,33 @@ export const chaves = {
   /** Sistema / claro / escuro. **Sobrevive**: é preferência de quem segura o
    *  aparelho, não da conta. Ver `theme/preferencia.ts`. */
   tema: 'cr.tema.v1',
+  /**
+   * O identificador desta instalação, para o registro de push. **Sobrevive**:
+   * ele descreve o aparelho, não quem está logado — e é justamente por
+   * sobreviver que a troca de conta consegue reapontar o mesmo aparelho no
+   * servidor, em vez de deixar dois registros vivos entregando para dois
+   * donos. Ver `notificacoes/instalacao.ts`.
+   */
+  instalacao: 'cr.instalacao.v1',
+  /**
+   * Já convidamos a ativar as notificações, e a pessoa respondeu.
+   * **Sobrevive**: "agora não" é resposta de quem segura o aparelho, e
+   * reperguntar a cada login seria o insistir que o §33 proíbe.
+   */
+  convitePush: 'cr.push.convite.v1',
 
   /** Rascunho local do perfil, enquanto não há API de dados. **Morre.** */
   perfilRascunho: 'cr.perfil.rascunho.v1',
   /** Preferências que pertencem à conta e um dia sincronizam. **Morre.** */
   preferenciasDaConta: 'cr.preferencias.conta.v1',
+
+  /**
+   * Para onde uma notificação ou um link queria levar, guardado enquanto a
+   * pessoa autentica. **Morre.** É o §19 em forma de chave: o destino de um
+   * push da conta anterior não pode sobreviver à troca de conta e abrir dados
+   * de quem saiu. Ver `notificacoes/destino.ts`.
+   */
+  destinoPendente: 'cr.destino.pendente.v1',
 
   /** Credencial de sessão. Vive no `SecureStore`, nunca no armazenamento comum. */
   sessao: 'cr.session.v1',
@@ -37,4 +59,5 @@ export const chaves = {
 export const chavesDaConta: readonly string[] = [
   chaves.perfilRascunho,
   chaves.preferenciasDaConta,
+  chaves.destinoPendente,
 ];

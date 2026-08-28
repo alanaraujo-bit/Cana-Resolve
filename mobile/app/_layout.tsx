@@ -19,12 +19,13 @@ import { Stack, useRouter, usePathname, useSegments, type Href } from 'expo-rout
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { anotar as anotarDestino, restaurar } from '@/notificacoes/destino';
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { ThemeProvider, useTheme } from '@/theme';
 import { lerPreferenciaDeTema, type ThemePreference } from '@/theme/preferencia';
@@ -154,17 +155,27 @@ function Gate() {
    *
    * Um link ou uma notificação pode apontar direto para uma oportunidade. Se o
    * aplicativo estiver fechado, o caminho é: abrir → entrar → **e chegar onde
-   * se queria chegar**. Sem isto, autenticar joga todo mundo no Início e o
-   * link se perde no meio do caminho.
+   * se queria chegar** (§17, §18). Sem isto, autenticar joga todo mundo no
+   * Início e o link se perde no meio do caminho.
+   *
+   * Isto **era** um `useRef` lido uma vez, na primeira montagem. A Fase 06
+   * mostrou o furo: um push tocado com o aplicativo já parado na tela de
+   * entrar, ou vindo do segundo plano, nunca passava por aquele instante — e o
+   * destino sumia. Agora quem guarda é `notificacoes/destino`, que aceita ser
+   * avisado a qualquer momento, valida a rota antes de aceitá-la, e é apagado
+   * quando alguém sai da conta.
    */
-  const destino = useRef<string | null>(null);
-  const primeira = useRef(true);
-  if (primeira.current) {
-    primeira.current = false;
-    if (pathname && pathname !== '/' && !pathname.startsWith('/entrar') && !pathname.startsWith('/onboarding')) {
-      destino.current = pathname;
-    }
-  }
+  useEffect(() => {
+    void restaurar();
+  }, []);
+
+  useEffect(() => {
+    if (stage !== 'sem-sessao' && stage !== 'primeira-vez') return;
+    if (!pathname || pathname === '/') return;
+    if (pathname.startsWith('/entrar') || pathname.startsWith('/onboarding')) return;
+    // Uma rota desconhecida é recusada aqui dentro, e não vira navegação.
+    anotarDestino(pathname, 'link');
+  }, [stage, pathname]);
 
   useEffect(() => {
     if (stage === 'carregando') return;
@@ -182,9 +193,12 @@ function Gate() {
     if (stage === 'autenticado' && account && atual !== '(app)') {
       // Hoje só existe a área do profissional. Quando o morador entrar, é aqui
       // que o papel da conta escolhe o destino — e não a tela de origem.
-      const pretendido = destino.current;
-      destino.current = null;
-      router.replace(pretendido ? (pretendido as Href) : '/inicio');
+      //
+      // O destino pendente **não** é consumido aqui de propósito: quem o honra
+      // é `NotificacoesProvider`, já dentro da área, com um `push` sobre o
+      // Início. Assim quem chegou por notificação tem para onde voltar —
+      // "voltar naturalmente para Oportunidades" é o §20.
+      router.replace('/inicio' as Href);
     }
   }, [stage, account, segments, router]);
 

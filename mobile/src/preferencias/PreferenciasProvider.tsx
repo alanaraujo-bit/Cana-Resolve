@@ -23,6 +23,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import type { CategoriaDePreferencia } from '@/notificacoes/tipos';
 import { apenasNesteAparelho, lerPreferencias, salvarPreferencias } from './repositorio';
 import { preferenciasPadrao, type PreferenciasDaConta } from './tipos';
 
@@ -37,6 +38,14 @@ type Valor = {
    * tela avisa, em vez de deixar um estado que some na próxima abertura.
    */
   pausarOportunidades: (pausar: boolean) => Promise<boolean>;
+  /**
+   * Liga ou desliga um tipo de aviso. Mesma disciplina da pausa: otimista, e
+   * volta atrás quando o disco recusa.
+   *
+   * Isto é **preferência**, e não a permissão do sistema — que é lida em
+   * `NotificacoesProvider` e nunca confundida com isto (§88).
+   */
+  definirAviso: (categoria: CategoriaDePreferencia, ligado: boolean) => Promise<boolean>;
 };
 
 const Contexto = createContext<Valor | null>(null);
@@ -61,6 +70,7 @@ export function PreferenciasProvider({ children }: { children: ReactNode }) {
   const pausarOportunidades = useCallback(async (pausar: boolean) => {
     const anterior = atuais.current;
     const proximo: PreferenciasDaConta = {
+      ...anterior,
       oportunidadesPausadas: pausar,
       pausadasEm: pausar ? (anterior.pausadasEm ?? new Date()) : null,
     };
@@ -75,14 +85,35 @@ export function PreferenciasProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const definirAviso = useCallback(
+    async (categoria: CategoriaDePreferencia, ligado: boolean) => {
+      const anterior = atuais.current;
+      const proximo: PreferenciasDaConta = {
+        ...anterior,
+        avisos: { ...anterior.avisos, [categoria]: ligado },
+      };
+
+      setPreferencias(proximo);
+      try {
+        await salvarPreferencias(proximo);
+        return true;
+      } catch {
+        setPreferencias(anterior);
+        return false;
+      }
+    },
+    [],
+  );
+
   const valor = useMemo<Valor>(
     () => ({
       preferencias,
       carregando,
       somenteNesteAparelho: apenasNesteAparelho(),
       pausarOportunidades,
+      definirAviso,
     }),
-    [preferencias, carregando, pausarOportunidades],
+    [preferencias, carregando, pausarOportunidades, definirAviso],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

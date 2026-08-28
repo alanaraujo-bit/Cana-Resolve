@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { confirmarSessao, encerrarSessao } from '@/auth/service';
+import { revogar as revogarDispositivo } from '@/notificacoes/registro';
 import { limparDadosDaConta } from './limpeza';
 import {
   clearStoredSession,
@@ -196,7 +197,32 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Avisa o servidor antes de esquecer o token — depois não haveria com o que
     // avisar. Não espera dar certo: sair é imediato para quem pediu.
     const atual = tokenRef.current;
-    if (atual) void encerrarSessao(atual);
+    if (atual) {
+      /**
+       * **A ordem aqui é a funcionalidade.**
+       *
+       * Primeiro o aparelho para de receber, e só depois a sessão morre. O
+       * servidor identifica quem pede pela credencial: com a sessão já
+       * apagada, a revogação leva 401 e a linha fica viva.
+       *
+       * Isso foi medido, não deduzido. Disparar os dois juntos — que era o que
+       * este bloco fazia — dava `204` para a sessão e `401` para o aparelho, e
+       * o telefone continuava recebendo "Nova oportunidade · Elétrica ·
+       * Centro" de um parceiro que já não estava ali. É o §57, o parágrafo que
+       * a especificação chama de crítico, e ele falhava em silêncio.
+       *
+       * Esperar custa: sair deixa de ser instantâneo. Por isso a revogação tem
+       * um limite curto (3s, em `registro.ts`) e a tela já mostra o botão
+       * carregando. Se estourar, sair acontece do mesmo jeito — e a proteção
+       * que resta é a de sempre: o aviso não carrega dado privado (§10), abrir
+       * a oportunidade exige uma sessão que já não existe (§19), e a próxima
+       * entrada neste aparelho reaponta o registro (§58).
+       */
+      await revogarDispositivo(atual);
+      // A sessão, depois. Esta não é esperada: o servidor já tem o pedido, e
+      // quem saiu não precisa ver a confirmação.
+      void encerrarSessao(atual);
+    }
     await encerrar(null);
   }, [encerrar]);
 

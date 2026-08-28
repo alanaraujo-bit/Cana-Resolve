@@ -17,6 +17,7 @@
  * para o que porventura não tenha um dono carregado.
  */
 
+import { esquecer as esquecerDestino } from '@/notificacoes/destino';
 import { esquecerMemoria as esquecerCarteira } from '@/oportunidades/repositorio';
 import { esquecer as esquecerPerfil } from '@/perfil/repositorio';
 import { clearAccountData } from './storage';
@@ -30,6 +31,11 @@ export async function limparDadosDaConta(): Promise<void> {
   await Promise.all([
     // O rascunho do perfil: memória e disco, nessa ordem de importância.
     esquecerPerfil(),
+    // O destino que uma notificação deixou pendente. Sem isto, o parceiro
+    // seguinte a entrar neste aparelho seria levado direto para a oportunidade
+    // do anterior assim que autenticasse — o §19 da Fase 06, com a mesma forma
+    // do vazamento do perfil que a Fase 05 encontrou: a memória, não o disco.
+    esquecerDestino(),
     // As chaves da conta que restarem — ver `chaves.ts`.
     clearAccountData(),
   ]);

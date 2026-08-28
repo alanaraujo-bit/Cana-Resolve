@@ -6,6 +6,8 @@ import { registrar } from '@/ajustes/analytics';
 import { LinhaDeAcao, LinhaDeAjuste, LinhaDeValor } from '@/ajustes/componentes';
 import { links, NOME_DO_APLICATIVO, versao } from '@/ajustes/informacoes';
 import { abrirExterno, TelaDeAjuste } from '@/ajustes/Tela';
+import { useNotificacoes } from '@/notificacoes/NotificacoesProvider';
+import { frasePermissao } from '@/notificacoes/tipos';
 import { usePreferencias } from '@/preferencias/PreferenciasProvider';
 import { IDIOMAS } from '@/preferencias/tipos';
 import { useSession } from '@/session/SessionProvider';
@@ -21,16 +23,17 @@ import { Bloco, Button, Grupo, Nota, Sheet, Text, haptics } from '@/ui';
  * outros veem**, **onde pedir ajuda**, **o que é este aplicativo**. Sair fica
  * no fim, sozinho, longe do que se toca todo dia.
  *
- * O que ficou de fora, e por quê: plano, assinatura, desempenho, notificações
- * com interruptor. Os três primeiros são outra fase; o último seria um
- * interruptor que não desliga nada — e um controle que não controla é a pior
- * coisa que uma tela de Configurações pode ter.
+ * O que ficou de fora, e por quê: plano, assinatura e desempenho — são outra
+ * fase. Notificações **entraram** na Fase 06, e a linha delas mostra o estado
+ * do sistema em vez de um interruptor: o interruptor que importa aqui é o do
+ * aparelho, e ele não mora nesta tela.
  */
 export default function Ajustes() {
   const { colors, preference } = useTheme();
   const router = useRouter();
   const { account, signOut } = useSession();
   const { preferencias } = usePreferencias();
+  const { permissao } = useNotificacoes();
 
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
@@ -108,11 +111,13 @@ export default function Ajustes() {
           {/* Idioma existe, mas não é escolha: só há um, de verdade. Uma linha
               que informa é honesta; um menu com uma opção seria teatro (§24). */}
           <LinhaDeValor titulo="Idioma" valor={IDIOMAS['pt-BR']} />
-          {/* Notificações chegam na Fase 06. Enquanto o envio não existir, um
-              interruptor aqui não desligaria nada (§37, §70). */}
-          <LinhaDeValor
+          {/* Notificações passaram a existir na Fase 06 — e a linha mostra o
+              estado **do sistema**, não a preferência interna: é o que a
+              pessoa quer saber sem entrar (§88). */}
+          <LinhaDeAjuste
             titulo="Notificações"
-            explicacao="Ainda não disponíveis nesta versão do aplicativo."
+            valor={frasePermissao[permissao]}
+            onPress={() => ir('notificacoes', '/ajustes/notificacoes')}
           />
         </Bloco>
       </Grupo>

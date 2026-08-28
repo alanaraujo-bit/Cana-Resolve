@@ -5,6 +5,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ESPACO_BARRA } from '@/navigation/BarraPrincipal';
+import { ConviteDeNotificacoes } from '@/notificacoes/componentes';
+import { useNotificacoes } from '@/notificacoes/NotificacoesProvider';
 import { useCarteira } from '@/oportunidades/Carteira';
 import { usePreferencias } from '@/preferencias/PreferenciasProvider';
 import { LinhaOportunidade, OportunidadeEmDestaque } from '@/oportunidades/componentes';
@@ -20,6 +22,7 @@ import {
   SectionHeader,
   Skeleton,
   Text,
+  haptics,
 } from '@/ui';
 
 /**
@@ -50,6 +53,11 @@ export default function Inicio() {
   const router = useRouter();
   const { account } = useSession();
   const { preferencias } = usePreferencias();
+  const {
+    podeConvidar,
+    ativar: ativarNotificacoes,
+    adiar: adiarNotificacoes,
+  } = useNotificacoes();
 
   const {
     situacao,
@@ -177,6 +185,22 @@ export default function Inicio() {
               recebendo={recebendo}
             />
           )}
+
+          {/* O convite das notificações (§31).
+              Ele entra **depois** das oportunidades, e não antes: a frase
+              "mesmo com o aplicativo fechado" só quer dizer alguma coisa para
+              quem já viu o que chega aqui. Pedir a permissão na abertura,
+              antes de a pessoa entender o valor, é o que o §30 proíbe.
+              `podeConvidar` já garante que ninguém foi perguntado ainda. */}
+          {podeConvidar ? (
+            <ConviteDeNotificacoes
+              onAtivar={() => {
+                haptics.step();
+                void ativarNotificacoes();
+              }}
+              onAdiar={() => void adiarNotificacoes()}
+            />
+          ) : null}
 
           {anteriores.length > 0 ? (
             <View style={styles.secao}>

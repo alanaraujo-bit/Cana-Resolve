@@ -1,9 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { LinhaDeValor } from '@/ajustes/componentes';
 import { abrirAjustesDoSistema, TelaDeAjuste } from '@/ajustes/Tela';
+import { useNotificacoes } from '@/notificacoes/NotificacoesProvider';
+import { frasePermissao } from '@/notificacoes/tipos';
 import { space } from '@/theme';
 import { Bloco, Button, Grupo, Nota, Text } from '@/ui';
 
@@ -15,10 +18,10 @@ import { Bloco, Button, Grupo, Nota, Text } from '@/ui';
  * desligados sem motivo, dá a impressão errada de um aplicativo faminto — e
  * ainda ensina a pessoa a ignorar pedidos de permissão (§33, §36).
  *
- * Hoje é uma só: **fotos**, para escolher a imagem do perfil e as fotos de
- * trabalho. Localização não é pedida — ser um aplicativo de bairro não é
- * motivo para saber onde alguém está o tempo todo. Notificações chegam na
- * próxima versão, e a permissão será pedida quando houver o que notificar.
+ * São duas: **fotos**, para escolher a imagem do perfil e as fotos de
+ * trabalho, e **notificações**, desde a Fase 06. Localização não é pedida —
+ * ser um aplicativo de bairro não é motivo para saber onde alguém está o tempo
+ * todo.
  *
  * Quando uma permissão está negada, a tela diz **por que precisamos**, **o que
  * muda sem ela** e **como habilitar** — nunca só "permissão negada" (§34).
@@ -36,6 +39,8 @@ const frases: Record<Situacao, string> = {
 };
 
 export default function Permissoes() {
+  const router = useRouter();
+  const { permissao } = useNotificacoes();
   const [fotos, setFotos] = useState<Situacao>('lendo');
   const [falhaAoAbrir, setFalhaAoAbrir] = useState(false);
 
@@ -126,6 +131,25 @@ export default function Permissoes() {
         ) : null}
       </Grupo>
 
+      <Grupo titulo="Notificações">
+        <Bloco>
+          <LinhaDeValor
+            primeira
+            titulo="Avisos de novas oportunidades"
+            valor={frasePermissao[permissao]}
+            explicacao="Pedida só quando você escolhe ativar — nunca na primeira abertura."
+          />
+        </Bloco>
+        {/* Uma porta, e não uma segunda cópia dos controles: quem manda nesse
+            assunto é a tela de Notificações, e duas telas mexendo na mesma
+            coisa é o começo de duas verdades. */}
+        <Button
+          label="Abrir Notificações"
+          variant="quiet"
+          onPress={() => router.push('/ajustes/notificacoes')}
+        />
+      </Grupo>
+
       <Grupo titulo="O que não pedimos">
         <Bloco>
           <LinhaDeValor
@@ -134,8 +158,8 @@ export default function Permissoes() {
             explicacao="O aplicativo não acompanha onde você está. A área que você atende é escolhida por você, no Perfil."
           />
           <LinhaDeValor
-            titulo="Notificações"
-            explicacao="Ainda não enviamos nenhuma. A permissão só vai ser pedida quando houver aviso para mandar."
+            titulo="Contatos, câmera e microfone"
+            explicacao="Nada disso é pedido. As fotos vêm da galeria, e só quando você escolhe uma."
           />
         </Bloco>
       </Grupo>
