@@ -35,6 +35,12 @@ A senha é sorteada e mostrada uma vez; o banco guarda só o hash (scrypt).
 **Continua faltando:** a tela de "criar senha" e a de "esqueci minha senha".
 Enquanto não existirem, quem distribui credencial é o comando acima.
 
+**No aparelho e no navegador.** No celular (Expo Go) não existe CORS: o `fetch`
+do React Native não tem origem, e a entrada funciona direto. A prévia web
+(`expo start --web`) é barrada pelo navegador, então a API libera de propósito
+só as origens locais — `localhost` e rede local. Nenhuma página da internet
+consegue disparar login pelo navegador de quem a visita.
+
 O texto abaixo é o registro de como era antes.
 
 ---
