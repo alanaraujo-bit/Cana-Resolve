@@ -1,5 +1,11 @@
 # Passagem de bastão — continuar o Portal do Parceiro e o do Morador
 
+> **Rumo mudou em 27/08/2026.** Este arquivo é histórico. A PWA foi
+> desligada; Morador e Parceiro viram app nativo em Expo / React Native, e
+> este repositório fica com a landing e o backend HTTP. Onde este documento
+> falar em portal web, manifest ou instalar o site, vale o que está na seção
+> **Direção** do `README.md`.
+
 Escrito em 26/08/2026, no fim da sessão que construiu o Operational Core.
 
 Duas sessões de IA trabalharam neste repositório ao mesmo tempo. Uma terminou

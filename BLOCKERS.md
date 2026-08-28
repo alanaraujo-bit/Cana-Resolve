@@ -1,5 +1,11 @@
 # Bloqueios — Canaã Resolve
 
+> **Rumo mudou em 27/08/2026.** Este arquivo é histórico. A PWA foi
+> desligada; Morador e Parceiro viram app nativo em Expo / React Native, e
+> este repositório fica com a landing e o backend HTTP. Onde este documento
+> falar em portal web, manifest ou instalar o site, vale o que está na seção
+> **Direção** do `README.md`.
+
 Itens que dependem de uma decisão, credencial ou informação do Alan. Nenhum
 deles impede o funcionamento do que já existe.
 

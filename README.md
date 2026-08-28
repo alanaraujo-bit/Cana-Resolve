@@ -13,6 +13,34 @@ O produto tem duas metades:
   comercial, qualificação, rede de parceiros, solicitações, encaminhamentos e
   os números que importam.
 
+## Direção — decidida em 27/08/2026
+
+Antes de mexer em qualquer coisa aqui, leia esta seção. Ela contradiz partes
+do histórico em `PROGRESS.md` de propósito.
+
+- **A PWA acabou.** Morador e Parceiro passam a ter **app nativo**, em
+  **Expo / React Native**, publicado na Play Store e na App Store. Um único
+  codebase em TypeScript, para reaproveitar os contratos de `lib/domain/` e o
+  Zod de `lib/forms.ts`. Não existe mais manifest do site nem do Parceiro, e
+  `public/sw.js` virou um service worker que só se desinstala.
+- **Este repositório é a landing + o backend.** A landing (`/`,
+  `/solicitar`, `/parceiros` e as páginas legais) é o que continua sendo
+  desenvolvido na web. `lib/domain/`, `lib/db/` e `lib/auth/` ficam, porque
+  o app nativo vai consumi-los — por HTTP, em `app/api/`. **App nativo não
+  chama Server Action**; toda funcionalidade nova que o app precisa nasce como
+  rota HTTP.
+- **As páginas dos portais (`app/(morador)/`, `app/(partner)/`) estão
+  congeladas.** Continuam no ar só porque links assinados já foram entregues
+  por WhatsApp. Nada novo entra nelas; elas saem quando o app estiver nas
+  lojas.
+- **O `/ops` sai daqui para um repositório próprio.** Até lá continua
+  funcionando e não deve quebrar, mas também é código congelado: nada novo é
+  construído nele neste repositório.
+- **O `/ops` perdeu o service worker junto com a PWA** — o registrador vivia
+  no layout raiz e valia para o site inteiro. Foi de propósito: cache de
+  estático não é peça essencial de uma ferramenta interna de desktop, e o
+  `ops-app.webmanifest` continua bastando para instalá-la.
+
 ## Stack
 
 - Next.js 16 (App Router, Turbopack) + React 19
@@ -48,7 +76,7 @@ app/
   ops/(painel)/         o Operations, atrás de autenticação
   ops/entrar/           a entrada — fora do grupo protegido, de propósito
   api/publico/          onde os formulários públicos gravam
-  ops-app.webmanifest/  manifest da PWA do Operations
+  ops-app.webmanifest/  manifest do Operations (a única PWA que sobrou)
 components/
   ops/                  as peças do Operations (mais densas que as do site)
   sections/ partners/   as seções do site público
@@ -106,9 +134,9 @@ tests/                  domínio (puro) e fluxo (contra Postgres de verdade)
 
 ## O que ainda não existe
 
-Portal do parceiro, contas de morador, checkout, automação de distribuição.
-A arquitetura foi montada para comportar tudo isso sem refazer a fundação —
-mas nada disso está prometido em nenhuma tela.
+A API HTTP que o app nativo vai consumir, o próprio app em Expo, checkout e
+automação de distribuição. A arquitetura foi montada para comportar tudo isso
+sem refazer a fundação — mas nada disso está prometido em nenhuma tela.
 
 Pendências que dependem de decisão ou credencial estão em `BLOCKERS.md`.
 O histórico das etapas está em `PROGRESS.md`.
