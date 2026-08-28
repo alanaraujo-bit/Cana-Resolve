@@ -39,7 +39,7 @@ import { usePreferencias } from '@/preferencias/PreferenciasProvider';
 import { useSession } from '@/session/SessionProvider';
 import { registrar as medir } from './analytics';
 import { responderConvite, type RespostaDoConvite } from './convite';
-import { anotar, assinar, consumir, restaurar } from './destino';
+import { anotar, assinar, comoRota, consumir, restaurar } from './destino';
 import { esperasDeRetentativa, registrar as registrarNoServidor } from './registro';
 import {
   aoReceber,
@@ -286,11 +286,22 @@ export function NotificacoesProvider({ children }: { children: ReactNode }) {
       const categoria = preferenciaDoTipo[carga.tipo];
       if (categoria && !preferencias.avisos[categoria]) return;
 
-      const rota = carga.oportunidadeId ? `/oportunidade/${carga.oportunidadeId}` : null;
+      /**
+       * O destino da faixa sai de `comoRota`, e não de um `if` por tipo de
+       * aviso.
+       *
+       * Antes da Fase 07 ele era montado à mão a partir de `oportunidadeId` —
+       * o que funcionava porque só havia um destino possível. Com a avaliação,
+       * essa linha silenciosamente deixaria a faixa sem destino: ela apareceria
+       * e o "Ver" não levaria a lugar nenhum. Perguntar ao mesmo validador que
+       * o toque usa mantém as duas portas com uma regra só, e a próxima
+       * entidade não precisa lembrar de mexer aqui.
+       */
+      const rota = comoRota(carga.destino);
 
-      // §79: se a pessoa já está olhando exatamente esta oportunidade, avisar
-      // que ela existe é ruído. Os dados acima já foram relidos — que é o que
-      // realmente importava —, e a tela vai refletir a mudança sozinha.
+      // §79: se a pessoa já está olhando exatamente o que o aviso anuncia,
+      // avisar que aquilo existe é ruído. Os dados acima já foram relidos —
+      // que é o que realmente importava —, e a tela reflete a mudança sozinha.
       if (rota && rota === caminho) return;
 
       setRecebido({ carga, rota, em: Date.now() });

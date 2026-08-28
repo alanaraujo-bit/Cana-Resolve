@@ -28,6 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Href } from 'expo-router';
 
 import { chaves } from '@/session/chaves';
+import { comoRota } from './rotas';
 
 export type Origem = 'push' | 'link' | 'interno';
 
@@ -51,54 +52,17 @@ export type Destino = {
 const VALIDADE_MS = 30 * 60_000;
 
 /**
- * Os destinos que o aplicativo aceita receber de fora.
+ * A tradução de endereço externo em rota mora em `rotas.ts`, sem dependência
+ * nenhuma, e é reexportada daqui para que ninguém precise saber que ela mudou
+ * de arquivo.
  *
- * A lista é curta de propósito e cresce por decisão, não por acidente. Hoje
- * são dois: a oportunidade, que é o motivo desta fase existir, e as
- * Configurações, para onde o aviso de segurança aponta.
+ * A separação é da Fase 07 e tem uma razão só: aquele arquivo é conferido por
+ * asserção do lado do repositório do site, junto de `lib/push/mensagens.ts`,
+ * que escreve o outro lado do mesmo contrato. Enquanto a função morava aqui,
+ * importá-la arrastava o `AsyncStorage` e o alias do aplicativo — e um teste
+ * que não roda é um contrato que ninguém confere.
  */
-const ROTAS: { padrao: RegExp; rota: (m: RegExpMatchArray) => string }[] = [
-  {
-    // `oportunidade/o1` — o id é livre no formato, e conhecê-lo não concede
-    // acesso: quem autoriza é o servidor, quando a tela for buscar os dados
-    // (§70). A tela trata "não é sua" e "não existe mais" do mesmo jeito.
-    padrao: /^oportunidade\/([A-Za-z0-9._-]{1,64})$/,
-    rota: (m) => `/oportunidade/${m[1]}`,
-  },
-  {
-    padrao: /^ajustes\/(seguranca|conta|notificacoes)$/,
-    rota: (m) => `/ajustes/${m[1]}`,
-  },
-];
-
-/**
- * Converte o que veio de fora em uma rota do aplicativo, ou `null`.
- *
- * Aceita as formas que as origens produzem: `oportunidade/o1`,
- * `/oportunidade/o1` e `canaaresolve://oportunidade/o1`.
- */
-export function comoRota(bruto: string): string | null {
-  let caminho = bruto.trim();
-  if (!caminho) return null;
-
-  // `canaaresolve://oportunidade/o1` e `https://.../app/oportunidade/o1`.
-  const comEsquema = /^[a-z][a-z0-9+.-]*:\/\//i.exec(caminho);
-  if (comEsquema) {
-    const semEsquema = caminho.slice(comEsquema[0].length);
-    const barra = semEsquema.indexOf('/');
-    caminho = barra >= 0 ? semEsquema.slice(barra + 1) : semEsquema;
-  }
-
-  // Sem barra inicial, sem query e sem fragmento.
-  caminho = caminho.replace(/^\/+/, '').split('?')[0].split('#')[0];
-  if (!caminho) return null;
-
-  for (const { padrao, rota } of ROTAS) {
-    const m = padrao.exec(caminho);
-    if (m) return rota(m);
-  }
-  return null;
-}
+export { comoRota } from './rotas';
 
 /* -------------------------------------------------------------------------- */
 

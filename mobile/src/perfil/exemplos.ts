@@ -64,7 +64,18 @@ function empresa(): Perfil {
       porDia: null,
     },
     portfolio: [],
-    verificacao: { estado: 'verificado', em: new Date('2026-03-12T10:00:00') },
+    verificacao: {
+      estado: 'verificado',
+      em: new Date('2026-03-12T10:00:00'),
+      // Cenário G da Fase 07: empresa com as três conferências feitas. Só
+      // desenvolvimento — em produção ninguém tem item nenhum, porque o
+      // processo de verificação ainda não existe.
+      itens: [
+        { tipo: 'contato', estado: 'verificado', em: new Date('2026-03-10T10:00:00') },
+        { tipo: 'empresa', estado: 'verificado', em: new Date('2026-03-12T10:00:00') },
+        { tipo: 'identidade', estado: 'verificado', em: new Date('2026-03-12T10:00:00') },
+      ],
+    },
     parceiroFundador: true,
   };
 }
@@ -102,7 +113,7 @@ function autonomo(): Perfil {
       porDia: null,
     },
     portfolio: [],
-    verificacao: { estado: 'nao-iniciada', em: null },
+    verificacao: { estado: 'nao-iniciada', em: null, itens: [] },
     parceiroFundador: false,
   };
 }
@@ -157,7 +168,11 @@ function extremos(): Perfil {
       porDia: { sab: { abre: '08:00', fecha: '12:00' } },
     },
     portfolio: [],
-    verificacao: { estado: 'em-analise', em: new Date('2026-08-20T09:30:00') },
+    verificacao: {
+      estado: 'em-analise',
+      em: new Date('2026-08-20T09:30:00'),
+      itens: [{ tipo: 'contato', estado: 'em-analise', em: null }],
+    },
     parceiroFundador: false,
   };
 }

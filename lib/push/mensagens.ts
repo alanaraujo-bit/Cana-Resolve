@@ -33,6 +33,8 @@ export type TipoDeAviso =
   | "oportunidade.nova"
   /** Algo mudou em uma oportunidade dele de um jeito que exige saber. */
   | "oportunidade.atualizada"
+  /** Um cliente avaliou um atendimento dele (Fase 07). */
+  | "avaliacao.nova"
   /** Conta e segurança: acesso novo, senha trocada. Nunca inventado. */
   | "conta.seguranca"
   /** Comunicado do Canaã Resolve. Raro. */
@@ -42,11 +44,16 @@ export type TipoDeAviso =
 export const preferenciaDoTipo: Record<TipoDeAviso, CategoriaDePreferencia | null> = {
   "oportunidade.nova": "oportunidades",
   "oportunidade.atualizada": "atualizacoes",
+  "avaliacao.nova": "avaliacoes",
   "conta.seguranca": null,
   "canaa.comunicado": "comunicados",
 };
 
-export type CategoriaDePreferencia = "oportunidades" | "atualizacoes" | "comunicados";
+export type CategoriaDePreferencia =
+  | "oportunidades"
+  | "atualizacoes"
+  | "avaliacoes"
+  | "comunicados";
 
 /**
  * Os canais do Android (§50). Um por família de aviso, e não um por categoria
@@ -56,6 +63,7 @@ export type CategoriaDePreferencia = "oportunidades" | "atualizacoes" | "comunic
 export const canalDoTipo: Record<TipoDeAviso, string> = {
   "oportunidade.nova": "oportunidades",
   "oportunidade.atualizada": "atualizacoes",
+  "avaliacao.nova": "avaliacoes",
   "conta.seguranca": "conta",
   "canaa.comunicado": "atualizacoes",
 };
@@ -73,6 +81,8 @@ export type CargaDoAviso = {
   destino: string;
   /** Presente quando o aviso é sobre uma oportunidade. */
   oportunidadeId?: string;
+  /** Presente quando o aviso é sobre uma avaliação (Fase 07). */
+  avaliacaoId?: string;
   /**
    * Quando o acontecimento ocorreu no servidor — não quando o push chegou.
    * Serve para o aplicativo descartar um aviso mais velho do que o que já
@@ -181,6 +191,49 @@ export function avisoDeAtualizacao(entrada: {
         "oportunidade.atualizada",
         `${entrada.oportunidadeId}:${entrada.motivo}`,
       ),
+      para: entrada.partnerId,
+    },
+  };
+}
+
+/**
+ * Uma avaliação nova (Fase 07, §72, §73).
+ *
+ * **O que este aviso não carrega é a decisão inteira.** Não vai o comentário,
+ * não vai a nota e não vai o nome de quem escreveu. O motivo é o mesmo §10 que
+ * governa a oportunidade, e aqui pesa mais: o texto de uma avaliação é o
+ * julgamento de uma pessoa sobre o trabalho de outra, e ele pode ser lido na
+ * tela bloqueada por quem estiver por perto — um cliente, um colega, um
+ * concorrente. "Nota 2: marcou duas vezes e não apareceu" numa tela de bloqueio,
+ * no meio de um serviço, é constrangimento sem nenhum ganho.
+ *
+ * E a nota também não vai, mesmo sendo só um número: uma avaliação boa que se
+ * anuncia sozinha ensina que a ausência de número no aviso significa avaliação
+ * ruim, e transforma cada push em veredito antes de a pessoa abrir.
+ *
+ * O aviso diz que existe. O conteúdo pertence ao aplicativo autenticado.
+ */
+export function avisoDeNovaAvaliacao(entrada: {
+  avaliacaoId: string;
+  partnerId: string;
+  em?: Date;
+}): Aviso {
+  const em = entrada.em ?? new Date();
+
+  return {
+    titulo: "Você recebeu uma nova avaliação",
+    corpo: "Veja o retorno sobre um atendimento recente.",
+    grupo: "avaliacoes",
+    carga: {
+      tipo: "avaliacao.nova",
+      // `avaliacao/:id`, e não a rota interna do aplicativo. Um push gravado
+      // hoje pode ser tocado daqui a semanas, e a estrutura de rotas do
+      // aplicativo não deve viajar dentro dele — a tradução mora em
+      // `mobile/src/notificacoes/destino.ts`.
+      destino: `avaliacao/${entrada.avaliacaoId}`,
+      avaliacaoId: entrada.avaliacaoId,
+      em: em.toISOString(),
+      evento: chaveDoEvento("avaliacao.nova", entrada.avaliacaoId),
       para: entrada.partnerId,
     },
   };

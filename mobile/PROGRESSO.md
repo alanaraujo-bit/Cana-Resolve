@@ -4,8 +4,9 @@ Registro de onde o trabalho está, para retomar sem arqueologia.
 
 ## Onde as coisas estão — 28/08/2026
 
-Cinco fases construídas e verificadas: fundação e login, Home, Central de
-Oportunidades, Perfil profissional, Conta e Configurações. Tudo versionado; o
+Sete fases construídas e verificadas: fundação e login, Home, Central de
+Oportunidades, Perfil profissional, Conta e Configurações, Notificações, e
+Reputação. Tudo versionado; o
 `.env` não.
 
 **O que é real e o que não é** — a distinção que mais confunde quem chega:
@@ -20,7 +21,9 @@ Oportunidades, Perfil profissional, Conta e Configurações. Tudo versionado; o
 | Escolher e comprimir imagem | **real** no aparelho; não há para onde enviar depois |
 | Google e Apple | não ligados — a API responde 501 dizendo isso |
 | Excluir conta | pedido pelo canal oficial; não há rota, e não se finge que há |
-| Push, avaliações, plano, chat | não construídos |
+| Push | infraestrutura real; falta credencial para chegar num aparelho |
+| Avaliações e reputação | **exemplos declarados** — mesma porta das oportunidades |
+| Plano, chat, área do morador | não construídos |
 
 A separação vive em duas variáveis: `EXPO_PUBLIC_AUTH_API_URL` está preenchida,
 `EXPO_PUBLIC_DATA_API_URL` está vazia. Enquanto a segunda estiver assim, os
@@ -33,18 +36,15 @@ nenhuma. Quem dá a primeira é `npm run parceiro:senha` na raiz do repositório
 Em 28/08/2026 existe uma credencial, no `PA-0002`.
 
 **O próximo passo óbvio**, se ninguém disser o contrário, é a **API de dados**:
-oportunidades e perfil lendo e gravando no Postgres de produção. É o que falta
-para o aplicativo ser real depois da tela de login. O contrato já está escrito
-em `tipos.ts` de cada módulo, e só o `repositorio.ts` precisa mudar — as telas
-não.
+oportunidades, perfil e avaliações lendo e gravando no Postgres de produção. É o
+que falta para o aplicativo ser real depois da tela de login. O contrato já está
+escrito em `tipos.ts` de cada módulo, e só o `repositorio.ts` precisa mudar — as
+telas não. Com a Fase 07 são três módulos esperando a mesma variável.
 
 A **Fase 05 chegou em 28/08/2026** e está feita — ver a seção dela abaixo e
 `AJUSTES.md`. Ela trouxe junto quatro rotas na API do site (o `GET` de sessão, o
 `POST` de senha, `email` na conta e o CORS extraído), porque metade do que ela
 pedia não existia do lado do servidor.
-
-A **Fase 06** é Push Notifications, e não foi começada. O briefing da Fase 04
-veio truncado no §37 naquela sessão; não invente o que faltou.
 
 **Atenção antes de abrir no Expo Go contra produção:** o aplicativo agora chama
 quatro rotas de autenticação, e três delas (`GET /auth/sessoes`,
@@ -527,10 +527,119 @@ aponta **para elas** (§113), não para um segundo conjunto de entidades.
 O roteiro completo para essa validação está em
 [`NOTIFICACOES.md`](NOTIFICACOES.md), na seção "O roteiro no aparelho".
 
+## Fase 07 — Reputação, avaliações, confiança e verificação · concluída
+
+**A decisão que organizou a fase.** A API de dados continua não existindo, então
+a pergunta foi a mesma da Fase 06: o que dá para construir de **verdade**? A
+resposta, aqui, é tudo que é regra — média, elegibilidade, moderação, o texto do
+push, a tradução do deep link. Nada disso depende de servidor, tudo isso é o que
+passa despercebido numa captura de tela, e é por isso que virou lógica pura com
+asserção em vez de comentário. As avaliações em si vêm dos exemplos declarados,
+pela mesma porta (`EXPO_PUBLIC_DATA_API_URL`) que alimenta oportunidades e perfil.
+
+**Feito — no aplicativo**
+
+- **`src/reputacao/`**, com a mesma separação dos outros módulos. E uma regra que
+  vive no **tipo**, não numa tela: `media` é `number | null`. Um perfil sem
+  avaliações não tem média — ele não tem *zero*. "0,0 ★" num perfil novo diz
+  "profissional ruim" quando o que existe é ausência de dado, e no lançamento a
+  maioria dos parceiros legítimos vai estar exatamente aí. Sendo `null` no tipo,
+  nenhuma tela futura consegue regredir para "0,0" por descuido.
+- **`resumir()` é a fonte única do cálculo.** Perfil, prévia e lista chamam essa
+  função e nenhuma outra. Duas contas independentes divergem no primeiro caso de
+  borda, e quando divergem quem perde credibilidade é a plataforma.
+- **`elegibilidade.ts`** — quem pode avaliar, como lógica pura. Autoavaliação,
+  quem não participou, serviço que não aconteceu, avaliação repetida e prazo
+  vencido: cinco impedimentos, cada um com asserção. **Não existe avaliação
+  pública irrestrita.** E "serviço realizado" é o único resultado que habilita:
+  encerrada não quer dizer atendida.
+- **Moderação com quatro estados**, e só `publicada` conta na média. A escolha
+  que precisou de justificativa é `em-analise` **não** contar: contar uma
+  avaliação que talvez seja fraude deixa a fraude funcionar enquanto a análise
+  corre. Como a análise só começa por uma denúncia, a saída fica **visível** — a
+  lista diz "em análise" e o resumo informa quantas estão fora da conta, em vez
+  de a média mudar sozinha.
+- **Contestar não remove.** A avaliação vira `em-analise` e continua existindo,
+  visível, com o estado escrito. E a folha diz isso **antes** do envio.
+- **Uma resposta, e ela é um objeto e não uma lista** — a forma do dado é o que
+  impede a thread de nascer. Editável e apagável; apagar a resposta não apaga a
+  avaliação.
+- **O que o profissional não pode fazer não existe como função.** Não há
+  `removerAvaliacao` no repositório, não há alterar nota, não há editar o
+  comentário do cliente. Não é permissão negada em tempo de execução: é operação
+  ausente do módulo.
+- **Privacidade na origem.** O objeto `Avaliacao` não tem telefone, e-mail nem id
+  de morador **para vazar**. `autor` chega pronto: "Cliente Canaã Resolve".
+- **Verificação com significado** (`verificacao.ts`): cada tipo com o que foi
+  conferido e o que aquilo **não** cobre, mais a frase obrigatória de que
+  verificação não é garantia. Três conferências viram **um** selo, não três.
+- **Fundador continua separado da nota**, e a folha diz com todas as letras que
+  ele não é avaliação nem prioridade.
+- **Push e deep link reutilizam a Fase 06 inteira.** Tipo novo `avaliacao.nova`,
+  com interruptor próprio; o aviso **não carrega a nota nem o comentário**; o
+  destino é `avaliacao/:id`, traduzido para a rota interna em um lugar só.
+- **O selo da aba não foi tocado.** As não lidas alimentam um ponto discreto no
+  Perfil, e nada mais.
+- Domínio documentado em [`REPUTACAO.md`](REPUTACAO.md).
+
+**Feito — no repositório do site**
+
+- `avisoDeNovaAvaliacao` em `lib/push/mensagens.ts`, passando pela mesma
+  `conferirPrivacidade` dos outros avisos.
+- `tests/reputacao.test.ts`, 44 asserções sobre média, moderação, elegibilidade,
+  saneamento de texto, verificação, o push e o deep link.
+
+**Corrigido no caminho** (achado olhando o produto, não o código):
+
+| O que estava errado | Onde |
+| --- | --- |
+| **`porId` tinha lista de dependências vazia.** A tela de detalhe guarda a avaliação num `useMemo` com `[id, porId]`, e com `porId` estável **o memo nunca recalculava**: publicar uma resposta gravava tudo certo e a tela continuava mostrando o objeto de antes, ainda oferecendo "Responder". Idem para a contestação. Tipo, lint e as 44 asserções passavam todos | `ReputacaoProvider` |
+| O ponto de "ainda não li" **vazava para a prévia pública** — um ponto verde ao lado da nota que o morador leria como algum estado do profissional | `CartaoDeAvaliacao` ganhou `publico` |
+| O filtro por nota desenhava `<Estrelas nota={1} />` em cada chip: cinco estrelas com uma preenchida ao lado de um "5", dizendo duas coisas contraditórias | `UmaEstrela`, ícone de unidade |
+| Alvos de 36 e de 28 px — os chips do filtro e o link "Como funcionam" | ambos para 44 |
+| "por não corresponde a um serviço meu": os rótulos de motivo são orações e não cabem depois de "por" | o motivo passou a entrar entre aspas |
+| **`comoRota` descartava tudo até a primeira barra em todo esquema**, como se sempre houvesse host. `canaaresolve://oportunidade/o1` virava `o1` e não abria nada. Defeito herdado da Fase 06, invisível porque o push manda o destino *sem* esquema — quem passava por ali era um link de verdade, tocado fora do aplicativo | `notificacoes/rotas.ts` |
+
+**Verificado**
+
+| O quê | Como | Resultado |
+| --- | --- | --- |
+| Tipos | `npx tsc --noEmit`, nos dois projetos | limpo |
+| Lint | `npx expo lint` e `npx eslint` | limpo |
+| Testes | `npm test`, com 44 asserções novas | 93/93 |
+| Média | zero, uma, três, cinco, e com removida e em análise no meio | `null` quando não há; 4,7 e não 4,66667; removida não contamina |
+| Elegibilidade | os cinco impedimentos, mais a janela de edição | conferidos |
+| "Serviço realizado" é o único que habilita | os outros cinco resultados | os cinco recusados |
+| Deep link | as três formas, ida e volta, e o esquema próprio | idempotente; a regressão da Fase 06 coberta |
+| Push de avaliação | busca por nota e por comentário no texto | nenhum dos dois; privacidade limpa |
+| Percurso completo | perfil → lista → detalhe → responder → contestar → prévia | claro e escuro, 393 e 320 |
+| Estados de confiança | empresa verificada com **zero** avaliações, folha de verificação, duas avaliações, negativa, em análise | os cinco conferidos |
+| "0,0" | busca no texto de **toda** tela capturada | nenhuma ocorrência |
+| Ranking e gamificação | busca por "Top 1", "Mais bem avaliado", "Score", "garantido" | nenhuma ocorrência |
+| Erro isolado | avaliações no cenário "erro", com o Perfil aberto | a caixa falha e diz; as seis seções continuam inteiras |
+| Amostra pequena | duas avaliações | sem distribuição, sem filtro, e a frase não conclui nada |
+| Alvos de toque | medição do DOM em todas as telas, 393 e 320 | nenhum abaixo de 44 |
+| Transbordo horizontal | 320 e 393 | nenhum |
+| Erros de console | quatro percursos completos, nos dois temas | nenhum |
+| Selo da aba | contagem de Oportunidades ao longo do percurso | continua 3; nenhuma avaliação entrou nele |
+| Landing intacta | `git diff --stat -- "app/(site)" components public brand` | vazio |
+
+**Não verificado aqui** — precisa de aparelho:
+
+- **Push de avaliação nova entregue de verdade.** Falta o mesmo da Fase 06: conta
+  Expo, chave APNs e build de desenvolvimento (`BLOCKERS.md` §7). **Não afirmo
+  que chegou em nenhum iPhone**, porque não chegou.
+- Cold start pelo toque num aviso de avaliação.
+- Haptics do publicar e do contestar.
+- O teclado real subindo sob a folha de resposta — `comTeclado` foi escrito para
+  isso e o navegador não tem teclado de sistema.
+- Dynamic Type acima do teto, Liquid Glass nativo, Safe Areas com Dynamic Island,
+  Android físico.
+
 ## Próxima fase — quando esta for aprovada
 
-A Fase 06 para aqui, de propósito. Não foram começados: assinatura, planos,
-pagamentos, avaliações, reputação, analytics comercial, área do morador, chat
+A Fase 07 para aqui, de propósito. Não foram começados: assinatura, planos,
+pagamentos, analytics comercial, área do morador, chat, ranking, marketplace
 nem Central de Notificações.
 
 Continuam de fora, pelo mesmo motivo de sempre: a **API de dados**, que é o que

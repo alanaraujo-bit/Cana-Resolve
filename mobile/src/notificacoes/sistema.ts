@@ -187,6 +187,17 @@ export async function prepararCanais(): Promise<void> {
       sound: 'default',
       showBadge: true,
     });
+    await Notifications.setNotificationChannelAsync('avaliacoes', {
+      name: 'Novas avaliações',
+      description: 'Quando um cliente avalia um atendimento seu.',
+      // `DEFAULT` e não `HIGH`: uma avaliação não é urgente. Ela merece ser
+      // sabida, não interromper um serviço em andamento.
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: 'default',
+      // Sem selo: o número do ícone conta oportunidades esperando decisão, e
+      // só isso (§76). Ver `definirSelo`.
+      showBadge: false,
+    });
     await Notifications.setNotificationChannelAsync('conta', {
       name: 'Conta e segurança',
       description: 'Avisos sobre o acesso à sua conta.',

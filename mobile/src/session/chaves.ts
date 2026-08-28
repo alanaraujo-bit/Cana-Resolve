@@ -39,6 +39,15 @@ export const chaves = {
   perfilRascunho: 'cr.perfil.rascunho.v1',
   /** Preferências que pertencem à conta e um dia sincronizam. **Morre.** */
   preferenciasDaConta: 'cr.preferencias.conta.v1',
+  /**
+   * Avaliações e respostas enquanto não há API de dados. **Morre**, e esta é a
+   * chave que mais precisa morrer de todas: dentro dela há **comentários de
+   * clientes** sobre atendimentos de um parceiro específico. O rascunho do
+   * perfil que vazou na Fase 05 eram os dados do próprio parceiro; aqui seriam
+   * os dados de terceiros, na tela de quem nunca os atendeu.
+   * Ver `reputacao/repositorio.ts`.
+   */
+  avaliacoesRascunho: 'cr.reputacao.rascunho.v1',
 
   /**
    * Para onde uma notificação ou um link queria levar, guardado enquanto a
@@ -59,5 +68,6 @@ export const chaves = {
 export const chavesDaConta: readonly string[] = [
   chaves.perfilRascunho,
   chaves.preferenciasDaConta,
+  chaves.avaliacoesRascunho,
   chaves.destinoPendente,
 ];

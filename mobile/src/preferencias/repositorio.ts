@@ -48,6 +48,12 @@ function lerAvisos(gravado: Gravado['avisos']): PreferenciasDaConta['avisos'] {
   return {
     oportunidades: gravado.oportunidades ?? padrao.oportunidades,
     atualizacoes: gravado.atualizacoes ?? padrao.atualizacoes,
+    // "avaliações" nasceu na Fase 07, e quem atualizar o aplicativo tem uma
+    // preferência gravada sem ela. Cair no padrão — ligada — e não em `false`
+    // é o parágrafo acima acontecendo de verdade: um interruptor que se
+    // desliga sozinho numa atualização é o tipo de coisa que ninguém percebe
+    // até parar de receber.
+    avaliacoes: gravado.avaliacoes ?? padrao.avaliacoes,
     comunicados: gravado.comunicados ?? padrao.comunicados,
   };
 }

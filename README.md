@@ -62,6 +62,13 @@ motivo só: o que elas precisam saber é **quem está logado**, e nada mais — 
 leem oportunidade nem perfil. Esperar pela API de dados adiaria por meses a
 peça que precisa existir antes de qualquer push.
 
+A Fase 07 acrescentou um aviso — `avisoDeNovaAvaliacao`, em
+`lib/push/mensagens.ts` — e nenhuma rota. Ele passa pela mesma
+`conferirPrivacidade` dos outros, e **não carrega a nota nem o comentário**: o
+texto de uma avaliação é o julgamento de uma pessoa sobre o trabalho de outra, e
+ele pode ser lido na tela bloqueada por quem estiver por perto. Ver
+`mobile/REPUTACAO.md`.
+
 A chave é a **instalação**, não o usuário e não o token de push: um índice
 único em `installation_id` é o que torna o registro idempotente, e é a mesma
 escrita que reaponta o aparelho quando outra conta entra nele. Sair **revoga**,

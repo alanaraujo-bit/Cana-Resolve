@@ -155,18 +155,66 @@ export type Disponibilidade = {
  * quem analise. A tela diz isso com todas as letras em vez de mostrar um botão
  * que não faz nada.
  */
-export type EstadoVerificacao = 'nao-iniciada' | 'em-analise' | 'verificado';
+export type EstadoVerificacao =
+  | 'nao-iniciada'
+  | 'em-analise'
+  | 'verificado'
+  /** Conferimos e não bateu. Interno — o morador nunca lê isto (Fase 07, §84). */
+  | 'rejeitada'
+  /** Venceu ou mudou. Precisa ser reenviada para o selo continuar valendo. */
+  | 'precisa-atualizacao';
 
 export const rotuloVerificacao: Record<EstadoVerificacao, string> = {
   'nao-iniciada': 'Não verificado',
   'em-analise': 'Em análise',
   verificado: 'Parceiro verificado',
+  rejeitada: 'Não confirmado',
+  'precisa-atualizacao': 'Precisa de atualização',
+};
+
+/**
+ * O que pode ser conferido (Fase 07, §81).
+ *
+ * Três, e nenhum a mais: cada um corresponde a uma conferência que uma pessoa
+ * do Canaã Resolve consegue fazer de verdade — ligar para um número, olhar um
+ * documento, consultar um registro. Um quarto tipo só entra quando existir o
+ * processo que o sustenta.
+ */
+export type TipoDeVerificacao = 'contato' | 'identidade' | 'empresa';
+
+/**
+ * Uma conferência, com o estado dela.
+ *
+ * O significado público de cada uma — rótulo, descrição, limite e a frase de
+ * que verificação não é garantia — mora em `reputacao/verificacao.ts`, junto
+ * dos outros sinais de confiança. Aqui fica só o dado.
+ *
+ * Nada de documento, número ou evidência: isso é do processo interno e não
+ * entra no objeto que a interface enxerga (§85, §86, §87).
+ */
+export type ItemDeVerificacao = {
+  tipo: TipoDeVerificacao;
+  estado: EstadoVerificacao;
+  /** Quando foi confirmada. `null` quando ainda não foi. */
+  em: Date | null;
 };
 
 export type Verificacao = {
+  /**
+   * O estado geral, que a Fase 04 já usava. Mantido para não reescrever as
+   * telas que o leem — o detalhe por tipo vem em `itens`.
+   */
   estado: EstadoVerificacao;
   /** Quando entrou em análise ou foi verificado. */
   em: Date | null;
+  /**
+   * O que foi conferido, item a item (Fase 07, §80).
+   *
+   * Vazio é o normal, e é o padrão de produção: não existe processo de
+   * verificação aberto, então ninguém tem item nenhum. Um selo que aparecesse
+   * por padrão seria o selo falso que o §19 dos critérios proíbe.
+   */
+  itens: ItemDeVerificacao[];
 };
 
 /** Uma foto de trabalho realizado. Não é postagem: não tem curtida nem data em destaque. */
@@ -242,7 +290,7 @@ export function perfilVazio(nome: string): Perfil {
       porDia: null,
     },
     portfolio: [],
-    verificacao: { estado: 'nao-iniciada', em: null },
+    verificacao: { estado: 'nao-iniciada', em: null, itens: [] },
     parceiroFundador: false,
   };
 }

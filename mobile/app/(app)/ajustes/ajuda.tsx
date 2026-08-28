@@ -35,6 +35,15 @@ const perguntas: { pergunta: string; resposta: string }[] = [
       'Só depois que você demonstra interesse na oportunidade. Antes disso, seu número não sai do aplicativo — e o dele também não chega até você.',
   },
   {
+    // §124 da Fase 07. Cada frase aqui descreve uma regra que o código
+    // realmente aplica — a elegibilidade em `reputacao/elegibilidade.ts`, a
+    // resposta única e a moderação em `reputacao/tipos.ts`. Se uma delas mudar,
+    // este texto muda junto ou vira mentira.
+    pergunta: 'Como funcionam as avaliações?',
+    resposta:
+      'Só quem foi atendido por você pelo Canaã Resolve pode avaliar, e só depois que o serviço for dado como realizado. Cada atendimento vira no máximo uma avaliação. Você pode responder uma vez a cada uma, e pode contestar o que estiver errado — contestar não apaga a avaliação: ela fica em análise até uma pessoa decidir. Nota baixa legítima não é motivo de remoção.',
+  },
+  {
     pergunta: 'Vou ficar um tempo sem atender. E agora?',
     resposta:
       'Em Configurações › Oportunidades, você pausa o recebimento de novos pedidos. Seu perfil continua no ar e é só reativar quando voltar.',

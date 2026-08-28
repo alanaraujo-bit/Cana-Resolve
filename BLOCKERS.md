@@ -245,3 +245,69 @@ Quando os dois existirem: acrescentar `associatedDomains` no `app.json`,
 E a regra que não muda com isso: uma URL válida não concede acesso. Conhecer o
 id de uma oportunidade não é autorização; quem autoriza é o servidor, para o
 usuário autenticado daquele momento.
+
+## 9. Reputação — Fase 07 · o que depende de você
+
+A camada de confiança está construída e conferida. Nada aqui impede o
+desenvolvimento continuar; são decisões e credenciais que só você tem.
+
+### 9.1 Push de avaliação nova — **mesmo bloqueio do §7**
+
+O aviso existe (`avisoDeNovaAvaliacao`), tem canal próprio no Android,
+interruptor próprio nas preferências e destino direto (`avaliacao/:id`). O que
+falta para ele **chegar num aparelho** é exatamente o que o §7 lista: conta
+Expo, chave APNs e build de desenvolvimento. Nenhuma linha nova.
+
+### 9.2 Verificação de parceiro — **não existe processo, e a tela diz isso**
+
+O domínio está pronto: três tipos (contato, identidade, empresa), cinco estados,
+e o significado público de cada um escrito em `mobile/src/reputacao/verificacao.ts`.
+
+O que **não** existe é o processo: ninguém recebe documento, ninguém analisa,
+ninguém decide. Em produção todo parceiro tem `verificacao.itens` vazio, e o
+perfil não mostra selo nenhum — que é o correto, e não uma falha.
+
+**Quando voltar**, três perguntas antes de qualquer código:
+
+1. **Quem confere?** Uma pessoa da operação, com um roteiro escrito. Sem isso, um
+   selo "verificado" é uma afirmação que ninguém sustenta.
+2. **O que basta para cada tipo?** Ligar para o número e ouvir resposta? Ver o
+   documento por vídeo? Consultar o CNPJ na Receita? A descrição pública que o
+   morador lê já está escrita, e ela precisa ser verdade.
+3. **Onde ficam os documentos?** Se houver envio de documento pelo aplicativo,
+   isso é armazenamento de dado sensível, com prazo de retenção e responsabilidade
+   — e nada disso foi construído de propósito (§85). Enquanto a resposta for
+   "não sabemos ainda", a verificação continua sendo feita fora do aplicativo, e o
+   resultado entra pelo banco.
+
+### 9.3 Moderação — a primeira coisa que a operação vai precisar
+
+Uma avaliação contestada vira `em-analise` e **fica lá**. Não há painel, não há
+fila e não há quem decida — por decisão: ferramenta administrativa não pertence
+ao aplicativo do profissional (§129), e ela é do Operations, que mora em outro
+repositório.
+
+O efeito prático: no dia em que a primeira contestação real chegar, alguém
+precisa poder olhá-la e decidir. Enquanto isso não existir, a avaliação fica fora
+da média indefinidamente — o que é seguro para o parceiro e ruim para o dado.
+
+**Quando voltar:** decidir se a moderação entra no Operations (o lugar certo) e
+qual o prazo máximo que uma contestação pode ficar sem resposta.
+
+### 9.4 Decisões de política, não de código
+
+Registradas em `mobile/REPUTACAO.md`, seção "Decisões pendentes". As duas que
+mais pesam:
+
+- **Uma avaliação removida some, ou fica marcada como removida?** Hoje some do
+  público. Se deve existir indicação é decisão jurídica, e não vale inventar uma
+  agora.
+- **O nome do morador pode aparecer?** Hoje é sempre "Cliente Canaã Resolve".
+  Mostrar o primeiro nome depende do que a política de privacidade prometeu a
+  ele — e mudar isso depois de as primeiras avaliações existirem é caro.
+
+### O que **não** bloqueia
+
+Tudo que é regra: média, contagem, elegibilidade, moderação, resposta,
+contestação, o texto do push e o deep link. Todos conferidos por asserção
+(`npm test`) e olhando o produto no navegador, claro e escuro, em 393 e 320.

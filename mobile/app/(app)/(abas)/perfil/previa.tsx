@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ESPACO_BARRA } from '@/navigation/BarraPrincipal';
@@ -7,7 +8,12 @@ import { rotuloDaCategoria } from '@/perfil/catalogo';
 import { CabecalhoDeTela, Nota, Retrato } from '@/perfil/componentes';
 import { usePerfil } from '@/perfil/PerfilProvider';
 import { atendimentoLegivel, horarioLegivel } from '@/perfil/tipos';
-import { gutter, radius, space, useTheme } from '@/theme';
+import { CartaoDeAvaliacao, ResumoDeNota, SemAvaliacoes } from '@/reputacao/componentes';
+import { ComoFuncionam } from '@/reputacao/explicacoes';
+import { useReputacao } from '@/reputacao/ReputacaoProvider';
+import { fraseDeVolume, visivelPublicamente } from '@/reputacao/tipos';
+import { FUNDADOR_ROTULO, seloDeVerificacao } from '@/reputacao/verificacao';
+import { gutter, hitTarget, radius, space, useTheme } from '@/theme';
 import { Pill, Text } from '@/ui';
 
 /**
@@ -24,14 +30,31 @@ import { Pill, Text } from '@/ui';
  * responsável pela empresa, o e-mail da conta e o telefone. O número não é
  * segredo, mas ele é entregue no momento certo — quando o parceiro diz que
  * consegue atender uma oportunidade —, e não fica exposto num perfil.
+ *
+ * **A Fase 07 acrescentou a reputação, e com ela a regra mais dura desta tela
+ * (§64):** o que aparece aqui é o que existe. Sem avaliações, esta prévia
+ * mostra "ainda sem avaliações" — não uma média de exemplo, não estrelas
+ * cinzentas, não um espaço reservado bonitinho. Uma prévia que preenche para
+ * ficar bonita é a forma mais barata de a plataforma inteira perder
+ * credibilidade, porque é o parceiro que descobre a mentira primeiro.
+ *
+ * E ela mostra **só o que é público** (§40): avaliações em análise ou removidas
+ * não aparecem, porque não é isso que o morador veria.
  */
 export default function Previa() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { perfil } = usePerfil();
+  const { situacao, avaliacoes, resumo } = useReputacao();
+  const [explicando, setExplicando] = useState(false);
 
   if (!perfil) return null;
+
+  const selo = seloDeVerificacao(perfil.verificacao.itens);
+  // Só o que o morador veria de verdade: `em-analise` é conversa entre o
+  // Canaã Resolve e o parceiro, e não faz parte do perfil público.
+  const publicas = avaliacoes.filter((a) => visivelPublicamente(a.estado)).slice(0, 3);
 
   const categoria = rotuloDaCategoria(perfil.categoriaId);
   const oficio = perfil.oficio.trim() || categoria;
@@ -59,12 +82,25 @@ export default function Previa() {
             {oficio}
           </Text>
 
-          {perfil.parceiroFundador || perfil.verificacao.estado === 'verificado' ? (
+          {perfil.parceiroFundador || selo ? (
             <View style={estilos.selos}>
-              {perfil.verificacao.estado === 'verificado' ? (
-                <Pill tone="marca">Parceiro verificado</Pill>
-              ) : null}
-              {perfil.parceiroFundador ? <Pill tone="destaque">Parceiro fundador</Pill> : null}
+              {selo ? <Pill tone="marca">{selo}</Pill> : null}
+              {perfil.parceiroFundador ? <Pill tone="destaque">{FUNDADOR_ROTULO}</Pill> : null}
+            </View>
+          ) : null}
+
+          {/* A reputação, na altura em que o morador a procuraria: logo abaixo
+              do nome, antes de ler o que a pessoa faz. Sem avaliação, o estado
+              honesto — e o perfil continua tendo o que mostrar. */}
+          {situacao !== 'carregando' ? (
+            <View style={estilos.reputacaoCapa}>
+              {resumo.total === 0 ? (
+                <Text variant="caption" tone="muted" center maxScale={1.3}>
+                  Ainda sem avaliações no Canaã Resolve.
+                </Text>
+              ) : (
+                <ResumoDeNota resumo={resumo} />
+              )}
             </View>
           ) : null}
         </View>
@@ -131,6 +167,38 @@ export default function Previa() {
           </Secao>
         ) : null}
 
+        {/* As avaliações, como o morador as veria (§65).
+            Poucas e legíveis. Cada uma sem nome, sem foto e sem link para
+            perfil nenhum — não é rede social, e o cliente que avaliou não
+            virou personagem público por ter avaliado (§40). */}
+        <Secao titulo="O que os clientes disseram">
+          {publicas.length === 0 ? (
+            <SemAvaliacoes compacto />
+          ) : (
+            <>
+              <View style={[estilos.avaliacoes, { borderColor: colors.line }]}>
+                {publicas.map((a) => (
+                  <CartaoDeAvaliacao key={a.id} avaliacao={a} publico />
+                ))}
+              </View>
+              <Text variant="caption" tone="faint" maxScale={1.3}>
+                {fraseDeVolume(resumo)}
+              </Text>
+              <Pressable
+                onPress={() => setExplicando(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Como funcionam as avaliações"
+                hitSlop={10}
+                style={estilos.comoFunciona}
+              >
+                <Text variant="caption" tone="brand" maxScale={1.25}>
+                  Como funcionam as avaliações
+                </Text>
+              </Pressable>
+            </>
+          )}
+        </Secao>
+
         {/* Contato: o morador vê que existe, e o canal. O número em si só
             aparece quando o parceiro assume a oportunidade. */}
         <Secao titulo="Contato">
@@ -156,6 +224,8 @@ export default function Previa() {
           atender a oportunidade dele.
         </Nota>
       </ScrollView>
+
+      <ComoFuncionam aberta={explicando} onFechar={() => setExplicando(false)} />
     </View>
   );
 }
@@ -178,6 +248,14 @@ const estilos = StyleSheet.create({
 
   capa: { alignItems: 'center', gap: space.sm },
   selos: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
+  reputacaoCapa: { marginTop: space.sm, alignItems: 'center' },
+
+  avaliacoes: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: -space.lg,
+  },
+  comoFunciona: { minHeight: hitTarget - 4, justifyContent: 'center', alignSelf: 'flex-start' },
 
   descricao: { marginTop: space.sm },
 

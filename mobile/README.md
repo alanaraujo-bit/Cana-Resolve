@@ -10,13 +10,15 @@ quem atende. Cinco fases construídas:
 | 03 | Central de Oportunidades e a tela da oportunidade | [`DOMINIO-OPORTUNIDADES.md`](DOMINIO-OPORTUNIDADES.md) |
 | 04 | Perfil profissional e a prévia pública | [`PERFIL.md`](PERFIL.md) |
 | 05 | Conta, Configurações, preferências e segurança | [`AJUSTES.md`](AJUSTES.md) |
+| 06 | Notificações, deep links e selos | [`NOTIFICACOES.md`](NOTIFICACOES.md) |
+| 07 | Reputação, avaliações, confiança e verificação | [`REPUTACAO.md`](REPUTACAO.md) |
 
 **A entrada é real, e a sessão também.** Desde 28/08/2026 o login vai contra a
 API em produção e os parceiros de verdade do banco; desde a Fase 05 a credencial
 fica no `SecureStore`, é conferida no servidor a cada abertura, e sair encerra a
 sessão de verdade. Alterar senha é uma operação real. Já as oportunidades e o
-perfil que aparecem depois do login ainda são **exemplos declarados**: a API de
-dados não existe. Ver "Variáveis", abaixo.
+perfil que aparecem depois do login — e, desde a Fase 07, as avaliações — ainda
+são **exemplos declarados**: a API de dados não existe. Ver "Variáveis", abaixo.
 
 O site (a landing, `/solicitar`, `/parceiros`) continua na raiz do repositório e
 não foi tocado. Este diretório é um projeto à parte, com o seu próprio
@@ -125,14 +127,22 @@ fica ao sair.
 aparelho, o ciclo de vida do token, os deep links, a regra do selo e como
 instalar a build de desenvolvimento para testar push de verdade.
 
+[`REPUTACAO.md`](REPUTACAO.md) — por que a média é `null` e nunca zero, quem
+pode avaliar, o que conta na média, o que o profissional pode e não pode fazer
+com uma avaliação, e o que "verificado" significa.
+
 [`PROGRESSO.md`](PROGRESSO.md) — o que cada fase entregou, o que foi
 verificado de verdade e o que não foi.
 
 ## Fora de escopo por enquanto
 
-Criação e recuperação de senha pelo próprio parceiro, avaliações, plano,
-financeiro, chat, área do morador, central de notificações e analytics
-conectado. A arquitetura os acomoda; nenhum deles foi construído.
+Criação e recuperação de senha pelo próprio parceiro, plano, financeiro, chat,
+área do morador, central de notificações, ranking e analytics conectado. A
+arquitetura os acomoda; nenhum deles foi construído.
+
+As **avaliações saíram desta lista na Fase 07**: a camada de confiança existe e
+está documentada. O que continua fora é a área onde o morador *escreve* uma —
+ver `REPUTACAO.md`, "O que a área do morador vai precisar implementar".
 
 Notificações **saíram** desta lista na Fase 06: a infraestrutura é real e o que
 falta para um push chegar no aparelho são credenciais, listadas em

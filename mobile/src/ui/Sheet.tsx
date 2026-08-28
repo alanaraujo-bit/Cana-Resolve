@@ -1,5 +1,14 @@
 import { useEffect } from 'react';
-import { BackHandler, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  BackHandler,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,6 +38,14 @@ import { Text } from './Text';
  *
  * Não usa `GlassSurface`: a folha nasce em outra hierarquia nativa, onde não há
  * o que desfocar atrás. Superfície sólida da paleta é o acabamento honesto.
+ *
+ * **A Fase 07 acrescentou duas coisas, e as duas são opcionais de propósito.**
+ * Até aqui toda folha era um seletor de opções — o motivo da recusa, o "como
+ * terminou?" — e nenhuma tinha campo de texto. Responder e denunciar uma
+ * avaliação são as primeiras que têm, e com o teclado aberto a ação de enviar
+ * ficava escondida (§94 da Fase 07). Daí `comTeclado` e `rodape`. Quem não
+ * passa nenhum dos dois recebe exatamente a folha da Fase 03, sem uma linha de
+ * diferença — que é a condição para mexer num arquivo da fundação.
  */
 export function Sheet({
   aberta,
@@ -36,12 +53,25 @@ export function Sheet({
   descricao,
   onFechar,
   children,
+  comTeclado = false,
+  rodape,
 }: {
   aberta: boolean;
   titulo: string;
   descricao?: string;
   onFechar: () => void;
   children: ReactNode;
+  /**
+   * A folha tem campo de texto: sobe com o teclado em vez de ficar embaixo
+   * dele. Só quem precisa liga — o comportamento padrão continua o de antes.
+   */
+  comTeclado?: boolean;
+  /**
+   * Uma ação fixa na base, fora da rolagem. Com teclado aberto e um texto
+   * longo digitado, o botão dentro do `ScrollView` some para baixo; aqui ele
+   * fica onde o polegar espera.
+   */
+  rodape?: ReactNode;
 }) {
   const { colors, reduceMotion } = useTheme();
   const insets = useSafeAreaInsets();
@@ -84,7 +114,13 @@ export function Sheet({
       onRequestClose={onFechar}
       statusBarTranslucent
     >
-      <View style={styles.palco}>
+      <KeyboardAvoidingView
+        // `padding` no iOS e `height` no Android é a combinação que funciona
+        // dentro de um `Modal` — e sem `comTeclado` o comportamento é
+        // `undefined`, ou seja, o de antes desta fase.
+        behavior={comTeclado ? (Platform.OS === 'ios' ? 'padding' : 'height') : undefined}
+        style={styles.palco}
+      >
         <Animated.View style={[StyleSheet.absoluteFill, veu]}>
           {/* O véu fecha ao toque, mas não é anunciado: quem usa leitor de
               tela fecha pelo botão ou pelo gesto do sistema, e dois "Fechar"
@@ -140,11 +176,14 @@ export function Sheet({
             contentContainerStyle={styles.conteudo}
             showsVerticalScrollIndicator={false}
             bounces={false}
+            keyboardShouldPersistTaps="handled"
           >
             {children}
           </ScrollView>
+
+          {rodape ? <View style={styles.rodape}>{rodape}</View> : null}
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -238,6 +277,7 @@ const styles = StyleSheet.create({
   },
   rolagem: { marginTop: space.xl },
   conteudo: { paddingHorizontal: gutter, gap: space.lg, paddingBottom: space.xs },
+  rodape: { paddingHorizontal: gutter, paddingTop: space.lg, gap: space.sm },
   opcao: {
     flexDirection: 'row',
     alignItems: 'center',

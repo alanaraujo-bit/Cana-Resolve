@@ -20,6 +20,7 @@
 import { esquecer as esquecerDestino } from '@/notificacoes/destino';
 import { esquecerMemoria as esquecerCarteira } from '@/oportunidades/repositorio';
 import { esquecer as esquecerPerfil } from '@/perfil/repositorio';
+import { esquecer as esquecerReputacao } from '@/reputacao/repositorio';
 import { clearAccountData } from './storage';
 
 export async function limparDadosDaConta(): Promise<void> {
@@ -31,6 +32,11 @@ export async function limparDadosDaConta(): Promise<void> {
   await Promise.all([
     // O rascunho do perfil: memória e disco, nessa ordem de importância.
     esquecerPerfil(),
+    // As avaliações. É o dado mais sensível que este aplicativo guarda no
+    // aparelho — comentários escritos por clientes sobre atendimentos de outra
+    // pessoa —, e ele cai no mesmo defeito das Fases 05 e 06 se a memória do
+    // repositório não for esvaziada junto com o disco. Ver `chaves.ts`.
+    esquecerReputacao(),
     // O destino que uma notificação deixou pendente. Sem isto, o parceiro
     // seguinte a entrar neste aparelho seria levado direto para a oportunidade
     // do anterior assim que autenticasse — o §19 da Fase 06, com a mesma forma

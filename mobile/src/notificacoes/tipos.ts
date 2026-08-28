@@ -17,12 +17,14 @@
 export type TipoDeAviso =
   | 'oportunidade.nova'
   | 'oportunidade.atualizada'
+  | 'avaliacao.nova'
   | 'conta.seguranca'
   | 'canaa.comunicado';
 
 const TIPOS: readonly TipoDeAviso[] = [
   'oportunidade.nova',
   'oportunidade.atualizada',
+  'avaliacao.nova',
   'conta.seguranca',
   'canaa.comunicado',
 ];
@@ -33,6 +35,8 @@ export type Carga = {
   /** Ex.: `oportunidade/o1`. Sem barra inicial — ver `destino.ts`. */
   destino: string;
   oportunidadeId?: string;
+  /** Presente quando o aviso é sobre uma avaliação (Fase 07). */
+  avaliacaoId?: string;
   /** Quando o fato aconteceu no servidor. ISO. */
   em: string;
   /** A identidade do fato — dois avisos com a mesma chave são o mesmo (§48). */
@@ -65,6 +69,7 @@ export function lerCarga(bruto: unknown): Carga | null {
     tipo: tipo as TipoDeAviso,
     destino,
     oportunidadeId: typeof d.oportunidadeId === 'string' ? d.oportunidadeId : undefined,
+    avaliacaoId: typeof d.avaliacaoId === 'string' ? d.avaliacaoId : undefined,
     em: typeof d.em === 'string' ? d.em : new Date().toISOString(),
     evento: typeof d.evento === 'string' ? d.evento : `${tipo}:${destino}`,
     para,
@@ -74,27 +79,41 @@ export function lerCarga(bruto: unknown): Carga | null {
 /**
  * As categorias que o profissional controla (§36).
  *
- * Três, e nenhuma delas é marketing — que não existe nesta fase e, quando
- * existir, precisa da própria (§38). Segurança não está aqui de propósito:
+ * Eram três na Fase 06; a Fase 07 trouxe a quarta, "avaliações". Ela ganhou
+ * interruptor próprio em vez de entrar em "atualizações" por um motivo
+ * concreto: uma avaliação nova é o único aviso que carrega julgamento sobre o
+ * trabalho da pessoa, e quem quiser ler isso na hora que escolher — em vez de
+ * receber uma nota 2 no meio de um serviço — precisa poder desligá-la sem
+ * desligar as mudanças em oportunidades, que são operacionais.
+ *
+ * Nenhuma delas é marketing — que não existe nesta fase e, quando existir,
+ * precisa da própria (§38 da Fase 06). Segurança não está aqui de propósito:
  * ela não responde a um interruptor de comunicação comum (§37).
  */
-export type CategoriaDePreferencia = 'oportunidades' | 'atualizacoes' | 'comunicados';
+export type CategoriaDePreferencia =
+  | 'oportunidades'
+  | 'atualizacoes'
+  | 'avaliacoes'
+  | 'comunicados';
 
 export const categoriasDePreferencia: CategoriaDePreferencia[] = [
   'oportunidades',
   'atualizacoes',
+  'avaliacoes',
   'comunicados',
 ];
 
 export const rotuloCategoria: Record<CategoriaDePreferencia, string> = {
   oportunidades: 'Novas oportunidades',
   atualizacoes: 'Atualizações importantes',
+  avaliacoes: 'Novas avaliações',
   comunicados: 'Comunicados do Canaã Resolve',
 };
 
 export const explicacaoCategoria: Record<CategoriaDePreferencia, string> = {
   oportunidades: 'Quando um pedido compatível com o que você faz chega até você.',
   atualizacoes: 'Quando algo muda em uma oportunidade sua de um jeito que você precisa saber.',
+  avaliacoes: 'Quando um cliente avalia um atendimento seu.',
   comunicados: 'Avisos do Canaã Resolve sobre o serviço. São raros.',
 };
 
@@ -102,6 +121,7 @@ export const explicacaoCategoria: Record<CategoriaDePreferencia, string> = {
 export const preferenciaDoTipo: Record<TipoDeAviso, CategoriaDePreferencia | null> = {
   'oportunidade.nova': 'oportunidades',
   'oportunidade.atualizada': 'atualizacoes',
+  'avaliacao.nova': 'avaliacoes',
   'conta.seguranca': null,
   'canaa.comunicado': 'comunicados',
 };

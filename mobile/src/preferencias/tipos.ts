@@ -73,7 +73,7 @@ export const preferenciasPadrao: PreferenciasDaConta = {
   // Tudo ligado por padrão: quem chegou a conceder a permissão do sistema já
   // disse que quer ser avisado. Um padrão desligado faria a permissão parecer
   // quebrada.
-  avisos: { oportunidades: true, atualizacoes: true, comunicados: true },
+  avisos: { oportunidades: true, atualizacoes: true, avaliacoes: true, comunicados: true },
 };
 
 /** Uma frase curta sobre o estado do recebimento, para a Home e os Ajustes. */
