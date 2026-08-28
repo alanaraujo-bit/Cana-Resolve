@@ -1,45 +1,35 @@
-# Canaã Resolve
+# Canaã Resolve — o site
 
-Plataforma hiperlocal que conecta quem precisa resolver alguma coisa em
-**Canaã dos Carajás (PA)** a profissionais e empresas que atendem a região.
+A landing do **Canaã Resolve**, plataforma hiperlocal que conecta quem precisa
+resolver alguma coisa em **Canaã dos Carajás (PA)** a profissionais e empresas
+que atendem a região.
 
 Uma plataforma Aionix. Produção: `canaaresolve.aionixdev.com`.
 
-O produto tem duas metades:
+## O que este repositório é — e o que deixou de ser
 
-- **O site** — a landing, `/solicitar` e `/parceiros`. Aquisição, do lado do
-  morador e do lado da empresa.
-- **O Operations** (`/ops`) — o sistema onde a operação acontece: funil
-  comercial, qualificação, rede de parceiros, solicitações, encaminhamentos e
-  os números que importam.
+Este repositório é **só o site**: a landing, `/solicitar`, `/parceiros` e as
+páginas legais. Aquisição, dos dois lados. Mais a captura dos leads que os dois
+formulários geram.
 
-## Direção — decidida em 27/08/2026
+Já foi mais. Saíram daqui, de propósito e por inteiro:
 
-Antes de mexer em qualquer coisa aqui, leia esta seção. Ela contradiz partes
-do histórico em `PROGRESS.md` de propósito.
+- **O Operations (`/ops`)** — funil comercial, triagem, rede de parceiros,
+  encaminhamentos, analytics. Vai para um repositório próprio.
+- **O Portal do Morador e o Portal do Parceiro**, e a API HTTP que estava
+  sendo construída para eles. Morador e parceiro passam a ter **app nativo**,
+  em Expo / React Native, publicado na Play Store e na App Store. Nada disso
+  se constrói aqui.
+- **A PWA.** O site não é mais instalável: competiria com o app das lojas e
+  entregaria menos.
 
-- **A PWA acabou.** Morador e Parceiro passam a ter **app nativo**, em
-  **Expo / React Native**, publicado na Play Store e na App Store. Um único
-  codebase em TypeScript, para reaproveitar os contratos de `lib/domain/` e o
-  Zod de `lib/forms.ts`. Não existe mais manifest do site nem do Parceiro, e
-  `public/sw.js` virou um service worker que só se desinstala.
-- **Este repositório é a landing + o backend.** A landing (`/`,
-  `/solicitar`, `/parceiros` e as páginas legais) é o que continua sendo
-  desenvolvido na web. `lib/domain/`, `lib/db/` e `lib/auth/` ficam, porque
-  o app nativo vai consumi-los — por HTTP, em `app/api/`. **App nativo não
-  chama Server Action**; toda funcionalidade nova que o app precisa nasce como
-  rota HTTP.
-- **As páginas dos portais (`app/(morador)/`, `app/(partner)/`) estão
-  congeladas.** Continuam no ar só porque links assinados já foram entregues
-  por WhatsApp. Nada novo entra nelas; elas saem quando o app estiver nas
-  lojas.
-- **O `/ops` sai daqui para um repositório próprio.** Até lá continua
-  funcionando e não deve quebrar, mas também é código congelado: nada novo é
-  construído nele neste repositório.
-- **O `/ops` perdeu o service worker junto com a PWA** — o registrador vivia
-  no layout raiz e valia para o site inteiro. Foi de propósito: cache de
-  estático não é peça essencial de uma ferramenta interna de desktop, e o
-  `ops-app.webmanifest` continua bastando para instalá-la.
+Tudo isso está no histórico do git — `git log` até `4ff3d91` mostra o
+repositório completo, e qualquer arquivo volta com
+`git checkout 4ff3d91 -- <caminho>`.
+
+**Se você chegou aqui para construir o app ou o painel, é no outro
+repositório.** Aqui, a régua é: se não aparece para quem visita o site, ou não
+serve para gravar quem preencheu um formulário, não entra.
 
 ## Stack
 
@@ -55,93 +45,82 @@ do histórico em `PROGRESS.md` de propósito.
 npm install
 cp .env.local.exemplo .env.local   # e preencha DATABASE_URL
 
-npm run db:setup                   # migrações + catálogo inicial
-npm run db:operator -- voce@email.com "Seu Nome"   # cria o acesso ao /ops
+npm run db:setup   # migrações + catálogo de categorias e serviços
 
 npm run dev        # http://localhost:3000
-npm test           # 40 testes; os de fluxo usam um banco de teste real
-npm run inspect    # navegador sem interface percorre o /ops e reporta problemas
+npm test           # regras puras + a entrada, contra um Postgres de teste
+npm run smoke      # o navegador preenche os dois formulários e confere o banco
 npm run lint
 npm run typecheck
 ```
 
-`npm run inspect` precisa de `OPS_EMAIL` e `OPS_SENHA` no ambiente ou no
-`.env.local`. Com `--shot`, salva as telas em `.inspect/telas/`.
+`npm run smoke` é a verificação que mais importa aqui — veja abaixo por quê.
 
 ## Estrutura
 
 ```
 app/
-  (site)/               tudo que é público: landing, /solicitar, /parceiros…
-  ops/(painel)/         o Operations, atrás de autenticação
-  ops/entrar/           a entrada — fora do grupo protegido, de propósito
-  api/publico/          onde os formulários públicos gravam
-  api/app/              a API do app nativo (Bearer, nunca cookie) — ver o
-                        README da própria pasta
-  ops-app.webmanifest/  manifest do Operations (a única PWA que sobrou)
+  (site)/               a landing, /solicitar, /parceiros, /privacidade, /termos
+  api/publico/          onde os dois formulários gravam
 components/
-  ops/                  as peças do Operations (mais densas que as do site)
-  sections/ partners/   as seções do site público
+  sections/             as seções da home
+  partners/             as seções de /parceiros
 lib/
-  api/                  o formato de resposta da API do app
-  auth/                 sessão do operador, credencial de morador e parceiro,
-                        e a leitura do Bearer
   db/                   esquema, conexão e migrações
-  domain/               as regras: estados, Beta, matching, entrada, analytics
-  forms.ts              o contrato dos formulários públicos (servidor e cliente)
+  domain/               entrada, códigos, telefone, catálogo semente
+  forms.ts              o contrato dos formulários (servidor e cliente)
 scripts/
-  db.ts                 migrar, plantar catálogo, criar operador
-  inspect.mjs           inspeção automatizada no navegador
-tests/                  domínio (puro) e fluxo (contra Postgres de verdade)
+  db.ts                 migrar, plantar catálogo, status
+  smoke-acoes.mjs       verificação dos formulários pelo navegador
+tests/                  regras puras e a entrada contra Postgres de verdade
 ```
 
 ## Decisões que valem manter
 
 ### Produto
 
-- **Solicitação não é Oportunidade.** A necessidade do morador e cada
-  encaminhamento dela para um parceiro são entidades separadas. Dois parceiros
-  podem receber o mesmo pedido e terminar em lugares diferentes; juntar isso
-  numa tabela de "leads" apagaria a informação que interessa.
-- **Os 90 dias do Parceiro Fundador não começam no pagamento.** Pagar reserva a
-  participação. O relógio corre a partir do lançamento da operação, quando
-  passam a existir pedidos chegando. Só `registerLaunch()` escreve
-  `betaStartedAt`, e há teste garantindo isso.
-- **Quem paga mais não recebe os melhores pedidos.** O matching ordena por
-  compatibilidade com o problema e por distribuição justa. Nenhum sinal
-  comercial entra na conta.
-- **Nada de métrica inventada.** Se o dado não existe — visita ao site,
-  mensagem entregue, tempo de resposta do parceiro — a tela diz que não existe,
-  em vez de mostrar zero como se fosse resultado.
+- **O WhatsApp nunca fica pior.** Os formulários gravam antes de abrir a
+  conversa, mas não esperam a resposta. Se a gravação falhar, a experiência
+  volta a ser exatamente a que era antes de existir banco: a pessoa cai no
+  WhatsApp do mesmo jeito, sem ver erro nenhum.
+- **É por isso que `npm run smoke` existe.** Uma captura quebrada é invisível
+  — a tela não muda, a conversa abre, ninguém reclama, e os leads simplesmente
+  param de aparecer. Só um teste que preenche o formulário de verdade e depois
+  procura o registro no banco pega isso.
+- **Nada de métrica inventada.** Se o dado não existe, a tela diz que não
+  existe, em vez de mostrar zero como se fosse resultado.
 - **Sem prova social inventada.** Nenhum número, avaliação, depoimento ou
   empresa fictícia em lugar nenhum.
 
 ### Técnicas
 
-- **Todo estado passa por `applyTransition`.** A transição é conferida contra a
-  máquina de estados e grava o histórico na mesma transação. Se a atividade não
-  puder ser gravada, o estado também não muda.
-- **O porteiro da borda não é a autorização.** `proxy.ts` só olha se existe um
-  cookie. `requireOperator()` é chamada em toda página **e em toda Server
-  Action** — uma action é um endpoint como qualquer outro.
-- **O WhatsApp nunca fica pior.** Os formulários públicos gravam antes de abrir
-  a conversa, mas não esperam a resposta. Se a gravação falhar, a experiência
-  volta a ser exatamente a que era.
 - **Deduplicação pelo WhatsApp normalizado.** É o único dado que a mesma
-  empresa escreve igual em qualquer contexto.
+  empresa escreve igual em qualquer contexto. Um cadastro repetido se junta ao
+  registro que já existe em vez de criar um segundo.
+- **O funil só anda para a frente.** Um cadastro que chega depois da aprovação
+  não pode puxar a empresa de volta para "cadastro recebido". Há teste.
+- **A atividade nasce na mesma transação do registro.** Se ela não puder ser
+  gravada, o registro também não é — nada existe sem explicação de como
+  apareceu.
 - **Dois temas nativos.** As duas paletas são escritas à mão; o escuro não é a
   inversão do claro. O tema é aplicado por um script inline antes da primeira
   pintura.
 - **Tokens antes de classes.** Cores novas entram como variáveis em `:root` /
   `[data-theme="dark"]` e são expostas no `@theme inline`.
-- **Nada é apagado.** Desativar tira do seletor; o histórico continua
-  explicando os registros antigos.
 
-## O que ainda não existe
+## Sobre o banco
 
-A API HTTP que o app nativo vai consumir, o próprio app em Expo, checkout e
-automação de distribuição. A arquitetura foi montada para comportar tudo isso
-sem refazer a fundação — mas nada disso está prometido em nenhuma tela.
+As tabelas continuam todas de pé — inclusive as que só o Operations escrevia
+(`opportunities`, `partners`, `operators`, `notifications`…). Nada foi
+derrubado, porque há dados reais dentro: empresas cadastradas, pedidos
+recebidos, o histórico inteiro. Uma migração de `drop table` apagaria isso
+para sempre, e o Operations ainda vai querer ler tudo do repositório novo.
 
-Pendências que dependem de decisão ou credencial estão em `BLOCKERS.md`.
-O histórico das etapas está em `PROGRESS.md`.
+O que este repositório escreve é só a entrada: `service_requests`,
+`partner_applications`, `prospects` e `activities`. `lib/domain/states.ts`
+guarda os nomes de estado que as colunas aceitam — vocabulário herdado, que
+nenhuma tela daqui movimenta.
+
+`public/sw.js` é uma lápide: ele existe para desinstalar o service worker que
+ficou nos aparelhos de quem abriu o site na época da PWA. Só pode ser apagado
+depois de essa versão ter circulado.

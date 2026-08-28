@@ -20,7 +20,6 @@ const columns = [
     links: [
       { label: "Seja parceiro", href: "/parceiros" },
       { label: "Parceiro Fundador", href: "/parceiros#parceiro-fundador" },
-      { label: "Entrar", href: "/entrar" },
     ],
   },
   {

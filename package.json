@@ -11,13 +11,9 @@
     "db:seed": "tsx scripts/db.ts seed",
     "db:setup": "tsx scripts/db.ts setup",
     "db:status": "tsx scripts/db.ts status",
-    "db:operator": "tsx scripts/db.ts operator",
     "db:generate": "drizzle-kit generate",
     "test": "node --conditions=react-server --import tsx --test --test-concurrency=1 \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "inspect": "node scripts/inspect.mjs",
-    "demo:popular": "node --conditions=react-server --import tsx --env-file=.env.local scripts/demo.ts popular",
-    "demo:limpar": "node --conditions=react-server --import tsx --env-file=.env.local scripts/demo.ts limpar",
     "smoke": "node scripts/smoke-acoes.mjs"
   },
   "dependencies": {

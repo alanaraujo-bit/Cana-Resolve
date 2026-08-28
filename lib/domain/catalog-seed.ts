@@ -11,8 +11,8 @@ import { categories } from "@/lib/categories";
  * encaminhamento preciso — e, mais para frente, o que permite entender qual
  * tipo de problema aparece mais em Canaã.
  *
- * A lista não pretende ser completa. Ela é administrável em
- * /ops/catalogo e deve crescer com o que a operação encontrar de verdade.
+ * A lista não pretende ser completa. Enquanto não existir tela para
+ * administrá-la, ela cresce editando este arquivo e rodando `npm run db:seed`.
  */
 export const serviceSeed: Record<string, string[]> = {
   "ar-condicionado": [

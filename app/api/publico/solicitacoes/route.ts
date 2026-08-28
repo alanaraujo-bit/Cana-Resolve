@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { grantResidentAccess } from "@/lib/auth/audience";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { receiveServiceRequest } from "@/lib/domain/intake";
-import { normalizePhone } from "@/lib/domain/phone";
 import { fieldErrors, serviceRequestSchema } from "@/lib/forms";
 import { callerKey, rateLimit } from "@/lib/rate-limit";
 
@@ -47,23 +45,12 @@ export async function POST(request: Request) {
   try {
     const result = await receiveServiceRequest(parsed.data);
 
-    // Concede acesso a este navegador (o cookie sai no Set-Cookie da resposta)
-    // e devolve o link assinado, para quem acabou de pedir ajuda poder abrir o
-    // acompanhamento de qualquer aparelho depois. `token` vem `null` só quando
-    // `CR_SESSION_SECRET` não está configurado — nesse caso a gravação e o
-    // WhatsApp continuam intactos, só não existe link para mostrar.
-    const whatsapp = normalizePhone(parsed.data.telefone);
-    const token = whatsapp ? await grantResidentAccess(whatsapp) : null;
-    // A origem vem da própria requisição, não de uma constante — assim o link
-    // funciona igual em produção, preview e `npm run start` local.
-    const origem = new URL(request.url).origin;
-    const link = token ? `${origem}/acesso?t=${token}&r=${result.id}` : null;
-
-    // `token` sai ao lado de `link` porque o app nativo não tem cookie jar:
-    // ele guarda a credencial no chaveiro do aparelho e a manda depois em
-    // `Authorization: Bearer`. Não é exposição nova — é o mesmo token que já
-    // viaja dentro de `link`, e é o mesmo que chega por WhatsApp.
-    return NextResponse.json({ ok: true, codigo: result.code, link, token }, { status: 201 });
+    // Só o código volta. Já houve aqui um link de acompanhamento assinado, que
+    // levava a um portal web; o portal saiu, e devolver uma credencial que não
+    // abre nada seria pior que não devolver nada. O código (CR-00021) continua
+    // servindo ao que sempre serviu: a pessoa e a equipe falarem do mesmo
+    // pedido no WhatsApp.
+    return NextResponse.json({ ok: true, codigo: result.code }, { status: 201 });
   } catch (error) {
     // Nada de dado pessoal no log: só o que ajuda a entender a falha.
     console.error(

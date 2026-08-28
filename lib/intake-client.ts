@@ -49,11 +49,7 @@ export type SolicitacaoPayload = {
   consentimento: boolean;
 };
 
-/**
- * `link` é o acompanhamento assinado (ver `/acesso`) — só existe quando
- * `CR_SESSION_SECRET` está configurado no ambiente que respondeu.
- */
-export type SolicitacaoResultado = { codigo: string; link: string | null } | null;
+export type SolicitacaoResultado = { codigo: string } | null;
 
 export async function enviarSolicitacao(payload: SolicitacaoPayload): Promise<SolicitacaoResultado> {
   const dados = attribution();
@@ -63,7 +59,7 @@ export async function enviarSolicitacao(payload: SolicitacaoPayload): Promise<So
     atribuicao: dados,
   });
   if (!data || typeof data.codigo !== "string") return null;
-  return { codigo: data.codigo, link: typeof data.link === "string" ? data.link : null };
+  return { codigo: data.codigo };
 }
 
 export type CadastroPayload = {
