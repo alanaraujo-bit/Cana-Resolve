@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke-acoes.mjs",
     "parceiro:senha": "tsx scripts/senha-parceiro.ts",
-    "push:teste": "node --conditions=react-server --import tsx scripts/push-teste.ts"
+    "push:teste": "node --conditions=react-server --import tsx scripts/push-teste.ts",
+    "comercial": "node --conditions=react-server --import tsx scripts/comercial.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

@@ -37,6 +37,22 @@ export type TipoDeAviso =
   | "avaliacao.nova"
   /** Conta e segurança: acesso novo, senha trocada. Nunca inventado. */
   | "conta.seguranca"
+  /**
+   * A participação comercial mudou de estado (Fase 08): pagamento confirmado,
+   * Beta iniciado, Beta terminando, problema de cobrança.
+   *
+   * **Não é desligável, e a razão é a mesma do §37 aplicada a dinheiro.** Quem
+   * pediu para não receber "comunicados" não pediu para descobrir pelo extrato
+   * que uma cobrança falhou, nem para perder o aviso de que o período dele
+   * acaba na semana que vem. São fatos operacionais sobre uma relação
+   * comercial paga, e são raros por natureza — no ciclo inteiro de um Beta são
+   * três, no máximo quatro.
+   *
+   * O que **nunca** entra aqui é venda: não existe `avisoDeUpgrade`, não
+   * existe "assine agora", e a ausência dessas funções é o que impede alguém de
+   * usar esta autorização para campanha (§118).
+   */
+  | "conta.participacao"
   /** Comunicado do Canaã Resolve. Raro. */
   | "canaa.comunicado";
 
@@ -46,6 +62,7 @@ export const preferenciaDoTipo: Record<TipoDeAviso, CategoriaDePreferencia | nul
   "oportunidade.atualizada": "atualizacoes",
   "avaliacao.nova": "avaliacoes",
   "conta.seguranca": null,
+  "conta.participacao": null,
   "canaa.comunicado": "comunicados",
 };
 
@@ -65,6 +82,7 @@ export const canalDoTipo: Record<TipoDeAviso, string> = {
   "oportunidade.atualizada": "atualizacoes",
   "avaliacao.nova": "avaliacoes",
   "conta.seguranca": "conta",
+  "conta.participacao": "conta",
   "canaa.comunicado": "atualizacoes",
 };
 
@@ -257,6 +275,115 @@ export function avisoDeSenhaAlterada(entrada: { partnerId: string; em?: Date }):
       destino: "ajustes/seguranca",
       em: em.toISOString(),
       evento: chaveDoEvento("conta.seguranca", `senha:${entrada.partnerId}:${em.getTime()}`),
+      para: entrada.partnerId,
+    },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Participação comercial (Fase 08)                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Os quatro fatos comerciais que merecem interromper alguém (§117).
+ *
+ * A lista é a resposta à pergunta "isto justifica uma notificação?", e ela
+ * exclui muito mais do que inclui. Não estão aqui, e não é esquecimento:
+ * "sua categoria está com poucas vagas", "aproveite", "veja os planos",
+ * "faltam 30 dias", "seu perfil está incompleto". Nenhum deles é um fato novo
+ * que exige ação — são pretextos para aparecer.
+ *
+ * A régua do §118: **uma notificação comercial é operacional ou não existe.**
+ */
+export type FatoComercial =
+  /** O pagamento entrou e a vaga está reservada. */
+  | "pagamento-confirmado"
+  /** A operação abriu e os 90 dias começaram. */
+  | "beta-comecou"
+  /** O período termina em poucos dias. */
+  | "beta-terminando"
+  /** Uma cobrança não passou. */
+  | "cobranca-com-problema";
+
+/**
+ * O aviso de um fato comercial.
+ *
+ * Três decisões no texto, e as três vêm do §32 e do §118:
+ *
+ * 1. **Nenhuma exclamação, nenhum "CORRA", nenhuma contagem dramática.** "Seu
+ *    período Beta termina em 7 dias" é informação; "RESTAM 2 DIAS!" é pressão.
+ * 2. **Nenhum valor em dinheiro no corpo.** O texto aparece na tela bloqueada,
+ *    e quanto alguém paga pela participação dele não é assunto de quem estiver
+ *    por perto — é a mesma régua do §10 aplicada a dinheiro em vez de endereço.
+ * 3. **Nenhuma venda.** Nem quando o Beta está acabando: a frase diz que
+ *    avisaremos sobre a continuidade, porque é o que é verdade — não há oferta
+ *    posterior aprovada, e inventar uma no push seria pior do que na tela.
+ *
+ * `dias` só é usado em `beta-terminando`, e quando ele falta a frase não
+ * inventa um número: diz que está terminando, sem contagem.
+ */
+export function avisoDeParticipacao(entrada: {
+  fato: FatoComercial;
+  partnerId: string;
+  /** Quantos dias faltam. Só para `beta-terminando`. */
+  dias?: number;
+  em?: Date;
+}): Aviso {
+  const em = entrada.em ?? new Date();
+
+  const textos: Record<FatoComercial, { titulo: string; corpo: string }> = {
+    "pagamento-confirmado": {
+      titulo: "Tudo certo",
+      corpo:
+        "Sua participação como Parceiro Fundador está confirmada. " +
+        "Seus 90 dias começam quando a operação for aberta aos moradores.",
+    },
+    "beta-comecou": {
+      titulo: "O Canaã Resolve está no ar",
+      corpo: "Seu período Beta começou hoje. A partir de agora você pode receber oportunidades.",
+    },
+    "beta-terminando": {
+      titulo: "Seu período Beta está terminando",
+      corpo:
+        entrada.dias && entrada.dias > 0
+          ? `Termina em ${entrada.dias} ${entrada.dias === 1 ? "dia" : "dias"}. Avisaremos sobre a continuidade antes disso.`
+          : "Avisaremos sobre a continuidade antes do término.",
+    },
+    "cobranca-com-problema": {
+      titulo: "Não foi possível concluir a cobrança",
+      corpo: "Toque para ver o que aconteceu e o que fazer.",
+    },
+  };
+
+  const { titulo, corpo } = textos[entrada.fato];
+
+  return {
+    titulo,
+    corpo,
+    grupo: "conta",
+    carga: {
+      tipo: "conta.participacao",
+      /*
+       * `plano` — a área comercial, e não a Home (§119).
+       *
+       * Mandar alguém para a Home depois de dizer que houve um problema de
+       * cobrança é fazê-lo procurar onde resolver. O destino curto é traduzido
+       * para `/ajustes/plano` em `mobile/src/notificacoes/rotas.ts`, e a
+       * tradução mora lá justamente para que a estrutura interna de rotas não
+       * viaje dentro de um push que pode ser tocado semanas depois.
+       */
+      destino: "plano",
+      em: em.toISOString(),
+      /*
+       * A chave inclui o dia, e não o instante: o processo que avisa sobre o
+       * fim do Beta pode rodar mais de uma vez no mesmo dia, e duas execuções
+       * não são dois fatos. Já `pagamento-confirmado` e `beta-comecou`
+       * acontecem uma vez só na vida de uma adesão.
+       */
+      evento: chaveDoEvento(
+        "conta.participacao",
+        `${entrada.fato}:${entrada.partnerId}:${em.toISOString().slice(0, 10)}`,
+      ),
       para: entrada.partnerId,
     },
   };

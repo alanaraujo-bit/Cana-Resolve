@@ -311,3 +311,186 @@ mais pesam:
 Tudo que é regra: média, contagem, elegibilidade, moderação, resposta,
 contestação, o texto do push e o deep link. Todos conferidos por asserção
 (`npm test`) e olhando o produto no navegador, claro e escuro, em 393 e 320.
+
+---
+
+## 10. Comercial — Fase 08 · o que depende de você
+
+A camada comercial está construída, testada e conferida no navegador. O que
+falta aqui é **credencial, decisão de política e conta de loja** — nada que
+código resolva.
+
+**A régua desta seção:** cada item diz o que falta, o que ele impede e quem
+resolve. E diz explicitamente se bloqueia a **interface**, o **sandbox** ou a
+**produção** — porque os três são coisas diferentes, e hoje quase nada bloqueia
+a interface.
+
+### 10.1 Apple — App Store Connect e produtos IAP · **bloqueia produção**
+
+**O que falta:** conta Apple Developer ativa, o aplicativo criado no App Store
+Connect, e os produtos de compra configurados lá.
+
+**O que impede:** compra dentro do aplicativo no iOS. Nada mais — a área
+comercial abre, mostra o estado real e permite concluir pelo canal oficial.
+
+**Quem resolve:** você. É a mesma conta que o §7 (push) já espera, então o
+mesmo dia resolve os dois.
+
+**Quando chegar:** `lib/billing/provedor.ts` tem o adaptador `apple` escrito
+como contrato e fechado. Ele passa a validar o `transactionId` contra a API da
+Apple, conferindo `bundleId`, ambiente e produto. As notificações
+servidor-a-servidor entram por `POST /api/v1/comercial/webhooks/apple`, que já
+existe e hoje responde 503.
+
+### 10.2 Google Play — Play Console e produtos de assinatura · **bloqueia produção**
+
+**O que falta:** conta de desenvolvedor no Google Play, o aplicativo criado no
+Play Console, os produtos configurados, e a conta de serviço com acesso à
+Play Developer API.
+
+**O que impede:** compra dentro do aplicativo no Android. Idem ao anterior.
+
+**Quem resolve:** você.
+
+**Atenção operacional:** o Google **estorna sozinho** uma compra que não seja
+reconhecida (`acknowledge`) no prazo. Quando o adaptador for ligado, o
+reconhecimento faz parte do caminho de confirmação — não é um passo opcional.
+
+### 10.3 Billing alternativo (Pix, cartão pelo site) · **bloqueia produção, e é decisão antes de credencial**
+
+**O que falta, e nesta ordem:**
+
+1. **Confirmar elegibilidade.** Apple e Google mantêm programas de billing
+   alternativo com condições próprias no Brasil. Antes de qualquer código:
+   somos elegíveis? Precisamos nos inscrever? Há telas obrigatórias, avisos
+   obrigatórios, obrigação de oferecer o billing da loja junto, relatórios
+   periódicos, e qual é a taxa?
+2. Só depois disso: credencial do provedor de pagamento.
+
+**O que impede:** oferecer Pix ou checkout externo **dentro do aplicativo**.
+
+**Por que não foi construído:** capacidade técnica não é permissão comercial.
+Colocar um botão de Pix dentro de um app das lojas sem essa confirmação é
+violar a política delas — e compliance é requisito de produto, não detalhe de
+implementação. O adaptador `alternativo` existe fechado, com o motivo escrito.
+
+**Quem resolve:** você, com quem cuidar do jurídico/fiscal.
+
+### 10.4 Segredos de webhook · **bloqueia sandbox e produção**
+
+**O que falta:** as variáveis de ambiente no servidor (Vercel):
+
+```
+CR_ADMIN_SEGREDO=…              administração comercial (obrigatória)
+CR_WEBHOOK_APPLE_SEGREDO=…      quando a Apple entrar
+CR_WEBHOOK_GOOGLE_SEGREDO=…     quando o Google entrar
+CR_WEBHOOK_ALTERNATIVO_SEGREDO=…  quando houver provedor alternativo
+```
+
+**O que impede:** `CR_ADMIN_SEGREDO` ausente fecha a rota administrativa
+(503) — mas **não** impede a operação: `npm run comercial` faz o mesmo pela
+linha de comando, e quem o roda já tem a `DATABASE_URL`. Os três de webhook
+ausentes fazem cada rota recusar tudo com 503.
+
+**Isso é intencional.** Um endpoint financeiro que aceita evento não verificado
+é um botão público de conceder acesso pago. Recusar por falta de credencial é
+o estado correto; aceitar por falta dela seria o bug.
+
+**Nunca em `EXPO_PUBLIC_*`.** Qualquer variável com esse prefixo vai dentro do
+pacote distribuído nas lojas, e um segredo ali é um segredo publicado.
+
+### 10.5 A data de início da operação · **bloqueia o começo do Beta de todo mundo**
+
+**O que falta:** a decisão de quando o Canaã Resolve abre para os moradores.
+
+**O que impede:** os 90 dias de todos os Fundadores. Enquanto a data não
+existir, quem pagou fica em "vaga garantida" e **nenhum dia é consumido** — que
+é exatamente o comportamento correto, e não um estado degradado.
+
+**Quem resolve:** você, e é uma decisão de negócio.
+
+**Como registrar, no dia:**
+
+```
+npm run comercial -- abrir 2026-10-01T03:00:00Z
+```
+
+Isso grava a data em `settings["operacao.inicio"]` e move todos os Fundadores
+reservados para `ativo` na mesma escrita, com o mesmo início. É idempotente:
+rodar duas vezes não empurra o fim do período de ninguém.
+
+**Não existe data padrão, e não existe data de exemplo.** Enquanto a chave não
+existir, o aplicativo diz "avisaremos quando a operação começar" — nunca uma
+data provável.
+
+### 10.6 Planos pós-Beta · **decisão comercial, não código**
+
+**O que falta:** decidir se existe continuidade após os 90 dias, e qual.
+
+Os valores que circularam — Profissional a partir de R$79/mês, Empresarial
+R$129, Destaque R$199 — são **hipóteses a validar durante o Beta**, e por isso
+não existem em lugar nenhum do código nem do banco. Não há semente, não há
+constante, não há comentário para descomentar. Um valor escrito vira uma
+decisão que ninguém tomou.
+
+**O que o aplicativo faz enquanto isso:** diz a verdade — "estamos finalizando
+as condições de continuidade após o Beta. Você será informado antes do
+término" — e `continuidade.renovacaoAutomatica` é `false`, sempre. Nada é
+cobrado sem oferta aprovada.
+
+**Quando decidir:** o plano entra como linha em `commercial_offers`, com
+`estado: 'rascunho'` até estar pronto. Nenhum deploy é necessário para mudar
+preço ou disponibilidade.
+
+### 10.7 Nota fiscal · **dependência empresarial**
+
+**O que falta:** definição fiscal — quem emite, sob qual regime, com qual
+integração.
+
+**O que impede:** entregar documento fiscal ao parceiro. O histórico de
+cobrança mostra o que foi pago, mas `comprovante` é `null` e a tela não finge
+que existe recibo.
+
+**Por que não foi construído:** gerar um PDF com cara de documento fiscal seria
+produzir documento falso. Enquanto não houver definição real, a ausência
+honesta é melhor.
+
+### 10.8 Políticas de reembolso e contestação · **decisão de política**
+
+**O que falta:** a política. Um reembolso de um Beta de 90 dias no dia 80
+devolve quanto? Uma contestação suspende o acesso na hora ou depois da
+análise? O status histórico de Fundador sobrevive a um estorno?
+
+**O que existe hoje, e é o comportamento seguro na ausência de política:**
+reembolso e contestação cancelam a adesão, o acesso cai, a cobrança muda de
+estado (nunca é apagada), o evento fica no livro — e **o status de Fundador
+não é apagado**, porque apagar história por causa de um estorno é uma decisão
+que ninguém tomou.
+
+**Quem resolve:** você.
+
+### 10.9 Grace period · **não inventado de propósito**
+
+Quando existir assinatura recorrente, existirá pagamento que falha. Quanto
+tempo de tolerância? A arquitetura suporta o estado (`tolerancia`), e o acesso
+durante ele é limitado pela data de fim do período — mas **a duração não está
+definida**, e não foi chutada.
+
+### O que **não** bloqueia
+
+Tudo que é regra e tudo que é interface:
+
+- a regra dos 90 dias, o cálculo do período, os fusos e a virada de horário de
+  verão;
+- a separação entre FounderStatus, adesão, assinatura, pagamento e entitlement;
+- o catálogo configurável, o versionamento de ofertas e a validação que recusa
+  promessa de resultado;
+- a idempotência de eventos financeiros e a proteção contra toque duplo;
+- a migração dos parceiros adquiridos por WhatsApp;
+- os onze estados da área comercial, o histórico de cobrança, o aviso
+  contextual da Home, o push comercial e o deep link;
+- a ativação administrativa, que é o modelo comercial **real** de hoje e
+  funciona de ponta a ponta.
+
+Conferidos por asserção (`npm test`, 205 asserções) e olhando o produto no
+navegador — claro e escuro, 393 e 320, os onze cenários.

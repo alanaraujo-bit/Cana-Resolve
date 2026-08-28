@@ -4,6 +4,8 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useComercial } from '@/comercial/ComercialProvider';
+import { AvisoComercial, avisoComercialDaHome } from '@/comercial/componentes';
 import { ESPACO_BARRA } from '@/navigation/BarraPrincipal';
 import { ConviteDeNotificacoes } from '@/notificacoes/componentes';
 import { useNotificacoes } from '@/notificacoes/NotificacoesProvider';
@@ -84,6 +86,9 @@ export default function Inicio() {
    * março acha que o Canaã Resolve parou de mandar trabalho (§27 da Fase 05).
    */
   const recebendo = (profissional?.recebendo ?? true) && !preferencias.oportunidadesPausadas;
+
+  const { comercial } = useComercial();
+  const avisoComercial = useMemo(() => avisoComercialDaHome(comercial), [comercial]);
 
   const { esperando, anteriores } = useMemo(
     () => ({
@@ -199,6 +204,19 @@ export default function Inicio() {
                 void ativarNotificacoes();
               }}
               onAdiar={() => void adiarNotificacoes()}
+            />
+          ) : null}
+
+          {/* O aviso comercial (§101).
+              Ele quase nunca aparece — `avisoComercialDaHome` devolve `null`
+              em todos os estados que não têm ação nem consequência —, e é essa
+              a intenção: o profissional abriu o aplicativo para trabalhar
+              oportunidades, não para ler sobre plano (§102). */}
+          {avisoComercial ? (
+            <AvisoComercial
+              titulo={avisoComercial.titulo}
+              texto={avisoComercial.texto}
+              onPress={() => router.push('/ajustes/plano')}
             />
           ) : null}
 

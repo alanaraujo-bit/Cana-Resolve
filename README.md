@@ -52,8 +52,32 @@ O que existe ali hoje, todo em `app/api/v1/auth/`:
 | `GET /auth/dispositivos` | quais aparelhos recebem — sem o endereço de entrega |
 | `DELETE /auth/dispositivos` | este aparelho para de receber. Chamado ao sair |
 
-A quarta nasceu com a Fase 05, porque uma tela de "alterar senha" que não
-altera senha nenhuma seria pior que tela nenhuma. A sessão vive no banco
+A Fase 08 acrescentou um segundo grupo, em `app/api/v1/comercial/` — o
+primeiro fora de `auth/`, e por um critério que a régua não cobria: estas
+rotas precisam saber **quem está logado e mais alguma coisa**.
+
+| Rota | O quê |
+| --- | --- |
+| `GET /comercial/situacao` | a situação comercial de quem está logado |
+| `GET /comercial/cobrancas` | o histórico de cobrança |
+| `POST /comercial/administracao` | aprovar, confirmar pagamento, abrir a operação, desfazer |
+| `POST /comercial/webhooks/[provedor]` | eventos das lojas e do gateway |
+
+**As duas primeiras são só leitura, e isso é a funcionalidade.** Não existe
+rota que o aplicativo possa chamar para conceder acesso a si mesmo — nem
+"confirmei o pagamento", nem "sou fundador". Não é disciplina de quem escreve o
+cliente: é a ausência da rota.
+
+A terceira é autenticada por `CR_ADMIN_SEGREDO`, que vive só no servidor —
+nunca numa variável `EXPO_PUBLIC_*`, que iria dentro do pacote das lojas. Sem
+ela, a rota responde 503. A quarta recusa tudo enquanto não houver segredo de
+webhook configurado, porque um endpoint financeiro que aceita evento não
+verificado é um botão público de conceder acesso pago.
+
+Ver `mobile/COMERCIAL.md` para o domínio, e `BLOCKERS.md` §10 para o que falta.
+
+A quarta rota de `auth` nasceu com a Fase 05, porque uma tela de "alterar
+senha" que não altera senha nenhuma seria pior que tela nenhuma. A sessão vive no banco
 (`partner_sessions`), e do token cru só existe uma cópia: a do aparelho que
 entrou.
 
@@ -96,6 +120,7 @@ npm run dev        # http://localhost:3000
 npm test           # regras puras + a entrada, contra um Postgres de teste
 npm run smoke      # o navegador preenche os dois formulários e confere o banco
 npm run push:teste # manda um aviso de teste para um parceiro (ver mobile/NOTIFICACOES.md)
+npm run comercial  # administração do Beta Fundador (ver mobile/COMERCIAL.md)
 npm run lint
 npm run typecheck
 ```
@@ -109,18 +134,24 @@ app/
   (site)/               a landing, /solicitar, /parceiros, /privacidade, /termos
   api/publico/          onde os dois formulários gravam
   api/v1/auth/          a entrada do aplicativo do parceiro
+  api/v1/comercial/     situação, cobrança, administração e webhooks
 components/
   sections/             as seções da home
   partners/             as seções de /parceiros
 lib/
   auth/                 senha (scrypt) e sessão do parceiro
   push/                 aparelhos, texto dos avisos e envio
+  comercial/            adesão, catálogo, situação e o livro de eventos
+  billing/              os quatro provedores e a verificação de webhook
   db/                   esquema, conexão e migrações
   domain/               entrada, códigos, telefone, catálogo semente
+  domain/beta.ts        a regra dos 90 dias do Beta Fundador
+  domain/comercial/     estados, catálogo, entitlements, eventos, situação
   forms.ts              o contrato dos formulários (servidor e cliente)
 scripts/
   db.ts                 migrar, plantar catálogo, status
   senha-parceiro.ts     dá a primeira senha a um parceiro (não há tela ainda)
+  comercial.ts          aprovar, confirmar pagamento e abrir a operação
   smoke-acoes.mjs       verificação dos formulários pelo navegador
 tests/                  regras puras e a entrada contra Postgres de verdade
 

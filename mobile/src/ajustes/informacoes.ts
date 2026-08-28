@@ -94,9 +94,13 @@ export function informacoesTecnicas(): string {
  * Ela é **preenchida e nunca enviada**: quem aperta enviar é a pessoa, dentro
  * do WhatsApp. É a mesma regra do contato com o morador, na Fase 03.
  */
-export function linkDoSuporte(assunto: 'ajuda' | 'problema' | 'exclusao'): string {
+export function linkDoSuporte(
+  assunto: 'ajuda' | 'problema' | 'exclusao' | 'participacao',
+): string {
   const introducao =
-    assunto === 'problema'
+    assunto === 'participacao'
+      ? 'Olá! Sou parceiro do Canaã Resolve e queria falar sobre a minha participação.'
+      : assunto === 'problema'
       ? 'Olá! Encontrei um problema no aplicativo Canaã Resolve.'
       : assunto === 'exclusao'
         ? 'Olá! Quero solicitar a exclusão da minha conta de parceiro no Canaã Resolve.'

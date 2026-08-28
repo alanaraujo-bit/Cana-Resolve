@@ -19,6 +19,8 @@ export type TipoDeAviso =
   | 'oportunidade.atualizada'
   | 'avaliacao.nova'
   | 'conta.seguranca'
+  /** A participação comercial mudou de estado (Fase 08). Não desligável. */
+  | 'conta.participacao'
   | 'canaa.comunicado';
 
 const TIPOS: readonly TipoDeAviso[] = [
@@ -26,6 +28,7 @@ const TIPOS: readonly TipoDeAviso[] = [
   'oportunidade.atualizada',
   'avaliacao.nova',
   'conta.seguranca',
+  'conta.participacao',
   'canaa.comunicado',
 ];
 
@@ -123,6 +126,7 @@ export const preferenciaDoTipo: Record<TipoDeAviso, CategoriaDePreferencia | nul
   'oportunidade.atualizada': 'atualizacoes',
   'avaliacao.nova': 'avaliacoes',
   'conta.seguranca': null,
+  'conta.participacao': null,
   'canaa.comunicado': 'comunicados',
 };
 

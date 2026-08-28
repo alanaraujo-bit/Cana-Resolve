@@ -1,7 +1,7 @@
 # Canaã Resolve — aplicativo
 
 O aplicativo nativo do **Canaã Resolve**, em Expo / React Native — o lado de
-quem atende. Cinco fases construídas:
+quem atende. Oito fases construídas:
 
 | Fase | O quê | Onde se lê o porquê |
 | --- | --- | --- |
@@ -12,6 +12,7 @@ quem atende. Cinco fases construídas:
 | 05 | Conta, Configurações, preferências e segurança | [`AJUSTES.md`](AJUSTES.md) |
 | 06 | Notificações, deep links e selos | [`NOTIFICACOES.md`](NOTIFICACOES.md) |
 | 07 | Reputação, avaliações, confiança e verificação | [`REPUTACAO.md`](REPUTACAO.md) |
+| 08 | Beta Fundador, planos, pagamentos e acesso comercial | [`COMERCIAL.md`](COMERCIAL.md) |
 
 **A entrada é real, e a sessão também.** Desde 28/08/2026 o login vai contra a
 API em produção e os parceiros de verdade do banco; desde a Fase 05 a credencial

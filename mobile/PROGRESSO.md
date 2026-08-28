@@ -4,9 +4,9 @@ Registro de onde o trabalho está, para retomar sem arqueologia.
 
 ## Onde as coisas estão — 28/08/2026
 
-Sete fases construídas e verificadas: fundação e login, Home, Central de
-Oportunidades, Perfil profissional, Conta e Configurações, Notificações, e
-Reputação. Tudo versionado; o
+Oito fases construídas e verificadas: fundação e login, Home, Central de
+Oportunidades, Perfil profissional, Conta e Configurações, Notificações,
+Reputação e a camada comercial. Tudo versionado; o
 `.env` não.
 
 **O que é real e o que não é** — a distinção que mais confunde quem chega:
@@ -23,7 +23,9 @@ Reputação. Tudo versionado; o
 | Excluir conta | pedido pelo canal oficial; não há rota, e não se finge que há |
 | Push | infraestrutura real; falta credencial para chegar num aparelho |
 | Avaliações e reputação | **exemplos declarados** — mesma porta das oportunidades |
-| Plano, chat, área do morador | não construídos |
+| Situação comercial e cobrança | **reais**, contra `/api/v1/comercial/` — ver Fase 08 |
+| Compra dentro do aplicativo | não existe: faltam as contas das lojas |
+| Chat, área do morador | não construídos |
 
 A separação vive em duas variáveis: `EXPO_PUBLIC_AUTH_API_URL` está preenchida,
 `EXPO_PUBLIC_DATA_API_URL` está vazia. Enquanto a segunda estiver assim, os
@@ -636,12 +638,134 @@ pela mesma porta (`EXPO_PUBLIC_DATA_API_URL`) que alimenta oportunidades e perfi
 - Dynamic Type acima do teto, Liquid Glass nativo, Safe Areas com Dynamic Island,
   Android físico.
 
+## Fase 08 — Beta Fundador, planos, pagamentos e acesso comercial · concluída no que não depende de credencial
+
+**A decisão que organizou a fase.** Ao contrário das Fases 06 e 07, esta não
+podia se apoiar em exemplos declarados para a parte que importa: **entitlement
+decide acesso**, e um dado de exemplo que vire permissão é um bug financeiro,
+não um detalhe visual. Então a divisão foi outra — tudo que decide dinheiro ou
+acesso foi construído **de verdade**, contra Postgres, com asserção; e o que
+depende de loja foi escrito como contrato **fechado**, que recusa em vez de
+fingir.
+
+O resultado prático: o modelo comercial real de hoje — venda por conversa,
+ativação registrada pela administração — funciona **de ponta a ponta, em
+produção**, com idempotência, auditoria e migração dos parceiros que já pagaram.
+E não existe nenhum caminho pelo qual o aplicativo conceda acesso a si mesmo.
+
+**Feito — no repositório do site**
+
+- **`lib/domain/beta.ts`** — a regra dos 90 dias, que o `schema.ts` já citava
+  pelo nome desde antes de existir. Cálculo em instantes, sem fuso e sem
+  horário de verão; `null` quando a operação não começou, e **nunca** uma data
+  inventada. A exceção de quem paga depois do lançamento é explícita: 90
+  vendidos, 90 entregues.
+- **`lib/domain/comercial/`** — quatro conceitos que não se confundem porque
+  têm tipos diferentes: adesão, assinatura, pagamento, entitlement. Mais o
+  catálogo (configurável, versionado, com validação que recusa promessa de
+  resultado) e os eventos (chave de idempotência, saneamento de log,
+  reconciliação nomeada).
+- **Seis tabelas novas** (migração `0006`): `commercial_offers`,
+  `product_mappings`, `founder_enrollments`, `subscriptions`,
+  `payment_transactions`, `commercial_events`. Centavos inteiros em todas.
+- **A migração carrega os parceiros de verdade** — `partners.founder` e
+  `beta_paid_at` viram adesões, `payments` vira histórico visível no aplicativo,
+  e cada pagamento antigo vira um evento no livro. Ninguém perde direito por o
+  billing ter chegado depois.
+- **Quatro rotas** em `app/api/v1/comercial/`: `situacao` e `cobrancas`
+  (leitura, para o aplicativo), `administracao` (protegida por segredo que o
+  app não tem) e `webhooks/[provedor]` (que hoje recusa tudo, de propósito).
+- **`lib/billing/`** — a abstração dos quatro provedores. Um ligado
+  (`administrativo`, que é o modelo real), três fechados com o motivo escrito.
+- **`npm run comercial`** — a administração pela linha de comando, pelo mesmo
+  raciocínio de `push:teste`: quem a roda já tem a `DATABASE_URL`, então não
+  acrescenta superfície nenhuma.
+- **`avisoDeParticipacao`** em `lib/push/mensagens.ts`, com tipo próprio não
+  desligável e destino na área comercial.
+
+**Feito — no aplicativo**
+
+- **`src/comercial/`**, com a mesma separação dos outros módulos — e uma
+  diferença que vale ser lida: **este repositório falha fechado**. Nos outros,
+  uma leitura que falha vira "não consegui carregar"; aqui vira *situação
+  desconhecida*, que não concede nada e **também não bloqueia o aplicativo**.
+- **A área comercial** (`ajustes/plano.tsx`), no grupo da conta e não numa
+  quarta aba. Onze estados, cada um com a frase que aquele momento pede — e o
+  estado "não consegui conferir" distinguido de "seu período terminou", porque
+  dizer o segundo quando é o primeiro é acusar alguém de não ter pago.
+- **O histórico de cobrança**, em rota própria porque **não depende de haver
+  acesso**: é dinheiro que a pessoa pagou.
+- **O aviso da Home**, que devolve `null` em quase todo estado. Três situações
+  passam; nenhuma outra.
+- Domínio documentado em [`COMERCIAL.md`](COMERCIAL.md).
+
+**Corrigido no caminho** (achado olhando o produto e o servidor, não o código):
+
+| O que estava errado | Onde |
+| --- | --- |
+| **`abrirOperacao` encurtava o Beta de quem pagou depois da data de abertura.** Carimbava `em` seco em todo mundo; quem pagasse entre o registro da data e o processamento receberia menos que os 90 dias comprados. Achado rodando o percurso contra o servidor de verdade, não em revisão | `adesao.ts` — passou a usar `greatest(em, paid_at)`, com asserção |
+| **O preço quebrava na linha errada.** `condicaoLegivel().split(' ')` produzia "R$ 79,00 pelos" em cima e "primeiros 90 dias" embaixo: `Intl` separa "R$" do valor com espaço **não separável** (U+00A0), que não é o que um `split(' ')` procura. Invisível em revisão, óbvio na captura | `componentes.tsx` — preço e período vêm de funções separadas |
+| **Dois efeitos chamavam `carregar` na mesma mudança de token**, disparando duas requisições simultâneas cujas respostas competiam para gravar o estado | `ComercialProvider` — um efeito, uma requisição |
+| **Sair da conta não esvaziava a situação comercial.** O parceiro seguinte a entrar no mesmo aparelho veria, pelo tempo de uma requisição, "Beta ativo · 72 dias" de outra pessoa — e a linha das Configurações leria isso como a participação dele. É o mesmo defeito que a Fase 05 pagou e a Fase 06 repetiu | `ComercialProvider` — volta a *desconhecida*, e não a vazia |
+| `ofertaVista` era usada no efeito de logout e declarada trinta linhas abaixo: erro de inicialização em tempo de execução, no logout | `ComercialProvider` |
+| `sql.raw` dentro de um literal de intervalo num caminho financeiro — sem injeção possível (constante do módulo), mas é o padrão que alguém copia para onde o valor vem de fora | `adesao.ts` — `make_interval` com parâmetro ligado |
+| O `npm run comercial` terminava e não saía: fechava o próprio pool e deixava o dos serviços aberto | `scripts/comercial.ts` |
+
+**Verificado**
+
+| O quê | Como | Resultado |
+| --- | --- | --- |
+| Tipos | `npx tsc --noEmit`, nos dois projetos | limpo |
+| Lint | `npx eslint` e `npx expo lint` | limpo |
+| Testes | `npm test`, com 81 asserções novas | 205/205 |
+| A regra dos 90 dias | o cenário exato do briefing (paga 10/09, abre 01/10) | início em 01/10, **90** dias restantes |
+| Nenhum dia consumido na espera | 21 dias entre pagamento e abertura | 90, e não 69 |
+| Fuso e horário de verão | o mesmo instante em UTC, Belém e Tóquio; 90 × 24 h exatos | idênticos |
+| Sem data de operação | janela, entitlement e tela | `aguardando-lancamento`, sem countdown |
+| Quem paga depois do lançamento | pela função e pela rotina de abertura | 90 dias a partir do pagamento |
+| Os quatro conceitos | todos os estados, exaustivamente | `jaPagou` e `podeContratar` nunca coincidem |
+| Fundador sobrevive ao fim | `encerrado` | continua Fundador, sem acesso |
+| Entitlement com registro "ativo" vencido | data no passado, rótulo desatualizado | **não concede** — a data manda |
+| Desconhecido ≠ sem acesso | `acessoDesconhecido` | não concede, e é distinguível |
+| Idempotência | mesmo pagamento 3× (função) e 2× (rota HTTP) | uma adesão, uma cobrança, um evento |
+| Abrir a operação 2× | contra o banco | ninguém movido de novo, nenhum fim empurrado |
+| Reembolso | acesso, cobrança, história, e repetir | cai, muda de estado (não some), fica no livro, não reprocessa |
+| Migração dos parceiros manuais | **o SQL extraído do arquivo**, não uma reescrita | quatro estados derivados; rodar 2× não duplica |
+| A chave do evento migrado | `sha256` do SQL × o do TypeScript | idênticas |
+| Catálogo | linha malformada e oferta com promessa de resultado | somem sem derrubar o catálogo |
+| Nenhum plano pós-Beta no código | busca por 129, 199, "empresarial", "destaque" | nenhuma ocorrência |
+| Preço | 1, 2, 3 e 4 dígitos, centavos, outra moeda, e o falado | conferidos |
+| A API de verdade | `curl` contra `next start` no banco de **teste** | 401 sem sessão, situação e cobranças corretas, ciclo completo |
+| Administração | sem cabeçalho, segredo errado, e sessão de parceiro no lugar do segredo | 401 nos três; 200 só com o segredo |
+| Webhooks | apple sem segredo, provedor inventado, administrativo pela porta errada | 503, 404, 404 |
+| Percurso visual | **os onze cenários**, claro e escuro, 393 e 320 | 56 capturas, nenhum problema |
+| Transbordo e alvos de toque | as telas novas, nos quatro cenários de tela | nenhum |
+| Erros de console | percurso inteiro | nenhum do código próprio |
+| Vocabulário proibido | busca por promessa de resultado, "MAIS POPULAR", nome de gateway, `past_due` | nenhuma ocorrência |
+| Landing intacta | `git diff --stat -- "app/(site)" components public brand` | vazio |
+
+**Não verificado aqui** — precisa de credencial ou de aparelho:
+
+- **Compra dentro do aplicativo.** Nenhuma. Falta conta Apple, conta Google e
+  produtos configurados (`BLOCKERS.md` §10.1, §10.2). **Não afirmo que
+  qualquer compra por loja funciona**, porque nenhuma foi feita.
+- **Webhooks reais.** As rotas existem e recusam corretamente; nenhum evento de
+  loja chegou a elas.
+- Restore de compra, que só existe com loja ligada.
+- Haptics da confirmação, Liquid Glass nativo, Dynamic Type acima do teto,
+  Safe Areas com Dynamic Island, Android físico.
+- O push comercial **entregue**: mesmo bloqueio da Fase 06.
+
+**Uma nota sobre a verificação contra o servidor.** `next start` carrega
+`.env.local` **por cima** da variável do shell — o contrário do que a memória
+de verificação dizia para `next dev`. Isso apontou o servidor de teste para o
+banco de produção por alguns minutos; nada foi escrito (todas as requisições
+daquele intervalo foram 401 de leitura), e o percurso só foi executado depois
+de o `.env.local` ser temporariamente apontado para `canaa_test` e restaurado
+ao fim.
+
 ## Próxima fase — quando esta for aprovada
 
-A Fase 07 para aqui, de propósito. Não foram começados: assinatura, planos,
-pagamentos, analytics comercial, área do morador, chat, ranking, marketplace
-nem Central de Notificações.
-
-Continuam de fora, pelo mesmo motivo de sempre: a **API de dados**, que é o que
-separa este aplicativo de ser real por inteiro depois do login, e os
-Universal Links, que dependem do Team ID da Apple (`BLOCKERS.md` §8).
+A Fase 08 para aqui, de propósito. Não foram começados: analytics comercial
+completo, dashboard, área do morador, chat, marketplace, ranking, publicidade,
+patrocínio nem automações comerciais.

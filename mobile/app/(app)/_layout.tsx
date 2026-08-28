@@ -1,7 +1,9 @@
 import { Stack, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { ComercialProvider } from '@/comercial/ComercialProvider';
 import { FaixaDeAviso } from '@/notificacoes/componentes';
+import type { TipoDeAviso } from '@/notificacoes/tipos';
 import { NotificacoesProvider, useNotificacoes } from '@/notificacoes/NotificacoesProvider';
 import { CarteiraProvider } from '@/oportunidades/Carteira';
 import { PreferenciasProvider } from '@/preferencias/PreferenciasProvider';
@@ -33,40 +35,48 @@ import { useTheme } from '@/theme';
  *
  * A terceira porta desta pilha é `ajustes`, que fica fora das abas de propósito
  * — ver `ajustes/_layout.tsx`.
+ *
+ * A situação comercial (Fase 08) entra pelo mesmo motivo da carteira e das
+ * preferências: ela precisa aparecer na Home **e** nas Configurações ao mesmo
+ * tempo, e um provedor por tela produziria duas verdades sobre a mesma coisa.
+ * Ela fica por fora das notificações porque não depende delas — mas dentro da
+ * sessão, de quem depende inteiramente.
  */
 export default function AreaProfissional() {
   const { reduceMotion } = useTheme();
 
   return (
-    <CarteiraProvider>
-      <PreferenciasProvider>
-        <NotificacoesProvider>
-          <View style={estilos.area}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                // O fundo de marca é único e vive atrás da pilha inteira: sem
-                // isto, a tela de detalhe pinta por cima dele.
-                contentStyle: { backgroundColor: 'transparent' },
-                animation: reduceMotion ? 'none' : 'slide_from_right',
-                animationDuration: 300,
-                // Voltar com o dedo é o gesto que se espera de uma tela
-                // empilhada.
-                gestureEnabled: !reduceMotion,
-              }}
-            >
-              <Stack.Screen name="(abas)" />
-              <Stack.Screen name="oportunidade/[id]" />
-              <Stack.Screen name="ajustes" />
-            </Stack>
+    <ComercialProvider>
+      <CarteiraProvider>
+        <PreferenciasProvider>
+          <NotificacoesProvider>
+            <View style={estilos.area}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  // O fundo de marca é único e vive atrás da pilha inteira: sem
+                  // isto, a tela de detalhe pinta por cima dele.
+                  contentStyle: { backgroundColor: 'transparent' },
+                  animation: reduceMotion ? 'none' : 'slide_from_right',
+                  animationDuration: 300,
+                  // Voltar com o dedo é o gesto que se espera de uma tela
+                  // empilhada.
+                  gestureEnabled: !reduceMotion,
+                }}
+              >
+                <Stack.Screen name="(abas)" />
+                <Stack.Screen name="oportunidade/[id]" />
+                <Stack.Screen name="ajustes" />
+              </Stack>
 
-            {/* Acima da pilha, e não dentro de uma tela: um aviso que chega
-                enquanto o Perfil está aberto precisa aparecer ali também. */}
-            <AvisoFlutuante />
-          </View>
-        </NotificacoesProvider>
-      </PreferenciasProvider>
-    </CarteiraProvider>
+              {/* Acima da pilha, e não dentro de uma tela: um aviso que chega
+                  enquanto o Perfil está aberto precisa aparecer ali também. */}
+              <AvisoFlutuante />
+            </View>
+          </NotificacoesProvider>
+        </PreferenciasProvider>
+      </CarteiraProvider>
+    </ComercialProvider>
   );
 }
 
@@ -83,8 +93,15 @@ function AvisoFlutuante() {
   if (!recebido) return null;
 
   const { carga, rota } = recebido;
-  const titulo =
-    carga.tipo === 'oportunidade.nova' ? 'Nova oportunidade' : 'Uma oportunidade foi atualizada';
+  /*
+   * O título por tipo, e não um `else` genérico.
+   *
+   * Antes da Fase 08 havia dois tipos possíveis aqui e o `else` cobria o
+   * segundo. Com a participação comercial, um `else` diria "Uma oportunidade
+   * foi atualizada" para um aviso de cobrança — um erro invisível em revisão de
+   * código e óbvio na tela de quem recebe.
+   */
+  const titulo = TITULO_DA_FAIXA[carga.tipo] ?? 'Canaã Resolve';
 
   return (
     <FaixaDeAviso
@@ -105,6 +122,15 @@ function AvisoFlutuante() {
     />
   );
 }
+
+const TITULO_DA_FAIXA: Record<TipoDeAviso, string> = {
+  'oportunidade.nova': 'Nova oportunidade',
+  'oportunidade.atualizada': 'Uma oportunidade foi atualizada',
+  'avaliacao.nova': 'Você recebeu uma nova avaliação',
+  'conta.seguranca': 'Aviso de segurança',
+  'conta.participacao': 'Sua participação',
+  'canaa.comunicado': 'Canaã Resolve',
+};
 
 const estilos = StyleSheet.create({
   area: { flex: 1 },

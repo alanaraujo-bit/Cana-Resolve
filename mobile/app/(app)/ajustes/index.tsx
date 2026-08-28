@@ -6,6 +6,8 @@ import { registrar } from '@/ajustes/analytics';
 import { LinhaDeAcao, LinhaDeAjuste, LinhaDeValor } from '@/ajustes/componentes';
 import { links, NOME_DO_APLICATIVO, versao } from '@/ajustes/informacoes';
 import { abrirExterno, TelaDeAjuste } from '@/ajustes/Tela';
+import { useComercial } from '@/comercial/ComercialProvider';
+import { nomeDaArea, resumoCurto } from '@/comercial/tipos';
 import { useNotificacoes } from '@/notificacoes/NotificacoesProvider';
 import { frasePermissao } from '@/notificacoes/tipos';
 import { usePreferencias } from '@/preferencias/PreferenciasProvider';
@@ -23,10 +25,14 @@ import { Bloco, Button, Grupo, Nota, Sheet, Text, haptics } from '@/ui';
  * outros veem**, **onde pedir ajuda**, **o que é este aplicativo**. Sair fica
  * no fim, sozinho, longe do que se toca todo dia.
  *
- * O que ficou de fora, e por quê: plano, assinatura e desempenho — são outra
- * fase. Notificações **entraram** na Fase 06, e a linha delas mostra o estado
- * do sistema em vez de um interruptor: o interruptor que importa aqui é o do
+ * Notificações **entraram** na Fase 06, e a linha delas mostra o estado do
+ * sistema em vez de um interruptor: o interruptor que importa aqui é o do
  * aparelho, e ele não mora nesta tela.
+ *
+ * A participação **entrou** na Fase 08, no grupo da conta — e não como quarta
+ * aba (§24). Ela é vizinha de "Login e segurança" porque é da mesma natureza:
+ * a condição sob a qual esta conta existe na rede. Continua de fora desempenho,
+ * que é outra fase.
  */
 export default function Ajustes() {
   const { colors, preference } = useTheme();
@@ -34,6 +40,7 @@ export default function Ajustes() {
   const { account, signOut } = useSession();
   const { preferencias } = usePreferencias();
   const { permissao } = useNotificacoes();
+  const { comercial } = useComercial();
 
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
@@ -92,6 +99,16 @@ export default function Ajustes() {
           titulo="Login e segurança"
           explicacao="Como você entra, senha e sessão"
           onPress={() => ir('seguranca', '/ajustes/seguranca')}
+        />
+        {/* A participação entrou na Fase 08, e ficou no grupo da conta em vez
+            de ganhar aba própria (§24). O valor à direita responde a pergunta
+            antes do toque — e some quando a situação não pôde ser conferida,
+            porque um rótulo em branco é melhor que um rótulo errado. */}
+        <LinhaDeAjuste
+          titulo={nomeDaArea(comercial)}
+          valor={resumoCurto(comercial)}
+          explicacao="Beta, período e cobrança"
+          onPress={() => ir('plano', '/ajustes/plano')}
         />
       </Bloco>
 

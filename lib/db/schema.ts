@@ -30,6 +30,17 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type {
+  EstadoDaOferta,
+  Plataforma,
+  Recorrencia,
+} from "@/lib/domain/comercial/catalogo";
+import type {
+  EstadoDaAdesao,
+  EstadoDaAssinatura,
+  EstadoDoPagamento,
+} from "@/lib/domain/comercial/estados";
+import type { Ambiente, Provedor, TipoDeEvento } from "@/lib/domain/comercial/eventos";
+import type {
   ApplicationStatus,
   OpportunityStatus,
   PartnerStatus,
@@ -622,3 +633,329 @@ export const partnerDevices = pgTable(
     index("partner_devices_token_idx").on(t.pushToken),
   ],
 );
+
+/* ---------------------------------------------------------------
+   Camada comercial
+   --------------------------------------------------------------- */
+
+/**
+ * O que segue é a Fase 08, e ela convive com o que já existia — não o
+ * substitui e não o apaga.
+ *
+ * `partners.founder`, `partners.betaPaidAt`, `partners.betaStartedAt` e a
+ * tabela `payments` foram escritos pela operação manual e **têm dados reais
+ * dentro**. Eles continuam de pé e continuam legíveis. O que muda é quem manda:
+ *
+ * - **A autoridade passa a ser `founder_enrollments`.** A migração `0006`
+ *   carrega para lá tudo que estava nas colunas antigas, de modo que nenhum
+ *   parceiro adquirido por WhatsApp perca direito por o billing ter chegado
+ *   depois (§72).
+ * - **As colunas antigas viram espelho.** Continuam sendo escritas para que
+ *   consultas e ferramentas existentes não quebrem, mas nada as consulta para
+ *   decidir acesso.
+ * - **`payments` continua sendo o registro histórico** do que a operação
+ *   manual recebeu; `payment_transactions` é o registro do que o sistema
+ *   processa a partir daqui, com estado, provedor e idempotência.
+ *
+ * Valores em **centavos inteiros**, em todas as tabelas, como já era em
+ * `payments.amountCents`. Nunca ponto flutuante (§91).
+ */
+
+/**
+ * O catálogo comercial.
+ *
+ * É uma **tabela**, e não uma constante, porque preço e disponibilidade
+ * precisam mudar sem que ninguém publique uma versão nova do aplicativo
+ * (§13, §96). Uma linha por versão de oferta: mudar a condição cria a versão
+ * seguinte e encerra a anterior, nunca reescreve (§15) — é o que preserva o
+ * significado histórico de uma compra antiga.
+ */
+export const commercialOffers = pgTable(
+  "commercial_offers",
+  {
+    id: pk(),
+    /** Estável entre versões. Ex.: `beta-fundador`. */
+    code: text("code").notNull(),
+    version: integer("version").notNull().default(1),
+
+    name: text("name").notNull(),
+    summary: text("summary").notNull(),
+    description: text("description").notNull(),
+
+    /** Centavos inteiros. */
+    priceCents: integer("price_cents").notNull(),
+    currency: text("currency").notNull().default("BRL"),
+    /** Quantos dias a compra cobre. `null` em recorrente sem prazo fixo. */
+    periodDays: integer("period_days"),
+    recurrence: text("recurrence").$type<Recorrencia>().notNull().default("unica"),
+
+    platforms: jsonb("platforms").$type<Plataforma[]>().notNull().default([]),
+    market: text("market").notNull().default("BR"),
+    benefits: jsonb("benefits").$type<string[]>().notNull().default([]),
+
+    status: text("status").$type<EstadoDaOferta>().notNull().default("rascunho"),
+    /** A contratação exige aprovação prévia? `true` no Beta (§75). */
+    requiresApproval: boolean("requires_approval").notNull().default(true),
+    /** Nota da administração. Nunca sai para o aplicativo. */
+    notes: text("notes"),
+
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("commercial_offers_code_version_key").on(t.code, t.version),
+    index("commercial_offers_status_idx").on(t.status),
+  ],
+);
+
+/**
+ * O mapeamento entre uma oferta nossa e o produto de cada loja.
+ *
+ * Existe separado da oferta porque o mesmo `beta-fundador` pode ter um SKU na
+ * App Store, outro no Google Play, e outros dois em sandbox — e misturar SKU de
+ * teste com o de produção libera acesso pago por dinheiro que não existe
+ * (§148, §149). Por isso `environment` faz parte da chave.
+ */
+export const productMappings = pgTable(
+  "product_mappings",
+  {
+    id: pk(),
+    offerCode: text("offer_code").notNull(),
+    offerVersion: integer("offer_version").notNull(),
+    provider: text("provider").$type<Provedor>().notNull(),
+    environment: text("environment").$type<Ambiente>().notNull().default("sandbox"),
+    /** O identificador do produto na loja. */
+    productId: text("product_id").notNull(),
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("product_mappings_key").on(t.provider, t.environment, t.productId),
+    index("product_mappings_offer_idx").on(t.offerCode, t.offerVersion),
+  ],
+);
+
+/**
+ * A adesão de um parceiro ao Beta Fundador — a autoridade sobre o §142.
+ *
+ * Uma linha por parceiro. Guarda o estado do processo, o pagamento, a condição
+ * comprada e as duas datas que o produto inteiro depende de não confundir:
+ * `paidAt`, que é quando o dinheiro entrou, e `betaStartedAt`, que é quando os
+ * 90 dias começaram — e que **só o lançamento da operação escreve**.
+ *
+ * `betaEndsAt` é gravado junto com `betaStartedAt`, e não recalculado a cada
+ * leitura, por uma razão de auditoria: o dia em que a regra dos 90 dias mudar,
+ * quem já estava dentro precisa continuar com o fim que foi prometido.
+ */
+export const founderEnrollments = pgTable(
+  "founder_enrollments",
+  {
+    id: pk(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+
+    status: text("status").$type<EstadoDaAdesao>().notNull().default("em_analise"),
+
+    /** A condição comprada, no par que o versionamento exige (§15). */
+    offerCode: text("offer_code"),
+    offerVersion: integer("offer_version"),
+
+    /** Em que categoria a vaga foi reservada — a entrada é limitada por ela (§74). */
+    categoryId: text("category_id"),
+
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    /** Quando o pagamento foi confirmado. Nunca define, sozinho, o Beta. */
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    /** Só o lançamento escreve. Ver `lib/domain/beta.ts`. */
+    betaStartedAt: timestamp("beta_started_at", { withTimezone: true }),
+    betaEndsAt: timestamp("beta_ends_at", { withTimezone: true }),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+
+    /**
+     * De onde veio a confirmação. `administrativo` é o caso de hoje — venda
+     * por conversa, ativação registrada pela administração (§70).
+     */
+    provider: text("provider").$type<Provedor>().notNull().default("administrativo"),
+
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    /** Uma adesão por parceiro. Duas seriam dois Betas para a mesma pessoa. */
+    uniqueIndex("founder_enrollments_partner_key").on(t.partnerId),
+    index("founder_enrollments_status_idx").on(t.status),
+    index("founder_enrollments_category_idx").on(t.categoryId),
+  ],
+);
+
+/**
+ * Assinaturas recorrentes.
+ *
+ * **Hoje não existe nenhuma linha aqui, e isso é o correto.** O Beta é compra
+ * única (§8). A tabela nasce agora para que a primeira assinatura não precise
+ * de uma migração feita com pressa — e para que o cancelamento, quando existir,
+ * já tenha onde guardar a diferença entre "não renova mais" e "acabou o
+ * acesso" (§87).
+ */
+export const subscriptions = pgTable(
+  "subscriptions",
+  {
+    id: pk(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+
+    status: text("status").$type<EstadoDaAssinatura>().notNull().default("pendente"),
+    offerCode: text("offer_code").notNull(),
+    offerVersion: integer("offer_version").notNull(),
+
+    provider: text("provider").$type<Provedor>().notNull(),
+    environment: text("environment").$type<Ambiente>().notNull().default("sandbox"),
+    /**
+     * O identificador da assinatura no provedor. É por ele que um evento de
+     * renovação ou cancelamento encontra esta linha.
+     */
+    providerRef: text("provider_ref"),
+
+    periodStart: timestamp("period_start", { withTimezone: true }),
+    /** Fim do período já pago. Cancelar **não** encurta isto. */
+    periodEnd: timestamp("period_end", { withTimezone: true }),
+    /** `false` quando a renovação já foi desligada. */
+    renews: boolean("renews").notNull().default(false),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("subscriptions_partner_idx").on(t.partnerId),
+    /**
+     * Uma assinatura por referência de provedor. É esta restrição que impede
+     * a mesma compra de virar duas assinaturas quando o evento chega duas
+     * vezes (§51).
+     */
+    uniqueIndex("subscriptions_provider_ref_key")
+      .on(t.provider, t.environment, t.providerRef)
+      .where(sql`provider_ref is not null`),
+  ],
+);
+
+/**
+ * Cada cobrança, com estado próprio.
+ *
+ * Separada da assinatura porque são coisas diferentes (§39): uma assinatura
+ * ativa pode ter uma cobrança falhada no meio, e uma cobrança aprovada pode
+ * pertencer a uma assinatura já cancelada.
+ *
+ * **Nunca guarda dado de cartão** (§66). Número, CVV e nome do portador não
+ * têm coluna aqui — não por disciplina de quem escreve, mas porque não existe
+ * onde colocá-los.
+ */
+export const paymentTransactions = pgTable(
+  "payment_transactions",
+  {
+    id: pk(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+
+    status: text("status").$type<EstadoDoPagamento>().notNull().default("criado"),
+    offerCode: text("offer_code").notNull(),
+    offerVersion: integer("offer_version").notNull(),
+
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency").notNull().default("BRL"),
+
+    provider: text("provider").$type<Provedor>().notNull(),
+    environment: text("environment").$type<Ambiente>().notNull().default("sandbox"),
+    providerRef: text("provider_ref"),
+
+    /**
+     * A chave que impede o toque duplo de virar duas transações (§83).
+     *
+     * Deriva do parceiro e da oferta — ver `chaveDaTentativa`. É um índice
+     * único, e não um `if` na rota: um `if` tem janela entre a consulta e a
+     * escrita, e é exatamente nessa janela que o segundo toque cabe.
+     */
+    idempotencyKey: text("idempotency_key").notNull(),
+
+    /** Comprovante do provedor, quando ele oferecer um. Nunca gerado por nós. */
+    receiptUrl: text("receipt_url"),
+    description: text("description").notNull(),
+
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    settledAt: timestamp("settled_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("payment_transactions_idempotency_key").on(t.idempotencyKey),
+    index("payment_transactions_partner_idx").on(t.partnerId),
+    index("payment_transactions_status_idx").on(t.status),
+  ],
+);
+
+/**
+ * O livro dos acontecimentos financeiros. Só cresce.
+ *
+ * Responde ao §113 e ao §114 de uma vez: "por que este parceiro está ativo?" é
+ * uma pergunta que se responde lendo esta tabela de cima a baixo — pagamento
+ * em tal dia, operação aberta em tal outro, Beta válido até tal data. Um
+ * estado sobrescrito não conta essa história; uma fila de eventos conta.
+ *
+ * `eventKey` é a defesa contra reentrega (§51). Ela é um `sha256` de
+ * provedor + ambiente + identificador do evento, e o índice único sobre ela é
+ * o que garante que processar duas vezes produza uma linha.
+ */
+export const commercialEvents = pgTable(
+  "commercial_events",
+  {
+    id: pk(),
+    /** `sha256(provedor:ambiente:idNoProvedor)`, em base64url. */
+    eventKey: text("event_key").notNull(),
+    provider: text("provider").$type<Provedor>().notNull(),
+    environment: text("environment").$type<Ambiente>().notNull().default("sandbox"),
+    kind: text("kind").$type<TipoDeEvento>().notNull(),
+
+    /** `null` só enquanto o vínculo com a conta não foi resolvido. */
+    partnerId: uuid("partner_id").references(() => partners.id, { onDelete: "set null" }),
+
+    amountCents: integer("amount_cents"),
+    currency: text("currency"),
+    offerCode: text("offer_code"),
+    offerVersion: integer("offer_version"),
+
+    /** Quando o provedor diz que aconteceu. */
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    /** Quando nós processamos. A diferença entre os dois importa em auditoria. */
+    createdAt: createdAt(),
+
+    /**
+     * O que o evento produziu aqui — em português, para ser lido por gente.
+     * Ex.: "Beta Fundador reservado; aguardando o início da operação".
+     */
+    effect: text("effect"),
+
+    /**
+     * Carga adicional do provedor, **saneada**.
+     *
+     * Nunca recibo cru, nunca token, nunca dado de cartão (§112). O que entra
+     * aqui é o que `paraOLog` deixa passar.
+     */
+    payload: jsonb("payload").$type<Record<string, unknown>>(),
+  },
+  (t) => [
+    uniqueIndex("commercial_events_key").on(t.eventKey),
+    index("commercial_events_partner_idx").on(t.partnerId),
+    index("commercial_events_occurred_idx").on(t.occurredAt),
+  ],
+);
+
+export type CommercialOffer = typeof commercialOffers.$inferSelect;
+export type FounderEnrollment = typeof founderEnrollments.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type CommercialEvent = typeof commercialEvents.$inferSelect;
+export type ProductMapping = typeof productMappings.$inferSelect;

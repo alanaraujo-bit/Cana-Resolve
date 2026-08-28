@@ -66,6 +66,22 @@ const ROTAS: { padrao: RegExp; rota: (m: RegExpMatchArray) => string }[] = [
     padrao: /^ajustes\/(seguranca|conta|notificacoes)$/,
     rota: (m) => `/ajustes/${m[1]}`,
   },
+  {
+    /**
+     * `plano` e `cobrancas` — o destino dos avisos comerciais (Fase 08, §119).
+     *
+     * Um aviso de pagamento confirmado ou de problema de cobrança abre a área
+     * comercial, e não a Home: mandar alguém para a Home depois de dizer que
+     * há um problema de cobrança é fazê-lo procurar (§119).
+     *
+     * A forma curta (`plano`) e a interna (`ajustes/plano`) são aceitas, pelo
+     * mesmo motivo da avaliação: `restaurar()` revalida a rota que leu do
+     * disco, e o que ele leu já é a forma traduzida. Sem as duas, um destino
+     * gravado numa execução seria descartado na seguinte, sem erro e sem aviso.
+     */
+    padrao: /^(?:ajustes\/)?(plano|cobrancas)$/,
+    rota: (m) => `/ajustes/${m[1]}`,
+  },
 ];
 
 /**
