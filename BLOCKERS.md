@@ -117,3 +117,43 @@ valor, avise** — trocar depois de publicado é caro.
 
 A tela já tem o ponto de entrada. O destino ainda não existe: hoje ela informa
 que o recurso chega em breve. Depende do item 1.
+
+**Alterar senha, ao contrário, já é real** desde a Fase 05 — mas só para quem
+está dentro do aplicativo, com a senha atual na mão (`POST /api/v1/auth/senha`).
+"Esqueci minha senha" é outro caminho: ali não existe sessão que autorize a
+troca, e ele precisa de e-mail transacional — que o projeto ainda não tem.
+
+## 6. Exclusão de conta — uma decisão de política, antes de código
+
+**Falta:** decidir o que acontece com o histórico quando um parceiro pede para
+sair.
+
+A tela existe (`Configurações › Dados da conta › Excluir minha conta`), explica
+a consequência e encaminha o pedido pelo WhatsApp oficial, onde uma pessoa
+confirma a identidade e executa. Nada é apagado pelo aplicativo, e nada diz que
+foi — apagar a sessão local e anunciar "conta excluída" deixaria a conta no
+banco e o perfil no ar.
+
+Automatizar exige responder três perguntas que **não são técnicas**:
+
+1. O que acontece com atendimentos já encerrados? Eles envolvem também o morador
+   do outro lado, e não são só do parceiro.
+2. Por quanto tempo os registros precisam ficar guardados — obrigação fiscal,
+   consumerista, LGPD?
+3. O que é anonimização suficiente: desligar o registro do perfil público basta,
+   ou o nome precisa sair também?
+
+**Quando voltar:** decidido isso, o caminho no servidor é curto — uma rota que
+reautentica, marca a conta e agenda o expurgo. A tela do aplicativo passa a
+chamá-la, e o texto dela já está escrito para esse dia.
+
+## 7. Notificações — Fase 06
+
+Nada está construído, de propósito. Nas Configurações existe uma linha dizendo
+que ainda não há notificações, **sem interruptor**: um controle que não controla
+nada é pior que a ausência dele.
+
+Quando a Fase 06 começar, ela precisará de `expo-notifications`, das credenciais
+de push (APNs e FCM) e de uma rota que guarde o token do aparelho. O lugar da
+preferência já está decidido: é **da conta**, não do aparelho — quem decide
+enviar é o servidor. Ver `mobile/AJUSTES.md`.

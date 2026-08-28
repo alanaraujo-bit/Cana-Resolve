@@ -4,17 +4,22 @@ Registro de onde o trabalho está, para retomar sem arqueologia.
 
 ## Onde as coisas estão — 28/08/2026
 
-Quatro fases construídas e verificadas: fundação e login, Home, Central de
-Oportunidades, Perfil profissional. Tudo versionado; o `.env` não.
+Cinco fases construídas e verificadas: fundação e login, Home, Central de
+Oportunidades, Perfil profissional, Conta e Configurações. Tudo versionado; o
+`.env` não.
 
 **O que é real e o que não é** — a distinção que mais confunde quem chega:
 
 | | Estado |
 | --- | --- |
 | Entrada no aplicativo | **real**, contra a API em produção e os parceiros do banco |
+| Sessão guardada entre aberturas, e sair | **real** desde a Fase 05 — credencial no `SecureStore`, conferida no servidor |
+| Alterar senha | **real** — o servidor confere a atual e derruba os outros aparelhos |
+| Tema e pausa de oportunidades | **reais** no aparelho; a pausa ainda não alcança o servidor |
 | Oportunidades e perfil | **exemplos declarados** — a API de dados não existe |
 | Escolher e comprimir imagem | **real** no aparelho; não há para onde enviar depois |
 | Google e Apple | não ligados — a API responde 501 dizendo isso |
+| Excluir conta | pedido pelo canal oficial; não há rota, e não se finge que há |
 | Push, avaliações, plano, chat | não construídos |
 
 A separação vive em duas variáveis: `EXPO_PUBLIC_AUTH_API_URL` está preenchida,
@@ -33,8 +38,22 @@ para o aplicativo ser real depois da tela de login. O contrato já está escrito
 em `tipos.ts` de cada módulo, e só o `repositorio.ts` precisa mudar — as telas
 não.
 
-As Fases 05 e 06 foram pedidas em 28/08/2026, mas **os briefings não chegaram**
-nesta sessão; o da Fase 04 veio truncado no §37. Não invente o escopo delas.
+A **Fase 05 chegou em 28/08/2026** e está feita — ver a seção dela abaixo e
+`AJUSTES.md`. Ela trouxe junto quatro rotas na API do site (o `GET` de sessão, o
+`POST` de senha, `email` na conta e o CORS extraído), porque metade do que ela
+pedia não existia do lado do servidor.
+
+A **Fase 06** é Push Notifications, e não foi começada. O briefing da Fase 04
+veio truncado no §37 naquela sessão; não invente o que faltou.
+
+**Atenção antes de abrir no Expo Go contra produção:** o aplicativo agora chama
+quatro rotas de autenticação, e três delas (`GET /auth/sessoes`,
+`DELETE /auth/sessoes` como parte do logout e `POST /auth/senha`) só existem
+depois que o repositório do site for publicado. Elas foram provadas contra a API
+rodando localmente no banco de teste. Enquanto o deploy não sair, o aplicativo
+não quebra — a confirmação de sessão cai no estado "não deu para conferir" e a
+troca de senha diz que não foi possível agora —, mas "Alterar senha" é um beco
+sem saída até lá.
 
 ## Fase 01 — Onboarding + Autenticação · concluída
 
@@ -263,8 +282,122 @@ e empacotamento não enxergam):
 pelo padrão da Fase 03, ficam os critérios de aceitação — não foram lidos. O que
 está aqui cobre §1–37.
 
+## Fase 05 — Conta, Configurações, Preferências e Segurança · concluída
+
+**A sessão passou a existir de verdade.** Era o buraco no meio de tudo: a API
+devolvia um token desde o dia em que nasceu, `entrar.tsx` o jogava fora e o
+`SessionProvider` apagava qualquer sessão guardada na abertura. Quem fechava o
+aplicativo entrava de novo, "sair" era esquecer localmente, e metade do que esta
+fase pedia — logout que funciona, sessão expirada tratada, senha alterável —
+não tinha em que se apoiar. Foi a primeira coisa construída.
+
+**Feito**
+
+- **Sessão** (`src/session/`): credencial no `SecureStore`, restaurada na
+  abertura e **conferida no servidor**. Três respostas, e a diferença entre elas
+  é o que separa um aplicativo confiável de um que expulsa gente sem motivo:
+  vale, não vale (única transição que manda entrar de novo), ou não deu para
+  perguntar — e sinal fraco não custa o login de ninguém.
+- **`session/chaves.ts`**: tudo que o aplicativo grava neste aparelho, em uma
+  lista só, com o lado da linha de cada chave. É o que torna confiável a
+  promessa de que sair apaga o rascunho do perfil e **não** apaga o tema nem o
+  onboarding.
+- **Quatro rotas na API** (repositório do site, `app/api/v1/auth/`): o `GET` de
+  sessão, que já existia como função (`contaDaSessao`) e não tinha porta; o
+  `POST /auth/senha`, novo; `email` na conta devolvida; e o CORS local extraído
+  para `lib/auth/cors.ts`, agora que há duas rotas seguindo a mesma regra.
+- **Configurações** em `app/(app)/ajustes/`, **fora** das abas: onze telas —
+  capa, dados da conta, login e segurança, alterar senha, aparência,
+  oportunidades, privacidade, permissões, ajuda, sobre, excluir conta — mais a
+  área de desenvolvimento fechada por `__DEV__`.
+- **Conta ≠ Perfil**, arquiteturalmente: `src/conta/` deriva método de entrada e
+  estado de sessão a partir da fonte única; não guarda nada. A entrada é uma
+  linha no fim da capa do Perfil, e não uma quarta aba.
+- **Alterar senha é real.** Servidor confere a atual, grava a nova e derruba os
+  outros aparelhos, mantendo o de quem trocou. Nenhuma tela desta fase diz que
+  fez algo que não fez.
+- **Tema com preferência explícita** — Sistema, Claro, Escuro —, gravado no
+  aparelho e lido **antes do primeiro quadro**, junto com as fontes. "Sistema"
+  continua sendo preferência depois de escolhido, e não a cor congelada.
+- **Pausar oportunidades**, a única preferência de oportunidade que passou pela
+  pergunta "ele precisa mesmo controlar isso?". Aparece na Home, porque uma
+  pausa que só se vê onde foi ligada é uma armadilha.
+- **Privacidade** explica o que o morador vê, o que só chega depois do
+  interesse e o que nunca aparece — sem duplicar um formulário do Perfil.
+  **Permissões** mostra a única que o aplicativo usa, e diz o que não pedimos.
+- **Ajuda** com cinco perguntas reais e WhatsApp preenchido e nunca enviado.
+  **Sobre** com a versão vinda do `app.json`, e a Aionix num crédito de uma
+  linha. Nada que sai daqui carrega e-mail, token ou dado de conta.
+- **Excluir conta** previsto e explicado, com o pedido pelo canal oficial. Nada
+  de exclusão local falsa — ver `BLOCKERS.md`.
+- **Cinco peças subiram para a fundação** (`src/ui/lista.tsx`): cabeçalho,
+  bloco, grupo, nota e alternador. `src/perfil/componentes.tsx` continua
+  exportando os mesmos nomes, e nenhuma tela da Fase 04 precisou mudar.
+- Domínio documentado em [`AJUSTES.md`](AJUSTES.md).
+
+**Corrigido no caminho** (achado olhando o produto, não o código):
+
+| O que estava errado | Onde |
+| --- | --- |
+| `/ajustes/index` — o que o gerador de rotas tipadas emite para o índice de uma pilha — cai em "Unmatched Route"; o endereço servido é `/ajustes` | `src/ajustes/rota.ts`, com a conversão em um lugar só |
+| "Dados da conta" e a linha do nome levavam ao mesmo lugar: duas portas para a mesma sala | capa das Configurações |
+| "Navegador 0.0.0" na informação de suporte — o React Native web devolve uma versão que não existe | `informacoes.ts` |
+| A nota de Segurança prometia preparação da Apple onde não há linha da Apple | `seguranca.tsx` |
+| Duas caixas de aviso empilhadas na mesma tela, e um "Recebendo" ecoando o interruptor logo abaixo dele | `oportunidades.tsx` |
+| "Aparelho: Navegador" repetido em Conta e em Segurança | `conta.tsx` |
+| O botão de sair vinha em verde cheio, com o brilho de uma conquista | folha de confirmação |
+| **Sair não apagava o rascunho do perfil de verdade**: o repositório guarda uma cópia em `memoria` e a consulta antes do disco, então o parceiro seguinte a entrar no mesmo aparelho encontraria o nome, o telefone e as fotos do anterior. Vale igual para as decisões da carteira | `src/session/limpeza.ts`, que chama o `esquecer()` de cada módulo |
+
+**Verificado**
+
+| O quê | Como | Resultado |
+| --- | --- | --- |
+| Tipos | `npx tsc --noEmit`, nos dois projetos | limpo |
+| Lint | `npx expo lint` e `npx eslint` | limpo |
+| Testes do servidor | `npm test` na raiz, com 8 asserções novas de sessão e senha | 32/32 |
+| Rotas da API | `curl` contra a API rodando no banco de **teste** | 201 entrar, 200 conferir, 401 sem token, 403 senha errada, 422 senha fraca, 204 sair, 401 depois de sair |
+| Percurso completo | 16 telas, nos dois temas, a 393×852 | claro e escuro refinados |
+| Tela pequena | o mesmo percurso a 320×700 | sem transbordo, composição mantida |
+| Sessão de verdade | login real → Conta → Segurança → trocar senha → sair, no navegador | 12 asserções, todas certas |
+| Senha | atual errada recusada, régua aplicada, troca concluída, senha velha morta, nova entra | conferido |
+| Tema | Escuro na hora, sobrevive a recarregar, Sistema volta a seguir o aparelho ao trocar o esquema | 8 asserções |
+| Logout | não devolve o tema ao padrão, não reabre o onboarding | conferido |
+| Pausa | registrada, datada, visível na capa e na Home, sobrevive a reabrir, e volta | 5 asserções |
+| Offline | tema troca; alterar senha falha com frase de gente e nada diz que deu certo | conferido |
+| Sessão expirada | sessões apagadas no banco, depois uma operação que precisa delas | vai ao login **uma vez**, com a frase, e fica lá |
+| Alvos de toque | medição do DOM nas 16 telas, em 393 e 320 | nenhum abaixo de 44 nas telas desta fase |
+| Transbordo horizontal | 320 e 393 | nenhum |
+| Erros de console | percurso inteiro | nenhum do código próprio |
+| Empacotamento | bundle de desenvolvimento pelo Metro, iOS e Android | 200, ~10,2 MB nos dois; as 11 rotas presentes |
+| Troca de conta no mesmo aparelho | parceiro A edita o perfil, sai, parceiro B entra sem fechar o aplicativo | o que A escreveu não aparece para B |
+| Formulários públicos | `npm run smoke`, apontado para o banco de teste | 7/7 |
+| Landing intacta | `git diff --stat -- "app/(site)" components public brand` | vazio |
+
+**Sobre as medições de alvo de toque:** a régua do DOM não enxerga `hitSlop`.
+Ela acusa o olho de mostrar/ocultar senha (40 × 40 com `hitSlop` 12, ou seja
+64 reais), os links do login (com `hitSlop` 10) e o `Switch` do sistema — que é
+só desenho, com o toque na linha inteira. Nenhum é alvo pequeno de verdade.
+
+**Não verificado aqui** — precisa de aparelho:
+
+- **Persistência da sessão entre aberturas.** `SecureStore` não existe na web,
+  então a prévia pelo navegador não guarda sessão por decisão de projeto. O
+  caminho de restaurar e conferir foi exercido pelo lado do servidor; o
+  `Keychain`/`Keystore` em si, não.
+- Permissão de fotos concedida, negada e parcial, e o "abrir configurações do
+  aparelho" — `Linking.openSettings()` não existe na web.
+- Haptics do toggle, da escolha de tema e da confirmação de saída.
+- Abertura real do WhatsApp e dos documentos no navegador do sistema.
+- Dynamic Type acima do teto, Liquid Glass nativo, Safe Areas com Dynamic
+  Island e indicador de Home, Android físico.
+
 ## Próxima fase — quando estas forem aprovadas
 
-Não foi antecipada. Ficaram de fora de propósito: Configurações, Push
-Notifications, avaliações, plano, financeiro, área do morador, chat e analytics
-conectado.
+A **Fase 06** foi anunciada: Push Notifications. A interface já nasceu
+preparada — uma linha em Preferências dizendo que ainda não existem, sem
+interruptor que não desligue nada — e o detalhe do que ela encontra pronto está
+em [AJUSTES.md](AJUSTES.md).
+
+Continuam de fora, de propósito: central de notificações, avaliações, plano,
+financeiro, área do morador, chat e analytics conectado. E a **API de dados**,
+que é o que separa este aplicativo de ser real por inteiro depois do login.

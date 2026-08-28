@@ -1,7 +1,7 @@
 # Canaã Resolve — aplicativo
 
 O aplicativo nativo do **Canaã Resolve**, em Expo / React Native — o lado de
-quem atende. Quatro fases construídas:
+quem atende. Cinco fases construídas:
 
 | Fase | O quê | Onde se lê o porquê |
 | --- | --- | --- |
@@ -9,11 +9,14 @@ quem atende. Quatro fases construídas:
 | 02 | Home do profissional e as três abas | [`HOME.md`](HOME.md) |
 | 03 | Central de Oportunidades e a tela da oportunidade | [`DOMINIO-OPORTUNIDADES.md`](DOMINIO-OPORTUNIDADES.md) |
 | 04 | Perfil profissional e a prévia pública | [`PERFIL.md`](PERFIL.md) |
+| 05 | Conta, Configurações, preferências e segurança | [`AJUSTES.md`](AJUSTES.md) |
 
-**A entrada é real.** Desde 28/08/2026 o login vai contra a API em produção e
-os parceiros de verdade do banco — não há atalho fingindo autenticar. Já as
-oportunidades e o perfil que aparecem depois dela ainda são **exemplos
-declarados**: a API de dados não existe. Ver "Variáveis", abaixo.
+**A entrada é real, e a sessão também.** Desde 28/08/2026 o login vai contra a
+API em produção e os parceiros de verdade do banco; desde a Fase 05 a credencial
+fica no `SecureStore`, é conferida no servidor a cada abertura, e sair encerra a
+sessão de verdade. Alterar senha é uma operação real. Já as oportunidades e o
+perfil que aparecem depois do login ainda são **exemplos declarados**: a API de
+dados não existe. Ver "Variáveis", abaixo.
 
 O site (a landing, `/solicitar`, `/parceiros`) continua na raiz do repositório e
 não foi tocado. Este diretório é um projeto à parte, com o seu próprio
@@ -79,6 +82,7 @@ app/                    rotas (expo-router)
     (abas)/             Início, Oportunidades, Perfil
       perfil/           a capa e as seis seções de edição, mais a prévia
     oportunidade/[id]   a tela da oportunidade — fora das abas, para abrir por link
+    ajustes/            Conta e Configurações — fora das abas pelo mesmo motivo
 src/
   theme/                tokens e o provedor de tema (claro, escuro, acessibilidade)
   ui/                   Button, TextField, Text, GlassSurface, Sheet, ícones, haptics
@@ -86,7 +90,10 @@ src/
   onboarding/stages.tsx as três composições visuais
   oportunidades/        domínio, exemplos, repositório, estado e componentes
   perfil/               domínio, catálogo, completude, validação, imagem, estado
-  session/              máquina de estados da entrada + persistência local
+  session/              máquina de estados da entrada, credencial e chaves locais
+  conta/                método de entrada e estado da sessão, derivados da sessão
+  preferencias/         o que é da conta: pausa de oportunidades (e o que vier)
+  ajustes/              as peças, os links, a versão e a moldura de Configurações
   auth/                 config, erros, contrato da API, Google e Apple
 assets/                 ícones e splash, gerados a partir da marca do site
 ```
@@ -110,14 +117,18 @@ oportunidade, os cinco estados, as ações, o encerramento e a privacidade.
 [`PERFIL.md`](PERFIL.md) — o que o perfil representa, o que aparece para quem,
 e o que ainda depende de servidor.
 
+[`AJUSTES.md`](AJUSTES.md) — a linha entre Conta e Perfil, como a sessão
+funciona, o que é preferência do aparelho e o que é da conta, o que sai e o que
+fica ao sair, e o que a Fase 06 vai encontrar pronto.
+
 [`PROGRESSO.md`](PROGRESSO.md) — o que cada fase entregou, o que foi
 verificado de verdade e o que não foi.
 
 ## Fora de escopo por enquanto
 
-Configurações, criação e recuperação de senha pelo próprio parceiro,
-notificações, avaliações, plano, financeiro, chat, área do morador e analytics
-conectado. A arquitetura os acomoda; nenhum deles foi construído.
+Criação e recuperação de senha pelo próprio parceiro, notificações, avaliações,
+plano, financeiro, chat, área do morador e analytics conectado. A arquitetura os
+acomoda; nenhum deles foi construído.
 
 E a **API de dados** — a leitura e a escrita de oportunidades e perfil contra o
 servidor. É o que separa este aplicativo de ser real por inteiro.
