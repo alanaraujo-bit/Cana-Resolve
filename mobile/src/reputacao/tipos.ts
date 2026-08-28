@@ -382,6 +382,71 @@ export function resumir(avaliacoes: readonly Avaliacao[]): ResumoDeReputacao {
   };
 }
 
+/**
+ * O resumo depois de **uma** avaliação mudar de estado.
+ *
+ * Existe por causa da contestação: quando o profissional contesta, a avaliação
+ * passa a `em-analise` e sai da conta pública. Sem isto, a tela mostraria "em
+ * análise" no cartão ao lado de uma média que ainda incluía aquela nota.
+ *
+ * Por que não simplesmente `resumir()` de novo: a lista carregada é **uma
+ * página**, não o histórico. Recalcular sobre ela devolveria a média dos dez
+ * primeiros como se fosse a do parceiro. Aqui a conta é um delta sobre o total
+ * conhecido — o único jeito correto de atualizar sem ter o conjunto inteiro na
+ * mão.
+ *
+ * `antes` é `null` quando a avaliação não estava carregada; nesse caso não há o
+ * que ajustar, e o resumo volta intacto.
+ *
+ * Quando a API existir, a resposta da ação traz o resumo novo e esta função sai
+ * do caminho — é o servidor que sabe somar o que não foi paginado.
+ */
+export function ajustarResumo(
+  resumo: ResumoDeReputacao,
+  antes: Avaliacao | null,
+  depois: Avaliacao,
+): ResumoDeReputacao {
+  if (!antes) return resumo;
+
+  const contavaAntes = contaParaAMedia(antes.estado);
+  const contaAgora = contaParaAMedia(depois.estado);
+  const mesmaNota = antes.nota === depois.nota;
+
+  // Nada que afete a média mudou — responder, por exemplo, não mexe em nota
+  // nem em estado.
+  if (contavaAntes === contaAgora && mesmaNota) return resumo;
+
+  const distribuicao = { ...resumo.distribuicao };
+  let total = resumo.total;
+  let soma = resumo.media === null ? 0 : resumo.media * resumo.total;
+  let foraDaConta = resumo.foraDaConta;
+
+  if (contavaAntes) {
+    total -= 1;
+    soma -= antes.nota;
+    distribuicao[antes.nota] = Math.max(0, distribuicao[antes.nota] - 1);
+  } else {
+    foraDaConta = Math.max(0, foraDaConta - 1);
+  }
+
+  if (contaAgora) {
+    total += 1;
+    soma += depois.nota;
+    distribuicao[depois.nota] += 1;
+  } else {
+    foraDaConta += 1;
+  }
+
+  return {
+    ...resumo,
+    media: total === 0 ? null : Math.round((soma / total) * 10) / 10,
+    total,
+    distribuicao,
+    foraDaConta,
+    volume: total === 0 ? 'nenhuma' : total < VOLUME_CONSISTENTE ? 'poucas' : 'consistente',
+  };
+}
+
 /** "4,8". Uma casa, vírgula decimal, e nada quando não há média. */
 export function mediaLegivel(media: number | null): string | null {
   if (media === null) return null;

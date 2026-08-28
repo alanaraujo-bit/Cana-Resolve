@@ -10,6 +10,7 @@ import {
   type ContextoDeAvaliacao,
 } from "../mobile/src/reputacao/elegibilidade";
 import {
+  ajustarResumo,
   contaParaAMedia,
   contagemLegivel,
   contarNaoVistas,
@@ -309,13 +310,29 @@ describe("o texto que a pessoa escreveu", () => {
   });
 
   it("um comentário longo é cortado em palavra inteira, e se declara cortado", () => {
-    const longo = "palavra ".repeat(80).trim();
-    const r = resumirTexto(longo, 100);
+    const longo = "Chamei para olhar um problema no quadro de energia da cozinha inteira.";
+    const r = resumirTexto(longo, 30);
+
     assert.equal(r.cortado, true);
-    assert.ok(r.texto.length <= 101, `ficou com ${r.texto.length}`);
     assert.ok(r.texto.endsWith("…"));
-    // Não corta no meio de uma palavra.
-    assert.ok(!/[a-z]…$/.test(r.texto.replace("palavra…", "…")));
+    // A asserção que importa: o texto cortado é um **prefixo de palavras
+    // inteiras** do original. Um corte no meio de uma palavra passaria por
+    // "termina com reticências" sem problema nenhum.
+    const semReticencia = r.texto.slice(0, -1);
+    assert.ok(longo.startsWith(semReticencia), `"${semReticencia}" não é prefixo do original`);
+    assert.equal(
+      longo[semReticencia.length],
+      " ",
+      `cortou no meio de uma palavra: "${semReticencia}"`,
+    );
+  });
+
+  it("uma palavra sem espaço nenhum ainda assim é cortada no limite", () => {
+    // O caso que a regra de palavra inteira não consegue atender: sem espaço,
+    // não há fronteira. O corte acontece no limite, e não estoura o layout.
+    const r = resumirTexto("a".repeat(200), 20);
+    assert.equal(r.cortado, true);
+    assert.ok(r.texto.length <= 21, `ficou com ${r.texto.length}`);
   });
 
   it("o saneamento tira controle e parede de espaço, e preserva parágrafo", () => {
@@ -525,5 +542,97 @@ describe("o deep link de uma avaliação", () => {
     assert.equal(comoRota("canaaresolve://oportunidade/o1"), "/oportunidade/o1");
     assert.equal(comoRota("canaaresolve://ajustes/seguranca"), "/ajustes/seguranca");
     assert.equal(comoRota("canaaresolve://avaliacoes"), "/perfil/avaliacoes");
+  });
+});
+
+describe("o resumo depois de uma ação", () => {
+  /**
+   * `ajustarResumo` existe porque a lista carregada é **uma página**, não o
+   * histórico: recalcular com `resumir()` sobre ela devolveria a média dos dez
+   * primeiros como se fosse a do parceiro. A conta aqui é um delta sobre o
+   * total conhecido, e delta é aritmética — o tipo de coisa que se confere por
+   * asserção e nunca por captura de tela.
+   */
+  const base = () =>
+    resumir([
+      avaliacao({ id: "x1", nota: 5 }),
+      avaliacao({ id: "x2", nota: 5 }),
+      avaliacao({ id: "x3", nota: 5 }),
+      avaliacao({ id: "x4", nota: 1 }),
+    ]);
+
+  it("contestar tira a nota da média, e o delta bate com o recálculo", () => {
+    const antes = avaliacao({ id: "x4", nota: 1 });
+    const depois = { ...antes, estado: "em-analise" as const };
+
+    const r = ajustarResumo(base(), antes, depois);
+
+    // 5+5+5 = 15 / 3 = 5,0. A nota 1 saiu.
+    assert.equal(r.media, 5);
+    assert.equal(r.total, 3);
+    assert.equal(r.foraDaConta, 1);
+    assert.equal(r.distribuicao[1], 0);
+
+    // E bate exatamente com o que `resumir` daria sobre o conjunto inteiro —
+    // que é a única prova de que o delta não diverge da fonte única.
+    const cheio = resumir([
+      avaliacao({ id: "x1", nota: 5 }),
+      avaliacao({ id: "x2", nota: 5 }),
+      avaliacao({ id: "x3", nota: 5 }),
+      depois,
+    ]);
+    assert.equal(r.media, cheio.media);
+    assert.equal(r.total, cheio.total);
+    assert.equal(r.foraDaConta, cheio.foraDaConta);
+    assert.deepEqual(r.distribuicao, cheio.distribuicao);
+  });
+
+  it("responder não mexe na média", () => {
+    const antes = avaliacao({ id: "x1", nota: 5 });
+    const depois = {
+      ...antes,
+      resposta: { texto: "Obrigado.", em: new Date(), editadaEm: null },
+    };
+    const inicial = base();
+    const r = ajustarResumo(inicial, antes, depois);
+    assert.equal(r.media, inicial.media);
+    assert.equal(r.total, inicial.total);
+    assert.deepEqual(r.distribuicao, inicial.distribuicao);
+  });
+
+  it("marcar como vista não mexe na média", () => {
+    const antes = avaliacao({ id: "x1", nota: 5, vista: false });
+    const inicial = base();
+    const r = ajustarResumo(inicial, antes, { ...antes, vista: true });
+    assert.equal(r.media, inicial.media);
+    assert.equal(r.total, inicial.total);
+  });
+
+  it("a última avaliação sair da conta devolve `null`, e não zero", () => {
+    // O caso que a fase inteira existe para não errar: contestar a única
+    // avaliação não pode produzir "0,0".
+    const so = avaliacao({ id: "u", nota: 5 });
+    const r = ajustarResumo(resumir([so]), so, { ...so, estado: "em-analise" });
+    assert.equal(r.media, null);
+    assert.equal(r.total, 0);
+    assert.equal(r.volume, "nenhuma");
+  });
+
+  it("o volume acompanha o total", () => {
+    const cinco = Array.from({ length: 5 }, (_, i) => avaliacao({ id: `v${i}`, nota: 5 }));
+    const inicial = resumir(cinco);
+    assert.equal(inicial.volume, "consistente");
+
+    const r = ajustarResumo(inicial, cinco[0]!, { ...cinco[0]!, estado: "em-analise" });
+    assert.equal(r.total, 4);
+    assert.equal(r.volume, "poucas");
+  });
+
+  it("uma avaliação que não estava carregada não é ajustada às cegas", () => {
+    // `antes` nulo = a ação mexeu em algo fora da página. Chutar um delta ali
+    // corromperia a média; o resumo volta intacto.
+    const inicial = base();
+    const r = ajustarResumo(inicial, null, avaliacao({ id: "z", nota: 1 }));
+    assert.deepEqual(r, inicial);
   });
 });

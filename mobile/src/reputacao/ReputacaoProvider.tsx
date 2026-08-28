@@ -45,9 +45,8 @@ import {
   type ErroDeReputacao,
 } from './repositorio';
 import {
-  contarNaoVistas,
+  ajustarResumo,
   ordemDeLeitura,
-  resumir,
   type Avaliacao,
   type MotivoDeDenuncia,
   type ResumoDeReputacao,
@@ -101,12 +100,21 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
   const [cenario, setCenario] = useState<Cenario>('consistente');
   const [situacao, setSituacao] = useState<Situacao>('carregando');
   /**
-   * `todas` é a lista completa que o repositório conhece; `avaliacoes` é o que
-   * já foi paginado para a tela. O resumo lê `todas` — porque a média de um
-   * parceiro não pode depender de quanto o dedo já rolou (§99).
+   * `avaliacoes` é o que já foi paginado para a tela; `resumo` descreve o
+   * **histórico inteiro** e vem pronto do repositório.
+   *
+   * Não são a mesma coisa, e não podem ser: a média de um parceiro não pode
+   * depender de quanto o dedo já rolou (§99). Calcular o resumo aqui, sobre o
+   * que está carregado, funcionaria com exemplos e mentiria contra uma API
+   * paginada de verdade — que devolve dez itens e nunca os trinta.
    */
-  const [todas, setTodas] = useState<Avaliacao[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
+  const [resumo, setResumo] = useState<ResumoDeReputacao>(RESUMO_VAZIO);
+  /**
+   * Quantas ainda não foram abertas — **do histórico inteiro**, e não do que
+   * está na tela. Vem do resumo pela mesma razão que a média vem.
+   */
+  const [naoVistas, setNaoVistas] = useState(0);
   const [cursor, setCursor] = useState<string | null>(null);
   const [erro, setErro] = useState<ErroDeReputacao | null>(null);
   const [atualizando, setAtualizando] = useState(false);
@@ -121,8 +129,9 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
     try {
       const pagina = await lerAvaliacoes(alvo, null);
       if (cenarioRef.current !== alvo) return;
-      setTodas(pagina.todas);
       setAvaliacoes(pagina.avaliacoes);
+      setResumo(pagina.resumo);
+      setNaoVistas(pagina.naoVistas);
       setCursor(pagina.cursor);
       setErro(null);
       setSituacao('pronto');
@@ -157,7 +166,8 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
     try {
       const pagina = await lerAvaliacoes(alvo, proximo);
       if (cenarioRef.current !== alvo) return;
-      setTodas(pagina.todas);
+      setResumo(pagina.resumo);
+      setNaoVistas(pagina.naoVistas);
       setAvaliacoes((atuais) => {
         // Uma página repetida — dedo rápido, duas chamadas — não pode duplicar
         // um cartão na lista.
@@ -173,16 +183,31 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
     }
   }, [carregandoMais]);
 
-  /** Aplica o resultado de uma ação nas duas listas, sem reler tudo. */
+  /**
+   * Aplica o resultado de uma ação na lista **e no resumo**.
+   *
+   * O resumo precisa ser refeito porque uma contestação muda a média: a
+   * avaliação passa a `em-analise` e sai da conta. Deixar só a lista mudar
+   * faria a tela mostrar "em análise" ao lado de uma média que ainda incluía
+   * aquela nota.
+   *
+   * Aqui o recálculo é local e correto, porque a ação mudou **uma** avaliação
+   * que já está carregada. Quando a API existir, a resposta dela traz o resumo
+   * novo e este `resumir` some — é o servidor que sabe somar o que não foi
+   * paginado.
+   */
   const trocar = useCallback((nova: Avaliacao) => {
-    const troca = (lista: Avaliacao[]) =>
-      lista.map((a) => (a.id === nova.id ? nova : a)).sort(ordemDeLeitura);
-    setTodas(troca);
-    setAvaliacoes(troca);
+    const antes = listaRef.current.find((a) => a.id === nova.id) ?? null;
+    setAvaliacoes((lista) =>
+      lista.map((a) => (a.id === nova.id ? nova : a)).sort(ordemDeLeitura),
+    );
+    setResumo((atual) => ajustarResumo(atual, antes, nova));
+    // As não vistas do histórico inteiro, ajustadas pela que acabou de mudar.
+    if (antes && !antes.vista && nova.vista) setNaoVistas((n) => Math.max(0, n - 1));
   }, []);
 
-  const todasRef = useRef(todas);
-  todasRef.current = todas;
+  const listaRef = useRef(avaliacoes);
+  listaRef.current = avaliacoes;
 
   /**
    * **`porId` depende de `todas`, e a dependência é a funcionalidade.**
@@ -200,13 +225,13 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
    * do domínio passavam todos.
    */
   const porId = useCallback(
-    (id: string) => todas.find((a) => a.id === id) ?? null,
-    [todas],
+    (id: string) => avaliacoes.find((a) => a.id === id) ?? null,
+    [avaliacoes],
   );
 
   const marcarVista = useCallback(
     (id: string) => {
-      const atual = todasRef.current.find((a) => a.id === id);
+      const atual = listaRef.current.find((a) => a.id === id);
       if (!atual || atual.vista) return;
       registrar({ nome: 'avaliacao_vista', avaliacaoId: id });
       // Otimista: o ponto some no toque. Se o disco recusar, ele volta na
@@ -268,14 +293,12 @@ export function ReputacaoProvider({ children }: { children: ReactNode }) {
   const trocarCenario = useCallback(async (c: Cenario) => {
     await esquecer();
     setSituacao('carregando');
-    setTodas([]);
     setAvaliacoes([]);
+    setResumo(RESUMO_VAZIO);
+    setNaoVistas(0);
     setCursor(null);
     setCenario(c);
   }, []);
-
-  const resumo = useMemo(() => (todas.length ? resumir(todas) : RESUMO_VAZIO), [todas]);
-  const naoVistas = useMemo(() => contarNaoVistas(todas), [todas]);
 
   const valor = useMemo<Valor>(
     () => ({

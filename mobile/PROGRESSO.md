@@ -586,7 +586,7 @@ pela mesma porta (`EXPO_PUBLIC_DATA_API_URL`) que alimenta oportunidades e perfi
 
 - `avisoDeNovaAvaliacao` em `lib/push/mensagens.ts`, passando pela mesma
   `conferirPrivacidade` dos outros avisos.
-- `tests/reputacao.test.ts`, 44 asserções sobre média, moderação, elegibilidade,
+- `tests/reputacao.test.ts`, 52 asserções sobre média, moderação, elegibilidade,
   saneamento de texto, verificação, o push e o deep link.
 
 **Corrigido no caminho** (achado olhando o produto, não o código):
@@ -606,7 +606,7 @@ pela mesma porta (`EXPO_PUBLIC_DATA_API_URL`) que alimenta oportunidades e perfi
 | --- | --- | --- |
 | Tipos | `npx tsc --noEmit`, nos dois projetos | limpo |
 | Lint | `npx expo lint` e `npx eslint` | limpo |
-| Testes | `npm test`, com 44 asserções novas | 93/93 |
+| Testes | `npm test`, com 52 asserções novas em `tests/reputacao.test.ts` | 100/100 |
 | Média | zero, uma, três, cinco, e com removida e em análise no meio | `null` quando não há; 4,7 e não 4,66667; removida não contamina |
 | Elegibilidade | os cinco impedimentos, mais a janela de edição | conferidos |
 | "Serviço realizado" é o único que habilita | os outros cinco resultados | os cinco recusados |

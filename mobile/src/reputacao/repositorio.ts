@@ -33,10 +33,13 @@ import { avaliacoesDeExemplo, type Cenario } from './exemplos';
 import {
   MAXIMO_DA_DENUNCIA,
   MAXIMO_DA_RESPOSTA,
+  contarNaoVistas,
   ordemDeLeitura,
+  resumir,
   textoSeguro,
   type Avaliacao,
   type MotivoDeDenuncia,
+  type ResumoDeReputacao,
 } from './tipos';
 
 const MENSAGEM_LEITURA = 'Não foi possível carregar as avaliações agora.';
@@ -180,19 +183,34 @@ async function guardar(cenario: Cenario, lista: Avaliacao[]): Promise<void> {
 /*  Leitura                                                                   */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Uma página de avaliações.
- *
- * `resumoDe` não vem daqui: quem calcula média e contagem é `resumir`, no
- * domínio, sobre a lista inteira (§47, §107). Uma média por página seria a
- * média de dez itens apresentada como a média do parceiro.
- */
+/** Uma página de avaliações, com o resumo que descreve o histórico inteiro. */
 export type Pagina = {
   avaliacoes: Avaliacao[];
   /** `null` quando acabou. */
   cursor: string | null;
-  /** O total de avaliações existentes, para o resumo não depender da página. */
-  todas: Avaliacao[];
+  /**
+   * **A média e a contagem vêm com a página, e não são calculadas sobre ela.**
+   *
+   * É a diferença entre um contrato que a API real consegue cumprir e um que
+   * ela não consegue. Um endpoint paginado devolve uma página — nunca o
+   * histórico inteiro —, então um resumo calculado na interface sobre o que já
+   * foi carregado seria "a média dos dez primeiros" apresentada como a média do
+   * parceiro. Ela mudaria conforme o dedo rolasse.
+   *
+   * `resumir()` continua sendo a fonte única do cálculo (§47, §107): o que muda
+   * é **onde** ela roda. Hoje, aqui, sobre a lista inteira que o exemplo
+   * conhece; amanhã, no servidor, sobre o que só ele consegue ver. A interface
+   * lê este campo nos dois casos e não sabe a diferença.
+   */
+  resumo: ResumoDeReputacao;
+  /**
+   * Quantas do **histórico inteiro** ainda não foram abertas (§77).
+   *
+   * Vem junto pelo mesmo motivo do resumo: o ponto discreto no Perfil precisa
+   * saber de uma avaliação nova que está na página trinta, e a interface só
+   * carregou a primeira.
+   */
+  naoVistas: number;
 };
 
 /**
@@ -222,7 +240,10 @@ export async function lerAvaliacoes(cenario: Cenario, cursor?: string | null): P
     return {
       avaliacoes: fatia,
       cursor: proximo < todas.length ? String(proximo) : null,
-      todas,
+      // Sobre a lista inteira, e não sobre a fatia — que é o que o servidor
+      // também terá de fazer.
+      resumo: resumir(todas),
+      naoVistas: contarNaoVistas(todas),
     };
   }
 

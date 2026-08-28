@@ -87,9 +87,27 @@ recebem a mesma estrela e são problemas diferentes.
 ## Média e contagem
 
 **Fonte única: `resumir()`, em `src/reputacao/tipos.ts`.** Perfil, prévia, lista
-e a futura área do morador chamam essa função e nenhuma outra. Duas contas
-independentes divergem no primeiro caso de borda, e quando divergem quem perde
-credibilidade é a plataforma.
+e a futura área do morador leem o mesmo `ResumoDeReputacao` e nenhum deles
+calcula nada. Duas contas independentes divergem no primeiro caso de borda, e
+quando divergem quem perde credibilidade é a plataforma.
+
+**E o resumo vem com a página, não é calculado sobre ela.** Essa é a diferença
+entre um contrato que a API real consegue cumprir e um que ela não consegue: um
+endpoint paginado devolve dez avaliações, nunca as trinta. Um resumo calculado na
+interface sobre o que já foi carregado seria "a média dos dez primeiros"
+apresentada como a média do parceiro — e ela mudaria conforme o dedo rolasse.
+
+`resumir()` continua sendo a única implementação do cálculo; o que muda é **onde
+ela roda**. Hoje no repositório, sobre a lista inteira que o exemplo conhece;
+amanhã no servidor, sobre o que só ele consegue ver. A interface lê o campo nos
+dois casos e não sabe a diferença. O mesmo vale para `naoVistas`: o ponto no
+Perfil precisa saber de uma avaliação nova que está na página trinta.
+
+Depois de uma ação — contestar muda a média, porque a avaliação sai da conta —
+quem atualiza é `ajustarResumo()`, um **delta** sobre o total conhecido, e não um
+`resumir()` sobre a página. Ele tem asserção que compara o delta com o recálculo
+completo, que é a única prova de que os dois não divergem. Quando a API existir,
+a resposta da ação traz o resumo novo e essa função sai do caminho.
 
 - Média simples, **uma casa decimal**, vírgula. "4,87392" não é mais preciso — é
   falsamente preciso sobre vinte pessoas.
@@ -297,11 +315,11 @@ Declaradas em vez de inventadas.
 
 ```
 src/reputacao/
-  tipos.ts            o contrato + resumir(): a fonte única do cálculo
+  tipos.ts            o contrato, resumir() e ajustarResumo(): o cálculo
   elegibilidade.ts    quem pode avaliar (puro, testado)
   verificacao.ts      o significado público de cada selo
   exemplos.ts         cenários A–G — só desenvolvimento
-  repositorio.ts      a única fronteira com o mundo, + esquecer()
+  repositorio.ts      a única fronteira; devolve página + resumo + esquecer()
   ReputacaoProvider   a fonte única de estado
   analytics.ts        nove eventos, sem conteúdo
   componentes.tsx     estrelas, resumo, distribuição, cartão
@@ -314,7 +332,7 @@ app/(app)/(abas)/perfil/
 
 src/notificacoes/rotas.ts   comoRota, puro e testável
 lib/push/mensagens.ts       avisoDeNovaAvaliacao (repositório do site)
-tests/reputacao.test.ts     44 asserções
+tests/reputacao.test.ts     52 asserções
 ```
 
 **Por que a tela da avaliação mora dentro da pilha do Perfil** e não numa rota de
