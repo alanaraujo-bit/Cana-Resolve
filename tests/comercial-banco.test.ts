@@ -515,8 +515,10 @@ describe("O ciclo do Fundador, do começo ao fim", () => {
       ambiente: "producao",
       idNoProvedor: "reembolso:pix-007",
       em: em("2026-10-10T00:00:00.000Z"),
+      referenciaDaCobranca: "pix-007",
     });
     assert.equal(r.novo, true);
+    assert.equal(r.cobrancasAfetadas, 1);
 
     const s = await situacaoDoParceiro(alice, em("2026-10-11T00:00:00.000Z"));
     assert.equal(s.adesao?.estado, "cancelado");
@@ -535,8 +537,68 @@ describe("O ciclo do Fundador, do começo ao fim", () => {
       ambiente: "producao",
       idNoProvedor: "reembolso:pix-007",
       em: em("2026-10-10T00:00:00.000Z"),
+      referenciaDaCobranca: "pix-007",
     });
     assert.equal(repetido.novo, false);
+  });
+
+  it("um estorno alcança uma cobrança, e não todas as do parceiro", async () => {
+    /*
+     * O defeito que este teste existe para impedir: o `update` filtrava só por
+     * parceiro e por estado `aprovado`, então um estorno de R$79 marcaria como
+     * reembolsada **toda** cobrança aprovada daquela conta. No histórico — que
+     * existe justamente para ser prova do que aconteceu — apareceriam duas
+     * devoluções onde houve uma.
+     */
+    await aprovarParaOBeta(alice);
+
+    const primeira = {
+      partnerId: alice,
+      provedor: "administrativo" as const,
+      ambiente: "producao" as const,
+      valorCentavos: 7900,
+      moeda: "BRL",
+      ofertaCodigo: CODIGO_DO_BETA,
+      ofertaVersao: 1,
+      descricao: "Beta",
+    };
+
+    await confirmarPagamento({
+      ...primeira,
+      idNoProvedor: "pagamento:pix-A",
+      em: em("2026-09-10T00:00:00.000Z"),
+      referencia: "pix-A",
+    });
+    await confirmarPagamento({
+      ...primeira,
+      idNoProvedor: "pagamento:pix-B",
+      em: em("2027-01-15T00:00:00.000Z"),
+      referencia: "pix-B",
+    });
+
+    assert.equal((await cobrancasDoParceiro(alice)).length, 2);
+
+    const r = await desfazerPagamento(alice, "reembolso", {
+      provedor: "administrativo",
+      ambiente: "producao",
+      idNoProvedor: "reembolso:pix-A",
+      em: em("2027-02-01T00:00:00.000Z"),
+      referenciaDaCobranca: "pix-A",
+    });
+    assert.equal(r.cobrancasAfetadas, 1, "uma cobrança, não duas");
+
+    const cobrancas = await cobrancasDoParceiro(alice);
+    const porEstado = Object.fromEntries(cobrancas.map((c) => [c.descricao + c.em, c.estado]));
+    assert.equal(
+      Object.values(porEstado).filter((e) => e === "reembolsado").length,
+      1,
+      "só a cobrança estornada mudou de estado",
+    );
+    assert.equal(
+      Object.values(porEstado).filter((e) => e === "aprovado").length,
+      1,
+      "a outra continua aprovada",
+    );
   });
 
   it("o histórico de cobrança fala português e nunca some", async () => {

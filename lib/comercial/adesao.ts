@@ -334,8 +334,26 @@ export async function encerrarBetasVencidos(agora = new Date()): Promise<number>
 export async function desfazerPagamento(
   partnerId: string,
   motivo: "reembolso" | "contestacao",
-  dados: { provedor: Provedor; ambiente: Ambiente; idNoProvedor: string; em: Date },
-): Promise<{ novo: boolean }> {
+  dados: {
+    provedor: Provedor;
+    ambiente: Ambiente;
+    idNoProvedor: string;
+    em: Date;
+    /**
+     * **Qual** cobrança está sendo desfeita.
+     *
+     * Obrigatório, e a obrigatoriedade é a correção de um defeito real: sem
+     * ela, o `update` alcançava **todas** as cobranças aprovadas do parceiro.
+     * Um estorno de R$79 marcaria como reembolsada também a renovação do ano
+     * seguinte — e o histórico passaria a contar uma história que não
+     * aconteceu, no lugar exato onde ele existe para ser prova.
+     *
+     * É a `referencia` da compra original, a mesma que foi gravada em
+     * `providerRef` quando o pagamento foi confirmado.
+     */
+    referenciaDaCobranca: string;
+  },
+): Promise<{ novo: boolean; cobrancasAfetadas: number }> {
   const db = getDb();
 
   const { novo } = await registrarEvento(
@@ -356,7 +374,9 @@ export async function desfazerPagamento(
       : "Pagamento contestado; adesão cancelada e acesso revogado.",
   );
 
-  if (!novo) return { novo: false };
+  if (!novo) return { novo: false, cobrancasAfetadas: 0 };
+
+  let afetadas = 0;
 
   await db.transaction(async (tx) => {
     await tx
@@ -364,7 +384,9 @@ export async function desfazerPagamento(
       .set({ status: "cancelado", canceledAt: dados.em, updatedAt: new Date() })
       .where(eq(founderEnrollments.partnerId, partnerId));
 
-    await tx
+    // Uma cobrança, e não todas as do parceiro. O `providerRef` identifica
+    // exatamente a compra que está sendo desfeita.
+    const mudadas = await tx
       .update(paymentTransactions)
       .set({
         status: motivo === "reembolso" ? "reembolsado" : "contestado",
@@ -374,11 +396,15 @@ export async function desfazerPagamento(
         and(
           eq(paymentTransactions.partnerId, partnerId),
           eq(paymentTransactions.status, "aprovado"),
+          eq(paymentTransactions.providerRef, dados.referenciaDaCobranca),
         ),
-      );
+      )
+      .returning({ id: paymentTransactions.id });
+
+    afetadas = mudadas.length;
   });
 
-  return { novo: true };
+  return { novo: true, cobrancasAfetadas: afetadas };
 }
 
 /** Quantas adesões pagas existem numa categoria — o limite do §74. */

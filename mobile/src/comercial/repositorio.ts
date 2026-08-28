@@ -122,6 +122,20 @@ export async function lerSituacaoComercial(
   }
 
   const bruto = await pedir('/comercial/situacao', token);
+
+  /*
+   * Um corpo de erro do servidor **não** é uma situação vazia.
+   *
+   * As rotas respondem `{ ok: false, erro: … }` quando algo falha, e esse
+   * objeto passaria por `lerSituacao` como "conta sem nada" se ninguém olhasse
+   * — a tela diria "você não tem participação" a um Fundador pagante porque o
+   * banco piscou. Conferir o `ok: false` antes de interpretar é o que mantém a
+   * distinção entre "não tem" e "não sei".
+   */
+  if (bruto && typeof bruto === 'object' && (bruto as { ok?: unknown }).ok === false) {
+    throw new ErroComercial(MENSAGEM, `O servidor recusou: ${(bruto as { erro?: string }).erro}`);
+  }
+
   const situacao = lerSituacao(bruto);
   if (!situacao) {
     // Resposta ilegível. Não é "sem participação" — é "não sei", e a diferença

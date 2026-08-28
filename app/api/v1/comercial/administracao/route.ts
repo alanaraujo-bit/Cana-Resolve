@@ -77,7 +77,17 @@ const corpo = z.discriminatedUnion("acao", [
     acao: z.literal("desfazer-pagamento"),
     parceiroId: z.string().uuid(),
     motivo: z.enum(["reembolso", "contestacao"]),
+    /** O identificador **deste** estorno. Torna a operação idempotente. */
     referencia: z.string().trim().min(4).max(120),
+    /**
+     * A referência da **compra original** que está sendo desfeita — a mesma
+     * que foi usada em `confirmar-pagamento`.
+     *
+     * Separada de `referencia` de propósito: um estorno tem identidade própria
+     * (senão reenviar a chamada reprocessaria), e a cobrança que ele desfaz
+     * também. Confundir as duas faria um estorno alcançar cobrança errada.
+     */
+    referenciaDaCobranca: z.string().trim().min(4).max(120),
     em: z.string().datetime().optional(),
   }),
   z.object({ acao: z.literal("encerrar-vencidos") }),
@@ -174,8 +184,13 @@ export async function POST(request: Request) {
         ambiente: "producao",
         idNoProvedor: `${dados.motivo}:${dados.referencia}`,
         em: dados.em ? new Date(dados.em) : new Date(),
+        referenciaDaCobranca: dados.referenciaDaCobranca,
       });
-      return NextResponse.json({ ok: true, novo: resultado.novo });
+      return NextResponse.json({
+        ok: true,
+        novo: resultado.novo,
+        cobrancasAfetadas: resultado.cobrancasAfetadas,
+      });
     }
 
     return NextResponse.json({ ok: true, encerradas: await encerrarBetasVencidos() });
