@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { and, eq, gt, isNotNull, sql } from "drizzle-orm";
+import { and, eq, gt, isNotNull, ne, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db/client";
 import { partnerSessions, partners } from "@/lib/db/schema";
@@ -33,6 +33,17 @@ const DIAS = 30;
 export type ContaDoParceiro = {
   id: string;
   nome: string;
+  /**
+   * O e-mail com que se entra. Vai na resposta porque a tela de Conta do
+   * aplicativo precisa dizer **qual conta está em uso**, e o aparelho não deve
+   * inferir isso do que foi digitado no formulário: quem sabe o e-mail de
+   * acesso é o banco.
+   *
+   * Nulo é possível: o cadastro de parceiro não exige e-mail, e a coluna
+   * reflete isso. Quem entra por senha necessariamente tem um — foi por ele
+   * que a linha foi encontrada —, mas o tipo não mente sobre a coluna.
+   */
+  email: string | null;
   papel: "profissional";
 };
 
@@ -67,6 +78,7 @@ export async function entrarComSenha(
     .select({
       id: partners.id,
       name: partners.name,
+      email: partners.email,
       passwordHash: partners.passwordHash,
     })
     .from(partners)
@@ -102,7 +114,12 @@ export async function entrarComSenha(
 
   return {
     token,
-    conta: { id: parceiro.id, nome: parceiro.name, papel: "profissional" },
+    conta: {
+      id: parceiro.id,
+      nome: parceiro.name,
+      email: parceiro.email ?? alvo,
+      papel: "profissional",
+    },
   };
 }
 
@@ -112,7 +129,12 @@ export async function contaDaSessao(token: string): Promise<ContaDoParceiro | nu
   const db = getDb();
 
   const [linha] = await db
-    .select({ id: partners.id, name: partners.name, tokenHash: partnerSessions.tokenHash })
+    .select({
+      id: partners.id,
+      name: partners.name,
+      email: partners.email,
+      tokenHash: partnerSessions.tokenHash,
+    })
     .from(partnerSessions)
     .innerJoin(partners, eq(partners.id, partnerSessions.partnerId))
     .where(
@@ -136,7 +158,7 @@ export async function contaDaSessao(token: string): Promise<ContaDoParceiro | nu
     .set({ lastSeenAt: new Date() })
     .where(eq(partnerSessions.tokenHash, linha.tokenHash));
 
-  return { id: linha.id, nome: linha.name, papel: "profissional" };
+  return { id: linha.id, nome: linha.name, email: linha.email, papel: "profissional" };
 }
 
 /** Encerra uma sessão. Sair é imediato e não depende de o token expirar. */
@@ -144,6 +166,71 @@ export async function sair(token: string): Promise<void> {
   if (!token) return;
   const db = getDb();
   await db.delete(partnerSessions).where(eq(partnerSessions.tokenHash, hashDoToken(token)));
+}
+
+/**
+ * Troca a senha de quem está com a sessão na mão.
+ *
+ * Três decisões:
+ *
+ * 1. **A senha atual é exigida.** O token prova que o aparelho está logado,
+ *    não que quem segura o aparelho é o dono da conta. Um celular destravado
+ *    esquecido na mesa não pode virar uma senha nova.
+ * 2. **As outras sessões caem.** Trocar senha é o que se faz quando se
+ *    desconfia de alguém dentro da conta; deixar as sessões antigas vivas
+ *    tornaria a troca decorativa. A sessão que pediu a troca continua — quem
+ *    trocou a senha não merece ser expulso por isso.
+ * 3. **O motivo da recusa é distinguido** entre "sessão não vale" e "senha
+ *    atual errada". Aqui isso não vaza nada: quem chegou até este ponto já
+ *    provou que tem uma sessão da conta.
+ */
+export type FalhaDeTroca = "sessao" | "senha-atual" | "sem-senha";
+
+export async function alterarSenha(
+  token: string,
+  atual: string,
+  nova: string,
+): Promise<FalhaDeTroca | null> {
+  if (!token) return "sessao";
+  const db = getDb();
+
+  const [linha] = await db
+    .select({
+      id: partners.id,
+      passwordHash: partners.passwordHash,
+      tokenHash: partnerSessions.tokenHash,
+    })
+    .from(partnerSessions)
+    .innerJoin(partners, eq(partners.id, partnerSessions.partnerId))
+    .where(
+      and(
+        eq(partnerSessions.tokenHash, hashDoToken(token)),
+        gt(partnerSessions.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+
+  if (!linha) return "sessao";
+  // Conta que entrou por outro caminho não tem senha para conferir. Hoje não
+  // existe esse caso; quando Google e Apple entrarem, existirá.
+  if (!linha.passwordHash) return "sem-senha";
+  if (!(await conferir(atual, linha.passwordHash))) return "senha-atual";
+
+  await db
+    .update(partners)
+    .set({ passwordHash: await gerarHash(nova), passwordSetAt: new Date() })
+    .where(eq(partners.id, linha.id));
+
+  await db
+    .delete(partnerSessions)
+    .where(
+      and(
+        eq(partnerSessions.partnerId, linha.id),
+        ne(partnerSessions.tokenHash, linha.tokenHash),
+      ),
+    );
+
+  return null;
 }
 
 /**

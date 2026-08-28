@@ -40,6 +40,20 @@ de pé e ligado ao Postgres, e um serviço novo custaria dias para entregar a
 mesma tela de login. A régua ganhou uma linha — o que o **app** precisa do
 servidor entra em `app/api/v1/`, e só isso. Telas do app continuam fora.
 
+O que existe ali hoje, todo em `app/api/v1/auth/`:
+
+| Rota | O quê |
+| --- | --- |
+| `POST /auth/sessoes` | entrar por e-mail e senha; devolve `{ token, conta }` |
+| `GET /auth/sessoes` | esta credencial ainda vale? 200 com a conta, ou 401 |
+| `DELETE /auth/sessoes` | sair; a sessão morre no banco, não só no aparelho |
+| `POST /auth/senha` | trocar a senha: exige a atual e derruba os outros aparelhos |
+
+As três últimas nasceram com a Fase 05 do aplicativo, porque uma tela de
+"alterar senha" que não altera senha nenhuma seria pior que tela nenhuma. A
+sessão vive no banco (`partner_sessions`), e do token cru só existe uma cópia:
+a do aparelho que entrou.
+
 ## Stack
 
 - Next.js 16 (App Router, Turbopack) + React 19
