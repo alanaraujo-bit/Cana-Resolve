@@ -13,7 +13,7 @@
     "db:status": "tsx scripts/db.ts status",
     "db:operator": "tsx scripts/db.ts operator",
     "db:generate": "drizzle-kit generate",
-    "test": "node --conditions=react-server --import tsx --test \"tests/**/*.test.ts\"",
+    "test": "node --conditions=react-server --import tsx --test --test-concurrency=1 \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "inspect": "node scripts/inspect.mjs",
     "demo:popular": "node --conditions=react-server --import tsx --env-file=.env.local scripts/demo.ts popular",

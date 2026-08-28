@@ -23,6 +23,23 @@ import { callerKey, rateLimit } from "@/lib/rate-limit";
  * é a credencial — assinado com HMAC, verificável sem consulta ao banco. Não
  * existe formulário de código+telefone para forçar porque não existe
  * formulário nenhum: ver HANDOFF.md §3.1 e §4.2.
+ *
+ * ---
+ *
+ * **Emitir um token e guardá-lo num cookie são duas coisas.** Este arquivo as
+ * mantém separadas porque existem dois clientes com transportes diferentes: a
+ * web guarda a credencial num cookie `httpOnly`, o app nativo a guarda no
+ * chaveiro do aparelho e a manda no cabeçalho `Authorization`. O que os dois
+ * compartilham é a credencial em si e a regra que a valida — não o transporte.
+ *
+ * Então cada público tem um par puro, que não toca em `cookies()`:
+ *
+ * - morador: `issueResidentToken` / `verifyResidentToken`
+ * - parceiro: `createPartnerSession` / `resolvePartnerByToken`
+ *
+ * e as funções de cookie (`grantResidentAccess`, `startPartnerSession`,
+ * `getResidentViewer`, `getPartnerViewer`) são só a camada web por cima
+ * desse par. Rota de API nova deve chamar o par, nunca a camada de cookie.
  */
 
 const TTL_DIAS_PARCEIRO = 30;
@@ -71,8 +88,12 @@ function base64UrlJson(value: unknown) {
  * Assina `{ whatsapp, expira }` com HMAC-SHA256. O token é o payload e a
  * assinatura, separados por ponto — sem biblioteca de JWT: é uma verificação,
  * não um formato de troca com terceiros.
+ *
+ * Exportada porque o app nativo precisa receber o token em JSON, sem cookie
+ * nenhum. Devolve `null` quando `CR_SESSION_SECRET` não está configurado —
+ * quem chama trata isso como "não há link para mostrar", nunca como erro.
  */
-function signResidentToken(whatsapp: string): string | null {
+export function issueResidentToken(whatsapp: string): string | null {
   const secret = residentSecret();
   if (!secret) return null;
   const payload = base64UrlJson({ w: whatsapp, exp: Date.now() + TTL_DIAS_MORADOR * 86_400_000 });
@@ -112,7 +133,7 @@ export function verifyResidentToken(token: string): ResidentViewer | null {
  * sem quebrar o que depende disso, a solicitação grava do mesmo jeito.
  */
 export async function grantResidentAccess(whatsapp: string): Promise<string | null> {
-  const token = signResidentToken(whatsapp);
+  const token = issueResidentToken(whatsapp);
   if (!token) return null;
   await writeCookie(RESIDENT_COOKIE, token, new Date(Date.now() + TTL_DIAS_MORADOR * 86_400_000));
   return token;
@@ -149,12 +170,23 @@ export const getResidentViewer = cache(async (): Promise<ResidentViewer | null> 
    Parceiro — sessão em banco, login com dois freios
    --------------------------------------------------------------- */
 
-/** A empresa entra com seu código PA e o mesmo WhatsApp validado pela operação. */
-export async function startPartnerSession(code: string, phone: string) {
+/**
+ * Emite a sessão do parceiro e devolve o token cru. **Não grava cookie.**
+ *
+ * Aqui ficam as duas travas que valem para qualquer cliente — os dois freios
+ * de tentativa e a conferência de código + WhatsApp —, porque elas protegem a
+ * credencial, não o navegador. Quem quiser cookie chama `startPartnerSession`.
+ *
+ * Os cabeçalhos chegam como argumento em vez de virem de `headers()`. Não é
+ * cerimônia: `headers()` só existe dentro do escopo de uma requisição do
+ * Next, e uma função que decide quem entra na rede precisa poder ser chamada
+ * de um teste, de um script e de uma rota — três lugares onde esse escopo não
+ * é o mesmo. Quem tem a requisição na mão passa `request.headers` direto.
+ */
+export async function createPartnerSession(code: string, phone: string, requestHeaders: Headers) {
   if (!isDatabaseConfigured()) return { ok: false as const, error: "indisponivel" as const };
 
   const normalizedCode = code.trim().toUpperCase();
-  const requestHeaders = await headers();
 
   // Duas chaves porque o abuso mais provável aqui não é volume genérico: são
   // poucos códigos (PA-0001, PA-0002…) e um telefone que, em Canaã, compartilha
@@ -185,16 +217,35 @@ export async function startPartnerSession(code: string, phone: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + TTL_DIAS_PARCEIRO * 86_400_000);
   await db.insert(partnerSessions).values({ tokenHash: sha256(token), partnerId: partner.id, expiresAt });
-  await writeCookie(PARTNER_COOKIE, token, expiresAt);
   // Aproveita a escrita para varrer o que já venceu. Sem cron, sem sujeira.
   await db.delete(partnerSessions).where(lt(partnerSessions.expiresAt, new Date()));
+  return { ok: true as const, token, expiresAt };
+}
+
+/**
+ * A mesma entrada, guardando o token no cookie deste navegador. É o caminho
+ * da web; o app nativo usa `createPartnerSession` e guarda o token sozinho.
+ *
+ * O token não sai daqui de propósito: em cookie `httpOnly` ele existe para o
+ * servidor, e devolvê-lo ao chamador convidaria alguém a copiá-lo para um
+ * lugar que o JavaScript da página alcança.
+ */
+export async function startPartnerSession(code: string, phone: string) {
+  const session = await createPartnerSession(code, phone, await headers());
+  if (!session.ok) return session;
+  await writeCookie(PARTNER_COOKIE, session.token, session.expiresAt);
   return { ok: true as const };
 }
 
-export const getPartnerViewer = cache(async (): Promise<PartnerViewer | null> => {
-  if (!isDatabaseConfigured()) return null;
-  const token = (await cookies()).get(PARTNER_COOKIE)?.value;
-  if (!token) return null;
+/**
+ * Quem é o dono deste token de parceiro — sem olhar cookie nenhum.
+ *
+ * A sessão vencida não é apagada aqui: a consulta simplesmente não a encontra
+ * (`gt(expiresAt, agora)`), e a varredura acontece na próxima entrada. Uma
+ * leitura não deveria escrever.
+ */
+export async function resolvePartnerByToken(token: string): Promise<PartnerViewer | null> {
+  if (!isDatabaseConfigured() || !token) return null;
   const [row] = await db
     .select({ id: partners.id, code: partners.code, name: partners.name, status: partners.status })
     .from(partnerSessions)
@@ -202,7 +253,19 @@ export const getPartnerViewer = cache(async (): Promise<PartnerViewer | null> =>
     .where(and(eq(partnerSessions.tokenHash, sha256(token)), gt(partnerSessions.expiresAt, new Date())))
     .limit(1);
   return row ?? null;
+}
+
+export const getPartnerViewer = cache(async (): Promise<PartnerViewer | null> => {
+  const token = (await cookies()).get(PARTNER_COOKIE)?.value;
+  if (!token) return null;
+  return resolvePartnerByToken(token);
 });
+
+/** Revoga uma sessão de parceiro pelo token. O app nativo sai por aqui. */
+export async function revokePartnerToken(token: string) {
+  if (!isDatabaseConfigured() || !token) return;
+  await db.delete(partnerSessions).where(eq(partnerSessions.tokenHash, sha256(token)));
+}
 
 export async function endAudienceSession(audience: "resident" | "partner") {
   if (audience === "resident") {
@@ -210,6 +273,6 @@ export async function endAudienceSession(audience: "resident" | "partner") {
     return;
   }
   const token = (await cookies()).get(PARTNER_COOKIE)?.value;
-  if (token) await db.delete(partnerSessions).where(eq(partnerSessions.tokenHash, sha256(token)));
+  if (token) await revokePartnerToken(token);
   (await cookies()).delete(PARTNER_COOKIE);
 }

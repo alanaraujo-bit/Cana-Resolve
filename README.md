@@ -76,11 +76,16 @@ app/
   ops/(painel)/         o Operations, atrás de autenticação
   ops/entrar/           a entrada — fora do grupo protegido, de propósito
   api/publico/          onde os formulários públicos gravam
+  api/app/              a API do app nativo (Bearer, nunca cookie) — ver o
+                        README da própria pasta
   ops-app.webmanifest/  manifest do Operations (a única PWA que sobrou)
 components/
   ops/                  as peças do Operations (mais densas que as do site)
   sections/ partners/   as seções do site público
 lib/
+  api/                  o formato de resposta da API do app
+  auth/                 sessão do operador, credencial de morador e parceiro,
+                        e a leitura do Bearer
   db/                   esquema, conexão e migrações
   domain/               as regras: estados, Beta, matching, entrada, analytics
   forms.ts              o contrato dos formulários públicos (servidor e cliente)

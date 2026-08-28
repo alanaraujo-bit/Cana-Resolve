@@ -59,7 +59,11 @@ export async function POST(request: Request) {
     const origem = new URL(request.url).origin;
     const link = token ? `${origem}/acesso?t=${token}&r=${result.id}` : null;
 
-    return NextResponse.json({ ok: true, codigo: result.code, link }, { status: 201 });
+    // `token` sai ao lado de `link` porque o app nativo não tem cookie jar:
+    // ele guarda a credencial no chaveiro do aparelho e a manda depois em
+    // `Authorization: Bearer`. Não é exposição nova — é o mesmo token que já
+    // viaja dentro de `link`, e é o mesmo que chega por WhatsApp.
+    return NextResponse.json({ ok: true, codigo: result.code, link, token }, { status: 201 });
   } catch (error) {
     // Nada de dado pessoal no log: só o que ajuda a entender a falha.
     console.error(

@@ -42,3 +42,17 @@ process.env.DATABASE_URL = TEST_DATABASE_URL;
 // O pool do teste é pequeno de propósito: se algum caminho esquecer de
 // devolver a conexão, o teste trava rápido em vez de mascarar o vazamento.
 process.env.CR_DB_POOL_MAX = "3";
+
+/**
+ * Um arquivo de teste de cada vez.
+ *
+ * `node --test` roda os arquivos em processos paralelos, e todos apontam para
+ * o mesmo `canaa_test`. Cada arquivo de fluxo começa com um `truncate` e monta
+ * as próprias fixtures — em paralelo, um apaga o cenário do outro no meio da
+ * rodada, e parceiros criados aqui aparecem no matching de lá. Daí o
+ * `--test-concurrency=1` em `package.json`: é a serialização que torna o
+ * `truncate` no início de cada arquivo uma garantia de verdade.
+ *
+ * O caminho alternativo seria um banco por arquivo. Não vale o preço enquanto
+ * a suíte inteira roda em menos de um minuto.
+ */
