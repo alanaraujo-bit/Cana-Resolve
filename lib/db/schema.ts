@@ -543,3 +543,82 @@ export type Opportunity = typeof opportunities.$inferSelect;
 export type Interaction = typeof interactions.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
+
+/* ---------------------------------------------------------------
+   Entrega de notificações
+   --------------------------------------------------------------- */
+
+/** Onde um push pode ser entregue. */
+export type DevicePlatform = "ios" | "android" | "web";
+
+/**
+ * Por que um endereço de entrega deixou de valer. `null` significa que vale.
+ *
+ * `desinstalado` vem do provedor (`DeviceNotRegistered`), e é definitivo:
+ * não se tenta de novo. `saiu` é decisão nossa, no logout. `substituido` é o
+ * mesmo aparelho reaparecendo com token novo.
+ */
+export type DeviceRevocation = "desinstalado" | "saiu" | "substituido";
+
+/**
+ * Um endereço de entrega de push. **Não** é uma sessão, e **não** é uma
+ * identidade.
+ *
+ * Três decisões que o resto da fase depende:
+ *
+ * 1. **A chave é a instalação, não o usuário.** `installationId` é sorteado
+ *    pelo aplicativo uma vez e guardado no aparelho. Um parceiro com iPhone e
+ *    Android tem duas linhas; o mesmo aparelho registrando dez vezes continua
+ *    tendo uma (§53, §60, §99). O token *muda* — a instalação não —, então
+ *    chavear pelo token faria lixo acumular a cada renovação.
+ *
+ * 2. **O vínculo com a conta é revogável e datado.** Sair não apaga a linha:
+ *    marca `revokedAt`/`revokedReason`. Uma linha apagada não conta história,
+ *    e a história aqui é a garantia do §57 — este aparelho **parou** de
+ *    receber o que era daquela conta, e dá para provar quando.
+ *
+ * 3. **O token é um endereço, nunca uma credencial.** Nada autentica por ele
+ *    (§55). Ele não sai desta tabela para lugar nenhum: nem para a interface,
+ *    nem para log (§96) — só para o provedor, na hora do envio.
+ */
+export const partnerDevices = pgTable(
+  "partner_devices",
+  {
+    id: pk(),
+    /** Sorteado pelo aplicativo, estável enquanto o app estiver instalado. */
+    installationId: text("installation_id").notNull(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => partners.id, { onDelete: "cascade" }),
+    /** O endereço de entrega do provedor. Guardado, nunca exibido. */
+    pushToken: text("push_token").notNull(),
+    platform: text("platform").$type<DevicePlatform>().notNull(),
+    /**
+     * `development` ou `production`. Um token de build de desenvolvimento não
+     * é entregável pela credencial de produção, e confundir os dois faz o
+     * envio falhar em silêncio (§118).
+     */
+    environment: text("environment").notNull().default("development"),
+    /** Modelo e versão do sistema, para diagnóstico. Nada identificável. */
+    descricao: text("descricao"),
+    /** Versão do aplicativo que registrou. */
+    appVersion: text("app_version"),
+
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    /** Último registro/renovação vindo do aparelho. */
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedReason: text("revoked_reason").$type<DeviceRevocation>(),
+  },
+  (t) => [
+    /**
+     * Uma instalação, um endereço. É esta restrição — e não um `if` na rota —
+     * que torna o registro idempotente (§99): registrar de novo é um
+     * `onConflictDoUpdate`, não uma linha nova.
+     */
+    uniqueIndex("partner_devices_installation_key").on(t.installationId),
+    index("partner_devices_partner_idx").on(t.partnerId),
+    index("partner_devices_token_idx").on(t.pushToken),
+  ],
+);
