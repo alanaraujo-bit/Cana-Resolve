@@ -9,4 +9,5 @@ export * from './TextField';
 export * from './Wordmark';
 export * from './haptics';
 export * from './icons';
+export * from './lista';
 export * from './liquidGlass';

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ESPACO_BARRA } from '@/navigation/BarraPrincipal';
 import { useCarteira } from '@/oportunidades/Carteira';
+import { usePreferencias } from '@/preferencias/PreferenciasProvider';
 import { LinhaOportunidade, OportunidadeEmDestaque } from '@/oportunidades/componentes';
 import { cenarios, rotuloCenario, type Cenario } from '@/oportunidades/exemplos';
 import { grupoDoEstado, type Oportunidade, type ResumoProfissional } from '@/oportunidades/tipos';
@@ -48,6 +49,7 @@ export default function Inicio() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { account } = useSession();
+  const { preferencias } = usePreferencias();
 
   const {
     situacao,
@@ -65,6 +67,15 @@ export default function Inicio() {
   } = useCarteira();
 
   const primeiroNome = (account?.nome ?? '').split(' ')[0] || 'por aqui';
+
+  /**
+   * Recebendo ou pausado.
+   *
+   * A pausa é escolhida nas Configurações e precisa aparecer **aqui** — é a
+   * tela que se abre todo dia. Sem isto, alguém pausa em janeiro, esquece, e em
+   * março acha que o Canaã Resolve parou de mandar trabalho (§27 da Fase 05).
+   */
+  const recebendo = (profissional?.recebendo ?? true) && !preferencias.oportunidadesPausadas;
 
   const { esperando, anteriores } = useMemo(
     () => ({
@@ -106,6 +117,7 @@ export default function Inicio() {
       <Cabecalho
         saudacao={`${saudacao(agora.getHours())}, ${primeiroNome}`}
         profissional={profissional}
+        recebendo={recebendo}
         carregando={situacao === 'carregando'}
         nomeCompleto={account?.nome ?? ''}
       />
@@ -162,7 +174,7 @@ export default function Inicio() {
             <SemNovidade
               contaNova={contaNova}
               categorias={profissional?.categorias ?? []}
-              recebendo={profissional?.recebendo ?? true}
+              recebendo={recebendo}
             />
           )}
 
@@ -206,11 +218,14 @@ export default function Inicio() {
 function Cabecalho({
   saudacao: texto,
   profissional,
+  recebendo,
   carregando,
   nomeCompleto,
 }: {
   saudacao: string;
   profissional: ResumoProfissional | null;
+  /** Já combinado com a pausa escolhida nas Configurações. */
+  recebendo: boolean;
   carregando: boolean;
   nomeCompleto: string;
 }) {
@@ -229,11 +244,11 @@ function Cabecalho({
             <View
               style={[
                 styles.estadoPonto,
-                { backgroundColor: profissional.recebendo ? colors.brand : colors.faint },
+                { backgroundColor: recebendo ? colors.brand : colors.faint },
               ]}
             />
             <Text variant="callout" tone="muted" numberOfLines={2} maxScale={1.25}>
-              {profissional.recebendo
+              {recebendo
                 ? `Recebendo oportunidades de ${listar(profissional.categorias)}`
                 : 'Recebimento pausado'}
             </Text>

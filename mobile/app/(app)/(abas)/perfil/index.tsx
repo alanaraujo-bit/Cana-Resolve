@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ROTA_DE_AJUSTES } from '@/ajustes/rota';
 import { ESPACO_BARRA } from '@/navigation/BarraPrincipal';
 import { registrar } from '@/perfil/analytics';
 import { resumoDeCompletude } from '@/perfil/completude';
@@ -34,7 +35,7 @@ export default function CapaDoPerfil() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { account, signOut } = useSession();
+  const { account } = useSession();
   const { situacao, perfil, erro, atualizando, completude, somenteLocal, atualizar } = usePerfil();
 
   useEffect(() => {
@@ -214,16 +215,20 @@ export default function CapaDoPerfil() {
         </Nota>
       ) : null}
 
-      {/* A conta — o que é de login, e não de vitrine. */}
-      <View style={estilos.conta}>
-        <Text variant="overline" tone="faint" accessibilityRole="header">
-          CONTA
-        </Text>
-        <Text variant="callout" tone="muted" maxScale={1.25}>
-          {account?.nome ? `Você entrou como ${account.nome}.` : 'Sessão ativa.'}
-        </Text>
-        <Button label="Sair da conta" variant="outline" onPress={signOut} haptic="commit" />
-      </View>
+      {/* A porta da Conta.
+          Uma linha, e não um bloco de sessão com botão de sair: conta,
+          segurança, preferências, privacidade e ajuda passaram a viver juntas
+          em Configurações, fora desta aba. O Perfil é o que o morador vê; a
+          Conta é como você entra — e as duas não se misturam. */}
+      <Bloco>
+        <LinhaDeSecao
+          primeira
+          ultima
+          titulo="Configurações"
+          resumo={account?.email ?? 'Conta, preferências, privacidade e ajuda'}
+          onPress={() => router.push(ROTA_DE_AJUSTES)}
+        />
+      </Bloco>
 
       {__DEV__ ? <TrocaDeCenario /> : null}
     </ScrollView>
@@ -313,8 +318,6 @@ const estilos = StyleSheet.create({
   },
   trilho: { height: 4, borderRadius: 2, overflow: 'hidden', marginTop: space.xs },
   trilhoCheio: { height: 4, borderRadius: 2 },
-
-  conta: { gap: space.md, marginTop: space.sm },
 
   dev: {
     gap: space.sm,

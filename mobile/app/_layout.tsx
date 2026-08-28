@@ -19,7 +19,7 @@ import { Stack, useRouter, usePathname, useSegments, type Href } from 'expo-rout
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { enableScreens } from 'react-native-screens';
@@ -27,6 +27,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SessionProvider, useSession } from '@/session/SessionProvider';
 import { ThemeProvider, useTheme } from '@/theme';
+import { lerPreferenciaDeTema, type ThemePreference } from '@/theme/preferencia';
 import { BrandCanvas, CanvasMotionProvider, useCanvasParallax } from '@/ui';
 
 /**
@@ -49,14 +50,32 @@ export default function RootLayout() {
     Inter_700Bold,
   });
   const [frauncesReady] = useFraunces({ Fraunces_600SemiBold, Fraunces_700Bold });
-  const ready = interReady && frauncesReady;
+
+  /**
+   * O tema escolhido precisa chegar **antes** do primeiro quadro.
+   *
+   * A leitura é assíncrona; se ela resolvesse depois da primeira pintura, um
+   * aparelho no escuro com "Claro" salvo abriria escuro e piscaria para claro.
+   * Como a splash já está segurada pelas fontes, esperar mais este disco não
+   * custa nada ao usuário e evita o lampejo.
+   */
+  const [tema, setTema] = useState<ThemePreference | null>(null);
+  useEffect(() => {
+    let alive = true;
+    lerPreferenciaDeTema().then((p) => alive && setTema(p));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const ready = interReady && frauncesReady && tema !== null;
 
   if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <ThemeProvider>
+        <ThemeProvider preferenciaInicial={tema}>
           <SessionProvider>
             <CanvasMotionProvider>
               <Shell />

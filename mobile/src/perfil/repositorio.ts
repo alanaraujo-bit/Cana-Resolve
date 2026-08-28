@@ -18,6 +18,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { authConfig } from '@/auth/config';
+import { chaves } from '@/session/chaves';
 import { perfilDeExemplo, type Cenario } from './exemplos';
 import type { Perfil } from './tipos';
 
@@ -71,7 +72,7 @@ function exigirDesenvolvimento(mensagem: string) {
  * signifique preencher tudo de novo a cada recarga do Metro. É rascunho local
  * e declarado: não é sincronização, não é backup e some com `esquecer()`.
  */
-const CHAVE = 'cr.perfil.rascunho.v1';
+const CHAVE = chaves.perfilRascunho;
 
 /** `Date` não sobrevive a JSON. Estas duas funções cuidam disso e nada mais. */
 function paraTexto(p: Perfil): string {

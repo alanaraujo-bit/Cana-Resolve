@@ -38,14 +38,14 @@ export default function Entrar() {
   const { colors, isDark, reduceMotion } = useTheme();
   const insets = useSafeAreaInsets();
   const canvas = useCanvasParallax();
-  const { signIn, replayOnboarding } = useSession();
+  const { signIn, replayOnboarding, motivoDeSaida, limparMotivoDeSaida } = useSession();
 
   const senhaRef = useRef<TextInput>(null);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erroEmail, setErroEmail] = useState<string | null>(null);
   const [erroSenha, setErroSenha] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<{ texto: string; detalhe?: string } | null>(null);
+  const [aviso, setAviso] = useState<{ texto: string; detalhe?: string; tom?: 'erro' | 'nota' } | null>(null);
   const [envio, setEnvio] = useState<Envio>('parado');
   const [apple, setApple] = useState(false);
 
@@ -53,6 +53,18 @@ export default function Entrar() {
     // O fundo chega em repouso: a mesma paisagem do onboarding, parada.
     canvas.value = withTiming(3, { duration: motion.duration.deliberate });
   }, [canvas]);
+
+  /**
+   * Chegar aqui pode ser uma escolha ou uma expulsão. Quando a sessão expirou,
+   * a pessoa precisa saber por que voltou para esta tela — senão parece que o
+   * aplicativo se perdeu. A explicação é dita uma vez e some; ela não é erro,
+   * então não vem vestida de erro.
+   */
+  useEffect(() => {
+    if (motivoDeSaida !== 'expirada') return;
+    setAviso({ texto: 'Sua sessão expirou. Entre novamente para continuar.', tom: 'nota' });
+    limparMotivoDeSaida();
+  }, [motivoDeSaida, limparMotivoDeSaida]);
 
   useEffect(() => {
     let alive = true;
@@ -88,13 +100,13 @@ export default function Entrar() {
 
     setEnvio('senha');
     try {
-      const { account } = await trocarPorSessao({
+      const { account, token } = await trocarPorSessao({
         tipo: 'senha',
         email: email.trim(),
         senha,
       });
       haptics.success();
-      await signIn(account);
+      await signIn(account, token);
     } catch (error) {
       mostrarErro(error);
     } finally {
@@ -108,9 +120,9 @@ export default function Entrar() {
     setEnvio('google');
     try {
       const credencial = await iniciarGoogle();
-      const { account } = await trocarPorSessao(credencial);
+      const { account, token } = await trocarPorSessao(credencial);
       haptics.success();
-      await signIn(account);
+      await signIn(account, token);
     } catch (error) {
       mostrarErro(error);
     } finally {
@@ -124,9 +136,9 @@ export default function Entrar() {
     setEnvio('apple');
     try {
       const credencial = await iniciarApple();
-      const { account } = await trocarPorSessao(credencial);
+      const { account, token } = await trocarPorSessao(credencial);
       haptics.success();
-      await signIn(account);
+      await signIn(account, token);
     } catch (error) {
       mostrarErro(error);
     } finally {
@@ -145,6 +157,7 @@ export default function Entrar() {
     void signIn({
       id: 'dev-profissional',
       nome: 'João Batista',
+      email: 'joao.batista@exemplo.com',
       papel: 'profissional',
       origem: 'desenvolvimento',
     });
@@ -199,13 +212,15 @@ export default function Entrar() {
             entering={reduceMotion ? undefined : FadeInDown.duration(motion.duration.base)}
             style={[
               styles.aviso,
-              { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
+              aviso.tom === 'nota'
+                ? { backgroundColor: colors.surface2, borderColor: colors.line }
+                : { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
             ]}
             accessibilityLiveRegion="assertive"
           >
-            <AlertIcon size={18} color={colors.danger} />
+            <AlertIcon size={18} color={aviso.tom === 'nota' ? colors.muted : colors.danger} />
             <View style={styles.avisoTexto}>
-              <Text variant="callout" tone="danger">
+              <Text variant="callout" tone={aviso.tom === 'nota' ? 'muted' : 'danger'}>
                 {aviso.texto}
               </Text>
               {aviso.detalhe ? (

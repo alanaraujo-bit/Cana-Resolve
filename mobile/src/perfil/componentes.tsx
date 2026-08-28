@@ -2,21 +2,18 @@
  * As peças que o Perfil repete.
  *
  * Nada aqui inventa linguagem: tudo sai dos tokens e conversa com o que a
- * Fase 01 já definiu. Estas peças moram no módulo, e não em `src/ui/`, porque
- * ainda não se repetem fora dele — o dia em que a área do morador precisar de
- * uma delas, ela sobe para a fundação. É mais fácil promover do que remendar.
+ * Fase 01 já definiu. Estas peças moram no módulo porque ainda não se repetem
+ * fora dele — o dia em que outra área precisar de uma delas, ela sobe para a
+ * fundação. É mais fácil promover do que remendar.
+ *
+ * **Foi o que aconteceu na Fase 05**: cabeçalho, bloco, grupo, nota e
+ * alternador viraram Conta e Configurações também, e mudaram de casa para
+ * `src/ui/lista.tsx`. Continuam sendo exportados daqui, com os mesmos nomes,
+ * para que nenhuma tela da Fase 04 precisasse ser tocada.
  */
 
 import type { ReactNode } from 'react';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Switch,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -24,9 +21,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { gutter, hitTarget, motion, radius, space, useTheme } from '@/theme';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, Text } from '@/ui';
+import { hitTarget, motion, radius, space, useTheme } from '@/theme';
+import { CheckIcon, ChevronRightIcon, Text } from '@/ui';
 import type { Imagem, TipoDePerfil } from './tipos';
+
+// Promovidas para a fundação na Fase 05 — reexportadas para não quebrar as
+// telas que já as importavam daqui.
+export { Alternador, Bloco, CabecalhoDeTela, Grupo, Nota } from '@/ui';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -96,43 +97,6 @@ export function Retrato({
           {iniciais || '·'}
         </Text>
       )}
-    </View>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Cabeçalho das telas empilhadas                                            */
-/* -------------------------------------------------------------------------- */
-
-/** Voltar à esquerda, título no meio da linha, ação opcional à direita. */
-export function CabecalhoDeTela({
-  titulo,
-  aoVoltar,
-  direita,
-}: {
-  titulo: string;
-  aoVoltar: () => void;
-  direita?: ReactNode;
-}) {
-  const { colors } = useTheme();
-
-  return (
-    <View style={estilos.cabecalho}>
-      <Pressable
-        onPress={aoVoltar}
-        accessibilityRole="button"
-        accessibilityLabel="Voltar"
-        hitSlop={12}
-        style={estilos.voltar}
-      >
-        <ChevronLeftIcon color={colors.ink} />
-      </Pressable>
-
-      <Text variant="title" numberOfLines={1} maxScale={1.2} style={estilos.cabecalhoTitulo}>
-        {titulo}
-      </Text>
-
-      <View style={estilos.cabecalhoDireita}>{direita}</View>
     </View>
   );
 }
@@ -215,22 +179,6 @@ export function LinhaDeSecao({
   );
 }
 
-/** O bloco branco que agrupa linhas. Uma superfície, não seis cartões. */
-export function Bloco({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  const { colors } = useTheme();
-  return (
-    <View
-      style={[
-        estilos.bloco,
-        { backgroundColor: colors.surface, borderColor: colors.line },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
-
 /* -------------------------------------------------------------------------- */
 /*  Chip selecionável                                                         */
 /* -------------------------------------------------------------------------- */
@@ -306,100 +254,8 @@ export function Chips({ children }: { children: ReactNode }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Alternador                                                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Uma decisão de sim ou não, com a explicação junto quando ela ajuda.
- *
- * A **linha inteira** aciona, não só o interruptor: o `Switch` do sistema tem
- * cerca de 40 × 20, bem abaixo dos 48 que a fundação exige, e mirar nele com o
- * polegar em pé no meio de uma obra é pedir demais. O interruptor continua ali
- * como o desenho do estado — só não é mais o único jeito de mexer nele.
- */
-export function Alternador({
-  titulo,
-  explicacao,
-  valor,
-  onChange,
-}: {
-  titulo: string;
-  explicacao?: string;
-  valor: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  const { colors } = useTheme();
-
-  return (
-    <Pressable
-      onPress={() => onChange(!valor)}
-      accessibilityRole="switch"
-      accessibilityLabel={titulo}
-      accessibilityHint={explicacao}
-      accessibilityState={{ checked: valor }}
-      style={estilos.alternador}
-    >
-      <View style={estilos.alternadorTexto}>
-        <Text variant="bodyStrong" maxScale={1.25}>
-          {titulo}
-        </Text>
-        {explicacao ? (
-          <Text variant="caption" tone="muted" maxScale={1.2}>
-            {explicacao}
-          </Text>
-        ) : null}
-      </View>
-      {/* Só desenho: quem recebe o toque e fala com o leitor de tela é a linha,
-          para não haver dois controles para a mesma decisão. */}
-      <View
-        style={estilos.semToque}
-        aria-hidden
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Switch
-          value={valor}
-          onValueChange={onChange}
-          trackColor={{ false: colors.surface3, true: colors.brandFill }}
-          thumbColor={colors.surface}
-          ios_backgroundColor={colors.surface3}
-        />
-      </View>
-    </Pressable>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Avisos e vazios                                                           */
 /* -------------------------------------------------------------------------- */
-
-/** Nota discreta. Explica, não assusta: fundo suave, sem ícone de perigo. */
-export function Nota({
-  children,
-  tom = 'neutro',
-}: {
-  /** Texto — aceita interpolação, que o JSX entrega como vários pedaços. */
-  children: ReactNode;
-  tom?: 'neutro' | 'destaque';
-}) {
-  const { colors } = useTheme();
-  return (
-    <View
-      accessibilityRole="text"
-      style={[
-        estilos.nota,
-        {
-          backgroundColor: tom === 'destaque' ? colors.accentSoft : colors.surface2,
-          borderColor: tom === 'destaque' ? colors.accentLine : colors.line,
-        },
-      ]}
-    >
-      <Text variant="caption" tone={tom === 'destaque' ? 'accent' : 'muted'} maxScale={1.3}>
-        {children}
-      </Text>
-    </View>
-  );
-}
 
 /** Estado vazio de uma seção. Nunca comunica fracasso. */
 export function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
@@ -415,18 +271,6 @@ export function Vazio({ titulo, texto }: { titulo: string; texto: string }) {
   );
 }
 
-/** Título de grupo dentro de uma tela de edição. */
-export function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <View style={estilos.grupo}>
-      <Text variant="overline" tone="faint" accessibilityRole="header">
-        {titulo.toUpperCase()}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
 const estilos = StyleSheet.create({
   retrato: {
     alignItems: 'center',
@@ -435,27 +279,6 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  cabecalho: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    paddingHorizontal: gutter - 8,
-    minHeight: hitTarget,
-  },
-  voltar: {
-    width: hitTarget,
-    height: hitTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cabecalhoTitulo: { flex: 1 },
-  cabecalhoDireita: { minWidth: hitTarget, alignItems: 'flex-end' },
-
-  bloco: {
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
   linha: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,22 +304,5 @@ const estilos = StyleSheet.create({
   },
   chipTexto: { flexShrink: 1 },
 
-  alternador: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.lg,
-    minHeight: hitTarget,
-  },
-  alternadorTexto: { flex: 1, gap: 2 },
-  semToque: { pointerEvents: 'none' },
-
-  nota: {
-    padding: space.md,
-    borderRadius: radius.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-
   vazio: { gap: space.sm, paddingVertical: space['3xl'], paddingHorizontal: space.lg },
-
-  grupo: { gap: space.md },
 });
