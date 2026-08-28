@@ -147,13 +147,101 @@ Automatizar exige responder três perguntas que **não são técnicas**:
 reautentica, marca a conta e agenda o expurgo. A tela do aplicativo passa a
 chamá-la, e o texto dela já está escrito para esse dia.
 
-## 7. Notificações — Fase 06
+## 7. Notificações — Fase 06 · **parcialmente resolvido em 28/08/2026**
 
-Nada está construído, de propósito. Nas Configurações existe uma linha dizendo
-que ainda não há notificações, **sem interruptor**: um controle que não controla
-nada é pior que a ausência dele.
+A infraestrutura existe e é real: tabela `partner_devices`, rota
+`POST/GET/DELETE /api/v1/auth/dispositivos`, camada mobile inteira, deep links,
+selo, preferências e o envio pelo Expo Push (`npm run push:teste`). O que
+funciona hoje sem depender de você está descrito em `mobile/NOTIFICACOES.md`.
 
-Quando a Fase 06 começar, ela precisará de `expo-notifications`, das credenciais
-de push (APNs e FCM) e de uma rota que guarde o token do aparelho. O lugar da
-preferência já está decidido: é **da conta**, não do aparelho — quem decide
-enviar é o servidor. Ver `mobile/AJUSTES.md`.
+**Falta o que só você pode fazer**, e são três coisas — nenhuma delas impede o
+desenvolvimento continuar, todas impedem um push chegar no seu iPhone.
+
+### 7.1 Conta Expo e `projectId` — **bloqueia o teste real**
+
+O serviço de push da Expo emite token para um projeto identificado. Sem isso o
+aplicativo não pede token, e diz na tela que a build não está identificada — em
+vez de tentar e falhar em silêncio.
+
+```bash
+npm i -g eas-cli
+cd mobile
+eas login          # a conta Expo é sua; não dá para criar por você
+eas init           # grava extra.eas.projectId em app.json — commite essa mudança
+```
+
+Nada foi inventado no `app.json`: o campo simplesmente não existe ainda.
+
+### 7.2 Credencial de push da Apple (APNs) — **bloqueia o teste real**
+
+```bash
+cd mobile
+eas credentials    # iOS → Push Notifications → gerar a chave
+```
+
+Precisa de uma conta paga do **Apple Developer Program** com o App ID
+`com.aionix.canaaresolve`. O EAS cria e guarda a chave `.p8` — ela nunca entra
+no repositório.
+
+### 7.3 Build de desenvolvimento — **bloqueia o teste real**
+
+```bash
+cd mobile
+eas build --profile development --platform ios
+```
+
+O perfil já está escrito em `mobile/eas.json`. Push remoto **não funciona no
+Expo Go** por decisão da plataforma, não por falta de configuração nossa: o
+aplicativo detecta o ambiente e diz isso na tela de Notificações.
+
+Android, quando for a vez: `eas credentials` cuida do FCM, e o
+`google-services.json` do Firebase precisa existir. Nenhum dos dois é
+necessário para o iPhone.
+
+### 7.4 Publicar a rota na Vercel — **um passo, não um bloqueio**
+
+A migração `0005` **já foi aplicada** no banco de trabalho, e a rota funciona
+contra ele. Falta o deploy do site para que o aparelho a alcance pela internet:
+enquanto ele não sair, `POST /api/v1/auth/dispositivos` responde 404 no domínio
+público, e o aplicativo trata isso como falha de registro — com nova tentativa
+na abertura seguinte, sem quebrar nada.
+
+### O que **não** bloqueia
+
+- O registro de aparelho já é real e já foi conferido de ponta a ponta contra o
+  banco (`npm test`, mais um percurso de `curl` na rota).
+- A preferência, a permissão, o convite, o selo e os deep links funcionam sem
+  qualquer credencial.
+- `EXPO_ACCESS_TOKEN` só é exigido se a conta Expo tiver *Enhanced Security*
+  ligada. Sem ele, o envio funciona.
+
+### Produção, quando chegar a hora
+
+- Chave APNs de **produção** (a mesma `.p8` serve; muda o ambiente do token).
+- `eas build --profile production` gera build com tokens de ambiente
+  `production` — o registro já guarda essa distinção por aparelho.
+- FCM configurado, para o Android.
+- Antes de publicar, conferir o texto dos avisos contra `§10`: categoria e
+  bairro, nunca a necessidade do morador.
+
+## 8. Universal Links / App Links — preparado, não ligado
+
+Hoje o aplicativo abre por `canaaresolve://oportunidade/:id`, e isso funciona
+para push e para link interno. Um link `https://canaaresolve.aionixdev.com/...`
+abrindo o aplicativo exige:
+
+- **iOS:** o arquivo `/.well-known/apple-app-site-association` servido pelo
+  domínio, com o **Team ID da Apple** — que ainda não temos. Um valor chutado
+  ali não é inofensivo: ele quebra a associação de forma silenciosa. Por isso
+  **nada foi criado em `public/`** (§63).
+- **Android:** `/.well-known/assetlinks.json` com a impressão digital SHA-256
+  do certificado de assinatura, que só existe depois da primeira build
+  assinada.
+
+Quando os dois existirem: acrescentar `associatedDomains` no `app.json`,
+`autoVerify: true` no intent filter do Android, e os dois arquivos na landing —
+**só os arquivos**, sem tocar no conteúdo da página.
+
+E a regra que não muda com isso: uma URL válida não concede acesso. Conhecer o
+id de uma oportunidade não é autorização; quem autoriza é o servidor, para o
+usuário autenticado daquele momento.

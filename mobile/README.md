@@ -119,16 +119,24 @@ e o que ainda depende de servidor.
 
 [`AJUSTES.md`](AJUSTES.md) — a linha entre Conta e Perfil, como a sessão
 funciona, o que é preferência do aparelho e o que é da conta, o que sai e o que
-fica ao sair, e o que a Fase 06 vai encontrar pronto.
+fica ao sair.
+
+[`NOTIFICACOES.md`](NOTIFICACOES.md) — como um aviso chega, o registro do
+aparelho, o ciclo de vida do token, os deep links, a regra do selo e como
+instalar a build de desenvolvimento para testar push de verdade.
 
 [`PROGRESSO.md`](PROGRESSO.md) — o que cada fase entregou, o que foi
 verificado de verdade e o que não foi.
 
 ## Fora de escopo por enquanto
 
-Criação e recuperação de senha pelo próprio parceiro, notificações, avaliações,
-plano, financeiro, chat, área do morador e analytics conectado. A arquitetura os
-acomoda; nenhum deles foi construído.
+Criação e recuperação de senha pelo próprio parceiro, avaliações, plano,
+financeiro, chat, área do morador, central de notificações e analytics
+conectado. A arquitetura os acomoda; nenhum deles foi construído.
+
+Notificações **saíram** desta lista na Fase 06: a infraestrutura é real e o que
+falta para um push chegar no aparelho são credenciais, listadas em
+`BLOCKERS.md`.
 
 E a **API de dados** — a leitura e a escrita de oportunidades e perfil contra o
 servidor. É o que separa este aplicativo de ser real por inteiro.

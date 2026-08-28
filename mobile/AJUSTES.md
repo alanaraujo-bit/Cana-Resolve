@@ -85,7 +85,8 @@ sabe se adaptar.
 | Aparência (Sistema / Claro / Escuro) | aparelho, `AsyncStorage` | **sim** |
 | Idioma | fixo em pt-BR | — |
 | Pausar oportunidades | conta, hoje espelhada no aparelho | **não** |
-| Notificações (Fase 06) | conta | **não** |
+| Notificações — o que receber | conta, hoje espelhada no aparelho | **não** |
+| Convite de notificações já respondido | aparelho | **sim** |
 
 A lista de chaves e de que lado da linha cada uma fica está em
 `src/session/chaves.ts`, em um lugar só — é o que torna a separação confiável.
@@ -165,22 +166,26 @@ já encerrados, que envolve o morador do outro lado.
 
 ## Permissões
 
-Uma só, porque é uma só que o aplicativo usa: **fotos**, para a imagem do perfil
-e o portfólio. Localização não é pedida — ser um aplicativo de bairro não é
-motivo para saber onde alguém está. Notificações serão pedidas na Fase 06,
-quando houver o que notificar.
+Duas, porque são duas que o aplicativo usa: **fotos**, para a imagem do perfil
+e o portfólio, e **notificações**, desde a Fase 06 — pedidas só quando a pessoa
+escolhe ativar. Localização não é pedida: ser um aplicativo de bairro não é
+motivo para saber onde alguém está.
 
 Quando a permissão está negada, a tela diz por que precisamos, o que muda sem
 ela e como habilitar — e oferece abrir os ajustes do sistema, sem pedir de novo
 em laço. Na web esse lugar não existe: a tela explica em vez de estourar.
 
-## Notificações — o que já está pronto para a Fase 06
+## Notificações
 
-Uma linha em Preferências, dizendo que ainda não existem. Sem interruptor: um
-controle que não controla nada é a pior coisa que uma tela de Configurações pode
-ter. Quando o envio existir, ela vira uma seção com as categorias que já se
-sabe que virão — novas oportunidades, conta e segurança, comunicados — e a
-preferência passa a ser **da conta**, porque quem decide enviar é o servidor.
+A linha que dizia "ainda não disponíveis" virou tela na Fase 06. Ela mostra
+duas coisas que se parecem e não são a mesma: o **estado do sistema** (o
+iOS/Android entrega ou não, e isso não se muda daqui) e a **preferência** — que
+tipos de aviso a pessoa quer. Com o sistema bloqueando, os interruptores
+continuam valendo e a tela diz que nada chega.
+
+Três categorias, e não quinze. Segurança fica fora do opt-out: quem desligou
+comunicados não pediu para não saber que alguém entrou na conta dele. O detalhe
+está em [`NOTIFICACOES.md`](NOTIFICACOES.md).
 
 ## Desenvolvimento
 
@@ -192,6 +197,6 @@ produto.
 
 ## O que esta fase não construiu
 
-Push completo, central de notificações, planos, assinatura, pagamentos,
-analytics conectado, avaliações, chat, área do morador e painel administrativo.
-A arquitetura acomoda todos; nenhum foi começado.
+Central de notificações, planos, assinatura, pagamentos, analytics conectado,
+avaliações, chat, área do morador e painel administrativo. A arquitetura
+acomoda todos; nenhum foi começado. Push saiu desta lista na Fase 06.

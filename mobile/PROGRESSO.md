@@ -391,13 +391,148 @@ só desenho, com o toque na linha inteira. Nenhum é alvo pequeno de verdade.
 - Dynamic Type acima do teto, Liquid Glass nativo, Safe Areas com Dynamic
   Island e indicador de Home, Android físico.
 
-## Próxima fase — quando estas forem aprovadas
 
-A **Fase 06** foi anunciada: Push Notifications. A interface já nasceu
-preparada — uma linha em Preferências dizendo que ainda não existem, sem
-interruptor que não desligue nada — e o detalhe do que ela encontra pronto está
-em [AJUSTES.md](AJUSTES.md).
+## Fase 06 — Notificações, deep links e selos · concluída no que não depende de credencial
 
-Continuam de fora, de propósito: central de notificações, avaliações, plano,
-financeiro, área do morador, chat e analytics conectado. E a **API de dados**,
-que é o que separa este aplicativo de ser real por inteiro depois do login.
+**A decisão que organizou a fase inteira.** A autenticação já é real; a API de
+dados ainda não existe. Isso decide, sozinho, o que pôde ser construído de
+verdade: **o registro de aparelho é autenticado pela sessão e por mais nada**,
+então ele não tinha por que esperar pela API de dados — foi feito de verdade,
+com tabela, rota, testes contra o Postgres e um percurso de `curl` de ponta a
+ponta. As oportunidades continuam vindo dos exemplos declarados, e o push
+aponta **para elas** (§113), não para um segundo conjunto de entidades.
+
+**Feito — no repositório do site**
+
+- **`partner_devices`** (migração `0005`), chaveada pela **instalação**, não
+  pelo usuário nem pelo token. É esse índice único — e não um `if` na rota —
+  que torna o registro idempotente, e é a mesma escrita que reaponta o aparelho
+  quando outra conta entra nele. Sem janela em que os dois recebem.
+- **`POST/GET/DELETE /api/v1/auth/dispositivos`**, sessão obrigatória nos três
+  verbos. O token de push **não sai** na resposta de nenhum deles.
+- **Sair revoga, não apaga.** `revokedAt` + motivo (`saiu`, `desinstalado`,
+  `substituido`). Uma linha apagada não conta história, e o que o requisito
+  crítico pede é poder provar que este aparelho parou de receber, e quando.
+- **`lib/push/mensagens.ts`** — a taxonomia (quatro tipos, três famílias) e o
+  texto. `conferirPrivacidade` examina o texto pronto e **recusa o envio** se
+  achar telefone, e-mail, endereço ou CPF: a rede existe para o dia em que
+  alguém escrever com pressa, não para substituir escrever com cuidado.
+- **`lib/push/envio.ts`** — Expo Push, com deduplicação por chave de evento,
+  e `DeviceNotRegistered` virando revogação em vez de retentativa eterna.
+- **`npm run push:teste`** — envio de teste pela linha de comando. **Não existe
+  rota HTTP de envio**, de propósito: um endpoint público seria uma superfície
+  nova para proteger, e um script que roda na máquina de quem já tem a
+  `DATABASE_URL` não tem superfície nenhuma (§110 + §117 de uma vez só).
+
+**Feito — no aplicativo**
+
+- **`src/notificacoes/`**, e uma regra que atravessa tudo: **o payload não é
+  fonte de verdade** (§22). Chegou um aviso? A carteira é relida do
+  repositório. Um push que diz "Nova" pode chegar depois de a oportunidade ter
+  sido encerrada.
+- **Uma porta só para `expo-notifications`** (`sistema.ts`), com irmão
+  `sistema.web.ts`. Conferido no bundle: `expo-notifications` aparece 52 vezes
+  no pacote iOS e **zero** no da web. É o que mantém viva a prévia pelo
+  navegador, que é onde este produto é olhado a cada passo.
+- **Permissão contextual.** O convite aparece na Home **depois** das
+  oportunidades — só ali "mesmo com o aplicativo fechado" quer dizer alguma
+  coisa. Duas ações do mesmo peso visual, e "Agora não" é gravado e respeitado.
+- **Permissão ≠ preferência**, e a tela de Notificações existe para não
+  confundir as duas: entrega é do iOS/Android, preferência é o que a pessoa
+  quer receber. Com o sistema bloqueando, os interruptores continuam valendo e
+  a tela **diz** que nada chega.
+- **Segurança fora do opt-out** (§37). Quem desligou "comunicados" não pediu
+  para não saber que alguém entrou na conta dele. Marketing não existe nesta
+  fase, e a ausência é o que impede campanha usando a autorização dada para
+  receber oportunidade.
+- **`destino.ts`** — um destino, várias origens. Ele valida contra uma lista
+  curta, guarda até haver sessão conferida, **confere o dono** antes de
+  entregar, expira em 30 minutos e morre no logout.
+- **Cold start tratado** com `getLastNotificationResponse()`, que é o único
+  caminho para o toque que *iniciou* o processo.
+- **O selo é uma regra só** (§44): `contarEsperando`, a mesma função que
+  alimenta a aba desde a Fase 03, passou a alimentar o ícone. Abrir uma
+  oportunidade a move de `nova` para `vista` e ela **continua** esperando
+  decisão — o número não cai por ter sido aberta, cai por ter sido respondida.
+- **Foreground não sequestra ninguém.** O banner do sistema é suprimido, os
+  dados são relidos, e uma faixa discreta oferece "Ver". Quem está preenchendo
+  o Perfil não é arrancado dali porque um pedido chegou.
+- **Sem WebSocket e sem trabalho em segundo plano.** Push sinaliza, voltar ao
+  primeiro plano reconcilia, puxar para atualizar continua existindo. Para um
+  produto hiperlocal, mais infraestrutura seria custo sem ganho (§28, §29).
+- **`eas.json`** com os perfis de build, e o plugin de notificações no
+  `app.json` — usando o `notification-icon.png` que já existia.
+- Domínio documentado em [`NOTIFICACOES.md`](NOTIFICACOES.md).
+
+**Corrigido no caminho** (achado olhando o produto, não o código):
+
+| O que estava errado | Onde |
+| --- | --- |
+| O porteiro lia o caminho pretendido **uma vez**, na primeira montagem. Um push tocado com o aplicativo já parado na tela de entrar, ou vindo do segundo plano, nunca passava por aquele instante — e o destino sumia | `app/_layout.tsx` passou a delegar para `notificacoes/destino` |
+| Um endereço desconhecido mostrava a tela crua do roteador: "Unmatched Route · Page could not be found", com a URL inteira e um link para o sitemap. Tela de ferramenta, em inglês, dentro de um produto usado por um eletricista de Canaã | `app/+not-found.tsx` |
+| `pausarOportunidades` montava o objeto de preferências campo a campo — com a chegada dos avisos, salvar a pausa apagaria os três interruptores | `PreferenciasProvider.tsx` |
+| A linha "Notificações" dizia que elas não existiam, em duas telas | capa das Configurações e Permissões |
+| **Sair da conta não desligava a entrega.** O `signOut` disparava os dois `DELETE` juntos; o da sessão chegava primeiro, e o do aparelho levava 401 — a linha ficava com `revoked_at` nulo e **o telefone continuava recebendo as oportunidades privadas de quem tinha acabado de sair**. É o §57, o parágrafo que a especificação chama de crítico, e ele falhava em silêncio. Medido contra o servidor antes e depois: `401` e `revogado: false` virou `204` e `revogado: "saiu"` | `SessionProvider.signOut` — a ordem passou a ser a funcionalidade |
+| Um aviso chegando enquanto a pessoa já olhava aquela mesma oportunidade levantava a faixa mesmo assim (§79) | `NotificacoesProvider`, comparando com a rota atual |
+
+**Verificado**
+
+| O quê | Como | Resultado |
+| --- | --- | --- |
+| Tipos | `npx tsc --noEmit`, nos dois projetos | limpo |
+| Lint | `npx expo lint` e `npx eslint` | limpo |
+| Testes do servidor | `npm test`, com 16 asserções novas de dispositivo e privacidade | 48/48 |
+| Idempotência | registrar dez vezes a mesma instalação | uma linha |
+| Troca de conta | B registra o aparelho de A | A para de receber na mesma escrita |
+| Logout, na rota | revogação datada, e a linha continua existindo | conferido |
+| **Logout, no caminho do aplicativo** | os dois `DELETE` na ordem do `signOut`, contra o servidor | antes: `401`, aparelho vivo. Depois da correção: `204`, `revogado: "saiu"` |
+| Autorização | B tentando revogar o aparelho de A | recusado |
+| Token morto | `DeviceNotRegistered` → revogado, e invalidar de novo não conta duas | conferido |
+| Privacidade do texto | telefone, e-mail e endereço no corpo do aviso | os três recusados |
+| A rota, de verdade | `curl` contra o servidor local e o banco de trabalho | 200 registrar, 200 idempotente, 200 segundo aparelho, 401 sem sessão, 401 sessão inventada, 400 corpo inválido, 400 sem instalação, 401 revogar sem sessão, 204 sair, 204 revogar de novo |
+| Token na resposta | busca por `ExponentPushToken` no corpo do `POST` e do `GET` | nenhuma ocorrência |
+| Bundles | Metro, iOS e Android | 200, ~10,9 MB nos dois |
+| Isolamento da web | `expo-notifications` no bundle | 52 no iOS, **0** na web |
+| Login real | e-mail e senha contra a API no ar, pelo navegador | entrou |
+| **Cenário C** | `/oportunidade/o1` deslogado → login → o detalhe correto abre | conferido, com botão de voltar levando ao Início |
+| Nada vaza antes do login | a tela de entrar com um destino pendente | nenhum dado da oportunidade |
+| Destino atravessa reinício | pendente gravado numa execução, honrado na seguinte | conferido |
+| Oportunidade indisponível | id inexistente, com sessão viva | "Esta oportunidade não está mais disponível", com saída para a Central; nenhum erro técnico |
+| Rota desconhecida | `/coisa/que/nao/existe`, com e sem sessão | nenhuma tela crua do roteador |
+| Convite | Home, claro e escuro, 393 e 320 | aparece, sem transbordo e sem alvo abaixo de 44 |
+| "Agora não" | tocar, e depois reabrir o aplicativo | não volta a perguntar |
+| Contagem única | selo da aba e "Precisa da sua atenção" | os dois em 3 |
+| Percurso das telas novas | Notificações e Permissões, nos dois temas | claro e escuro refinados |
+| Erros de console | quatro percursos completos | nenhum |
+| Landing intacta | `git diff --stat -- "app/(site)" components public brand` | vazio |
+
+**Não verificado aqui** — precisa do seu iPhone e das credenciais:
+
+- **Push remoto de verdade.** Nada foi entregue a nenhum aparelho: falta a
+  conta Expo (`eas init`), a chave APNs e a build de desenvolvimento — os três
+  em `BLOCKERS.md` §7. **Não afirmo que push foi validado no iPhone**, porque
+  não foi.
+- Cold start pelo toque na notificação, foreground, background e app encerrado.
+- O selo no ícone do aplicativo, os canais do Android e o agrupamento no
+  Notification Center.
+- O prompt do sistema — conceder, negar, negar de vez — e "abrir configurações
+  do aparelho".
+- Que o logout impede a entrega **de fato**. A revogação está conferida no
+  banco, pelo caminho exato que o aplicativo usa; o que falta é a outra metade
+  — mandar um push depois de sair e confirmar que nada chega.
+- Persistência da sessão entre aberturas, que na web não existe por decisão da
+  Fase 05 — e é por isso que o percurso de destino pendente foi conferido
+  dentro de uma execução e entre execuções, mas não com sessão restaurada.
+
+O roteiro completo para essa validação está em
+[`NOTIFICACOES.md`](NOTIFICACOES.md), na seção "O roteiro no aparelho".
+
+## Próxima fase — quando esta for aprovada
+
+A Fase 06 para aqui, de propósito. Não foram começados: assinatura, planos,
+pagamentos, avaliações, reputação, analytics comercial, área do morador, chat
+nem Central de Notificações.
+
+Continuam de fora, pelo mesmo motivo de sempre: a **API de dados**, que é o que
+separa este aplicativo de ser real por inteiro depois do login, e os
+Universal Links, que dependem do Team ID da Apple (`BLOCKERS.md` §8).

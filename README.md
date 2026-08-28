@@ -48,11 +48,26 @@ O que existe ali hoje, todo em `app/api/v1/auth/`:
 | `GET /auth/sessoes` | esta credencial ainda vale? 200 com a conta, ou 401 |
 | `DELETE /auth/sessoes` | sair; a sessão morre no banco, não só no aparelho |
 | `POST /auth/senha` | trocar a senha: exige a atual e derruba os outros aparelhos |
+| `POST /auth/dispositivos` | onde entregar um aviso deste parceiro. Idempotente |
+| `GET /auth/dispositivos` | quais aparelhos recebem — sem o endereço de entrega |
+| `DELETE /auth/dispositivos` | este aparelho para de receber. Chamado ao sair |
 
-As três últimas nasceram com a Fase 05 do aplicativo, porque uma tela de
-"alterar senha" que não altera senha nenhuma seria pior que tela nenhuma. A
-sessão vive no banco (`partner_sessions`), e do token cru só existe uma cópia:
-a do aparelho que entrou.
+A quarta nasceu com a Fase 05, porque uma tela de "alterar senha" que não
+altera senha nenhuma seria pior que tela nenhuma. A sessão vive no banco
+(`partner_sessions`), e do token cru só existe uma cópia: a do aparelho que
+entrou.
+
+As três de `dispositivos` nasceram com a Fase 06, e ficaram sob `auth` por um
+motivo só: o que elas precisam saber é **quem está logado**, e nada mais — não
+leem oportunidade nem perfil. Esperar pela API de dados adiaria por meses a
+peça que precisa existir antes de qualquer push.
+
+A chave é a **instalação**, não o usuário e não o token de push: um índice
+único em `installation_id` é o que torna o registro idempotente, e é a mesma
+escrita que reaponta o aparelho quando outra conta entra nele. Sair **revoga**,
+não apaga — uma linha apagada não conta história. O token de push nunca sai
+desta tabela para a interface, para log, ou para qualquer resposta: ele é
+endereço de entrega, nunca identidade. Ver `mobile/NOTIFICACOES.md`.
 
 ## Stack
 
@@ -73,6 +88,7 @@ npm run db:setup   # migrações + catálogo de categorias e serviços
 npm run dev        # http://localhost:3000
 npm test           # regras puras + a entrada, contra um Postgres de teste
 npm run smoke      # o navegador preenche os dois formulários e confere o banco
+npm run push:teste # manda um aviso de teste para um parceiro (ver mobile/NOTIFICACOES.md)
 npm run lint
 npm run typecheck
 ```
@@ -91,6 +107,7 @@ components/
   partners/             as seções de /parceiros
 lib/
   auth/                 senha (scrypt) e sessão do parceiro
+  push/                 aparelhos, texto dos avisos e envio
   db/                   esquema, conexão e migrações
   domain/               entrada, códigos, telefone, catálogo semente
   forms.ts              o contrato dos formulários (servidor e cliente)
