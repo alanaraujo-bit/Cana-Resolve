@@ -30,12 +30,31 @@ export const authConfig = {
    * em desenvolvimento, e em produção se declaram indisponíveis.
    */
   dataApiBaseUrl: read(process.env.EXPO_PUBLIC_DATA_API_URL),
+  /**
+   * Vitrine: liga os exemplos declarados fora do desenvolvimento.
+   *
+   * Sem isto, um pacote de release sem API de dados não fica vazio — ele
+   * **falha**: `exigirExemplos` levanta erro e toda tela de dados vira
+   * estado de falha. Isso é o certo para produção e o errado para um pacote
+   * que existe só para alguém olhar a interface antes de a leitura existir.
+   *
+   * Fica atrás de uma variável própria, e não de `__DEV__`, porque quem
+   * compila a vitrine é quem escreve `EXPO_PUBLIC_DEMO=1` — vazio, que é o
+   * padrão, mantém produção exatamente como estava.
+   */
+  demo: read(process.env.EXPO_PUBLIC_DEMO) === '1',
   google: {
     ios: read(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS),
     android: read(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID),
     web: read(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB),
   },
 } as const;
+
+/**
+ * Se os exemplos declarados podem aparecer no lugar da API que ainda não
+ * existe. Verdadeiro em desenvolvimento e na vitrine; falso em produção.
+ */
+export const comExemplos = __DEV__ || authConfig.demo;
 
 export function googleClientId(platform: 'ios' | 'android' | 'web'): string | null {
   return authConfig.google[platform] ?? authConfig.google.web;

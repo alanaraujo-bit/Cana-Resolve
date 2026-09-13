@@ -18,7 +18,7 @@
  * A leitura já nasce paginada (`Pagina`), não porque hoje existam muitas, mas
  * porque o histórico cresce e a camada de dados não deve supor dez itens.
  */
-import { authConfig } from '@/auth/config';
+import { authConfig, comExemplos } from '@/auth/config';
 import { carteiraDeExemplo, type Cenario } from './exemplos';
 import type {
   Carteira,
@@ -100,8 +100,8 @@ function semApi(): boolean {
   return !authConfig.dataApiBaseUrl;
 }
 
-function exigirDesenvolvimento(mensagem: string) {
-  if (!__DEV__) {
+function exigirExemplos(mensagem: string) {
+  if (!comExemplos) {
     throw new ErroDeDados(
       mensagem,
       'EXPO_PUBLIC_AUTH_API_URL não configurada — veja BLOCKERS.md.',
@@ -112,7 +112,7 @@ function exigirDesenvolvimento(mensagem: string) {
 /** Lê a carteira inteira. O cursor já existe para o dia em que ela crescer. */
 export async function lerCarteira(cenario: Cenario): Promise<Pagina> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_LISTA);
+    exigirExemplos(MENSAGEM_LISTA);
     await espera(ATRASO);
     if (cenario === 'erro') {
       throw new ErroDeDados(
@@ -137,7 +137,7 @@ export async function lerCarteira(cenario: Cenario): Promise<Pagina> {
 /** Lê uma oportunidade só — o caminho de um link ou de uma notificação. */
 export async function lerOportunidade(cenario: Cenario, id: string): Promise<Oportunidade> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_LISTA);
+    exigirExemplos(MENSAGEM_LISTA);
     await espera(ATRASO);
     const achada = carteiraViva(cenario).oportunidades.find((o) => o.id === id);
     if (!achada) {
@@ -171,7 +171,7 @@ async function decidir(cenario: Cenario, id: string, mudanca: Mudanca): Promise<
     throw new ErroDeDados(MENSAGEM_ACAO, 'O registro de decisões ainda não foi implementado.');
   }
 
-  exigirDesenvolvimento(MENSAGEM_ACAO);
+  exigirExemplos(MENSAGEM_ACAO);
   await espera(ATRASO_ACAO);
 
   const carteira = carteiraViva(cenario);
@@ -208,7 +208,7 @@ async function decidir(cenario: Cenario, id: string, mudanca: Mudanca): Promise<
  * a transição acontece uma vez, e é ela que autoriza o evento de analytics.
  */
 export async function marcarComoVista(cenario: Cenario, id: string): Promise<Oportunidade | null> {
-  const carteira = semApi() && __DEV__ ? carteiraViva(cenario) : null;
+  const carteira = semApi() && comExemplos ? carteiraViva(cenario) : null;
   const atual = carteira?.oportunidades.find((o) => o.id === id);
   if (atual && atual.estado !== 'nova') return null;
 
@@ -223,7 +223,7 @@ export async function marcarComoVista(cenario: Cenario, id: string): Promise<Opo
  * telefone entra no objeto exatamente aqui, e não antes.
  */
 export async function registrarInteresse(cenario: Cenario, id: string): Promise<Oportunidade> {
-  const carteira = semApi() && __DEV__ ? carteiraViva(cenario) : null;
+  const carteira = semApi() && comExemplos ? carteiraViva(cenario) : null;
   const atual = carteira?.oportunidades.find((o) => o.id === id);
 
   return decidir(cenario, id, {

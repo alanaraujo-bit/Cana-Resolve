@@ -27,7 +27,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { authConfig } from '@/auth/config';
+import { authConfig, comExemplos } from '@/auth/config';
 import { chaves } from '@/session/chaves';
 import { avaliacoesDeExemplo, type Cenario } from './exemplos';
 import {
@@ -82,8 +82,8 @@ function semApi(): boolean {
   return !authConfig.dataApiBaseUrl;
 }
 
-function exigirDesenvolvimento(mensagem: string) {
-  if (!__DEV__) {
+function exigirExemplos(mensagem: string) {
+  if (!comExemplos) {
     throw new ErroDeReputacao(
       mensagem,
       'EXPO_PUBLIC_DATA_API_URL não configurada — ver REPUTACAO.md e BLOCKERS.md.',
@@ -222,7 +222,7 @@ export type Pagina = {
  */
 export async function lerAvaliacoes(cenario: Cenario, cursor?: string | null): Promise<Pagina> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_LEITURA);
+    exigirExemplos(MENSAGEM_LEITURA);
     await espera(cursor ? ATRASO / 2 : ATRASO);
 
     if (cenario === 'erro') {
@@ -256,7 +256,7 @@ export async function lerAvaliacoes(cenario: Cenario, cursor?: string | null): P
 /** Uma avaliação, pelo id. É o destino de um deep link. */
 export async function lerAvaliacao(cenario: Cenario, id: string): Promise<Avaliacao> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_LEITURA);
+    exigirExemplos(MENSAGEM_LEITURA);
     await espera(ATRASO / 2);
 
     const achada = (await listaViva(cenario)).find((a) => a.id === id);
@@ -305,7 +305,7 @@ async function aplicar(
  */
 export async function marcarVista(cenario: Cenario, id: string): Promise<Avaliacao | null> {
   if (semApi()) {
-    if (!__DEV__) return null;
+    if (!comExemplos) return null;
     try {
       return await aplicar(cenario, id, (a) => (a.vista ? a : { ...a, vista: true }));
     } catch {
@@ -327,7 +327,7 @@ export async function responder(cenario: Cenario, id: string, texto: string): Pr
   if (!limpo) throw new ErroDeReputacao('Escreva sua resposta antes de publicar.');
 
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_ACAO);
+    exigirExemplos(MENSAGEM_ACAO);
     await espera(ATRASO_ACAO);
     return aplicar(cenario, id, (a) => {
       if (a.resposta) throw new ErroDeReputacao('Você já respondeu esta avaliação.');
@@ -354,7 +354,7 @@ export async function editarResposta(
   if (!limpo) throw new ErroDeReputacao('Escreva sua resposta antes de publicar.');
 
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_ACAO);
+    exigirExemplos(MENSAGEM_ACAO);
     await espera(ATRASO_ACAO);
     return aplicar(cenario, id, (a) => {
       if (!a.resposta) throw new ErroDeReputacao('Não há resposta para editar.');
@@ -373,7 +373,7 @@ export async function editarResposta(
  */
 export async function removerResposta(cenario: Cenario, id: string): Promise<Avaliacao> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_ACAO);
+    exigirExemplos(MENSAGEM_ACAO);
     await espera(ATRASO_ACAO);
     return aplicar(cenario, id, (a) => ({ ...a, resposta: null }));
   }
@@ -399,7 +399,7 @@ export async function denunciar(
   const limpo = comentario ? textoSeguro(comentario, MAXIMO_DA_DENUNCIA) : '';
 
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_ACAO);
+    exigirExemplos(MENSAGEM_ACAO);
     await espera(ATRASO_ACAO);
     return aplicar(cenario, id, (a) => {
       if (a.denuncia) throw new ErroDeReputacao('Você já contestou esta avaliação.');

@@ -17,7 +17,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { authConfig } from '@/auth/config';
+import { authConfig, comExemplos } from '@/auth/config';
 import { chaves } from '@/session/chaves';
 import { perfilDeExemplo, type Cenario } from './exemplos';
 import type { Perfil } from './tipos';
@@ -54,8 +54,8 @@ function semApi(): boolean {
   return !authConfig.dataApiBaseUrl;
 }
 
-function exigirDesenvolvimento(mensagem: string) {
-  if (!__DEV__) {
+function exigirExemplos(mensagem: string) {
+  if (!comExemplos) {
     throw new ErroDePerfil(
       mensagem,
       'EXPO_PUBLIC_AUTH_API_URL não configurada — veja BLOCKERS.md.',
@@ -132,7 +132,7 @@ let memoria: Perfil | null = null;
  */
 export async function lerPerfil(cenario: Cenario, nome: string): Promise<Perfil> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_LEITURA);
+    exigirExemplos(MENSAGEM_LEITURA);
     await espera(ATRASO);
 
     if (cenario === 'erro') {
@@ -163,7 +163,7 @@ export async function lerPerfil(cenario: Cenario, nome: string): Promise<Perfil>
  */
 export async function salvarPerfil(p: Perfil): Promise<Perfil> {
   if (semApi()) {
-    exigirDesenvolvimento(MENSAGEM_SALVAR);
+    exigirExemplos(MENSAGEM_SALVAR);
     await espera(ATRASO_SALVAR);
     memoria = p;
     await gravarRascunho(p);
